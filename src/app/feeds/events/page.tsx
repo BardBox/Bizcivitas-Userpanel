@@ -122,7 +122,6 @@ export default function EventsPage() {
           </button>
           <button
             onClick={() => {}}
-            disabled
             className="bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed opacity-50"
           >
             Debug Info

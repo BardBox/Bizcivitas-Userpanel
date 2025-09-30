@@ -56,14 +56,11 @@ export const requestForToken = async (): Promise<string | null> => {
       });
 
       if (currentToken) {
-        console.log("FCM registration token:", currentToken);
         return currentToken;
       } else {
-        console.log("No registration token available.");
         return null;
       }
     } else {
-      console.log("Unable to get permission to notify.");
       return null;
     }
   } catch (err) {

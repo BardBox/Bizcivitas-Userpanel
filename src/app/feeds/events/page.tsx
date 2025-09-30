@@ -41,16 +41,6 @@ export default function EventsPage() {
     error: rawError,
   } = useGetRawEventsQuery();
 
-  // Log raw response for debugging
-  React.useEffect(() => {
-    if (rawEvents) {
-      console.log("Raw backend response:", rawEvents);
-    }
-    if (rawError) {
-      console.error("Raw API error:", rawError);
-    }
-  }, [rawEvents, rawError]);
-
   // Filter events based on search and filters
   const filteredEvents = useMemo(() => {
     let filtered: FrontendEvent[] = events;
@@ -131,10 +121,9 @@ export default function EventsPage() {
             Try Again
           </button>
           <button
-            onClick={() =>
-              console.log("Debug info:", { error, rawError, rawEvents })
-            }
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            onClick={() => {}}
+            disabled
+            className="bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed opacity-50"
           >
             Debug Info
           </button>

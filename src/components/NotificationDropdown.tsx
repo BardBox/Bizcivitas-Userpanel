@@ -65,7 +65,6 @@ export default function NotificationDropdown({
       // Handle notification action if present
       if (notification.action) {
         // You can add navigation logic here based on notification.action
-        console.log("Notification action:", notification.action);
       }
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
@@ -269,7 +268,6 @@ export default function NotificationDropdown({
                   onClick={() => {
                     setIsOpen(false);
                     // Navigate to notifications page if you have one
-                    console.log("Navigate to all notifications");
                   }}
                   className="w-full text-sm text-blue-600 hover:text-blue-800"
                 >

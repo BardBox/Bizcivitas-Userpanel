@@ -38,7 +38,6 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      console.log("Full login response:", data); // Debug the actual response structure
 
       if (data?.data?.user) {
         const user = data.data.user;
@@ -57,7 +56,6 @@ export default function LoginPage() {
         if (user.role) {
           localStorage.setItem("role", user.role);
         }
-        console.log("Stored accessToken and role in localStorage");
       }
 
       // Use hard redirect for reliability

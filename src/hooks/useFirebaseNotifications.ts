@@ -34,7 +34,6 @@ export const useFirebaseNotifications = () => {
   // Initialize FCM and get token
   const initializeFCM = useCallback(async () => {
     if (!isFCMSupported) {
-      console.log("FCM is not supported in this browser");
       return null;
     }
 
@@ -49,10 +48,8 @@ export const useFirebaseNotifications = () => {
         // Update token in backend via RTK Query
         await updateFcmToken({ fcmToken: token }).unwrap();
 
-        console.log("FCM token registered successfully:", token);
         return token;
       } else {
-        console.log("Failed to get FCM token");
         return null;
       }
     } catch (error) {
@@ -64,7 +61,6 @@ export const useFirebaseNotifications = () => {
   // Request notification permission
   const requestNotificationPermission = useCallback(async () => {
     if (!isFCMSupported) {
-      console.log("FCM is not supported in this browser");
       return false;
     }
 
@@ -76,7 +72,6 @@ export const useFirebaseNotifications = () => {
         const token = await initializeFCM();
         return !!token;
       } else {
-        console.log("Notification permission denied");
         return false;
       }
     } catch (error) {
@@ -97,8 +92,6 @@ export const useFirebaseNotifications = () => {
 
         if (messaging) {
           unsubscribe = onMessage(messaging, (payload: { notification?: { title?: string; body?: string; click_action?: string }; data?: Record<string, unknown> }) => {
-            console.log("Received foreground message:", payload);
-
             const notification = payload.notification;
             const data = payload.data;
 
@@ -116,7 +109,6 @@ export const useFirebaseNotifications = () => {
                 const clickAction =
                   notification.click_action || data?.click_action;
                 // You can add navigation logic here based on click_action
-                console.log("Notification click action:", clickAction);
               }
             }
           });

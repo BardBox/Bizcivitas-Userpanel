@@ -69,29 +69,6 @@ const Avatar: React.FC<AvatarProps> = ({
 
   const borderClasses = showMembershipBorder ? (isCoreMemeber ? "" : "") : "";
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('🔍 Avatar Debug:', {
-      src,
-      imageUrl,
-      imageError,
-      imageLoaded,
-      fallbackText,
-      membershipType,
-      showMembershipBorder,
-      size
-    });
-  }, [
-    src,
-    imageUrl,
-    imageError,
-    imageLoaded,
-    fallbackText,
-    membershipType,
-    showMembershipBorder,
-    size
-  ]);
-
   // Reset error state when src changes
   React.useEffect(() => {
     setImageError(false);
@@ -117,7 +94,6 @@ const Avatar: React.FC<AvatarProps> = ({
                 className="object-cover"
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
-                  console.log("Image failed to load:", imageUrl);
                   setImageError(true);
                 }}
               />
@@ -142,7 +118,6 @@ const Avatar: React.FC<AvatarProps> = ({
               className="object-cover rounded-full"
               onLoad={() => setImageLoaded(true)}
               onError={() => {
-                console.log("Image failed to load:", imageUrl);
                 setImageError(true);
               }}
             />

@@ -45,12 +45,6 @@ const MyProfileClient: React.FC = () => {
 
   // Normalize all profile data once at the top level
   const normalizedData = useMemo(() => {
-    console.log("🔍 Debug - Full profile data:", profile);
-  console.log(
-      "🔍 Debug - Professional details:",
-      profile?.professionalDetails
-    );
-
     return {
       personal: {
         hobbiesAndInterests: profile?.myBio?.hobbiesAndInterests,

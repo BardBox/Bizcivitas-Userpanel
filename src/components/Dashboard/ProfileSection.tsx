@@ -23,15 +23,6 @@ export default function ProfileSection({ isCollapsed }: ProfileSectionProps) {
     setIsMounted(true);
   }, []);
 
-  // Debug logging
-  useEffect(() => {
-    if (user) {
-      if (user.avatar) {
-        console.log("Generated image URL:", getAbsoluteImageUrl(user.avatar));
-      }
-    }
-  }, [user]);
-
   const handleProfileClick = () => {
     router.push("/feeds/myprofile");
   };

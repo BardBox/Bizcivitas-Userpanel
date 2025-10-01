@@ -12,9 +12,10 @@ import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 
 interface ProfileSectionProps {
   isCollapsed: boolean;
+  onNavigate?: () => void;
 }
 
-export default function ProfileSection({ isCollapsed }: ProfileSectionProps) {
+export default function ProfileSection({ isCollapsed, onNavigate }: ProfileSectionProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { data: user, isLoading, error } = useGetCurrentUserQuery();
   const router = useRouter();
@@ -24,6 +25,9 @@ export default function ProfileSection({ isCollapsed }: ProfileSectionProps) {
   }, []);
 
   const handleProfileClick = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
     router.push("/feeds/myprofile");
   };
 
@@ -114,7 +118,7 @@ export default function ProfileSection({ isCollapsed }: ProfileSectionProps) {
       {!isCollapsed ? (
         <div
           onClick={handleProfileClick}
-          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="group flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <div className="">
             <Avatar
@@ -133,6 +137,10 @@ export default function ProfileSection({ isCollapsed }: ProfileSectionProps) {
               {getGreeting()}
             </h2>
             <p className="text-xs text-gray-500 truncate">{getUserTitle()}</p>
+            {/* View Profile hint on hover */}
+            <p className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+              View Profile →
+            </p>
           </div>
         </div>
       ) : (

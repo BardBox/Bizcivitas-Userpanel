@@ -131,22 +131,22 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
       <form ref={formRef} onSubmit={handleSubmit(handleSave)}>
         <div className="space-y-3">
           {/* Dream Destination */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-2 md:gap-4 py-2">
             <div>
-              <span className="font-medium text-gray-700 flex items-center gap-2">
+              <span className="font-medium text-gray-700 flex items-center gap-2 text-sm md:text-base">
                 <MapPin className="h-4 w-4 text-gray-500" />
                 Dream Destination:
               </span>
             </div>
             <div>
               {!isEditing ? (
-                <span className="text-gray-600">
+                <span className="text-gray-600 text-sm md:text-base">
                   {travelDiary?.dreamDestination || "-"}
                 </span>
               ) : (
                 <input
                   {...register("dreamDestination")}
-                  className="w-full border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   placeholder="Enter your dream travel destination"
                 />
               )}
@@ -154,14 +154,14 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
           </div>
 
           {/* My Footprints */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-2 md:gap-4 py-2">
             <div>
-              <span className="font-medium text-gray-700 flex items-center gap-2">
+              <span className="font-medium text-gray-700 flex items-center gap-2 text-sm md:text-base">
                 <Plane className="h-4 w-4 text-gray-500" />
                 My Footprints:
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {!isEditing ? (
                 travelDiary?.myFootprints &&
                 travelDiary.myFootprints.length > 0 ? (
@@ -176,7 +176,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-gray-600">No places visited yet</span>
+                  <span className="text-gray-600 text-sm">No places visited yet</span>
                 )
               ) : (
                 <div className="space-y-2">
@@ -184,13 +184,13 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     <div key={field.id} className="flex gap-2">
                       <input
                         {...register(`myFootprints.${index}.value`)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        placeholder="Enter a place you've visited"
+                        className="flex-1 min-w-0 border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        placeholder="Place visited"
                       />
                       <button
                         type="button"
                         onClick={() => removeFootprint(index)}
-                        className="px-2 py-1 text-red-600 hover:text-red-800"
+                        className="flex-shrink-0 px-2 py-1 text-red-600 hover:text-red-800"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -199,7 +199,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                   <button
                     type="button"
                     onClick={addFootprint}
-                    className="flex items-center gap-2 px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md hover:bg-indigo-50"
                   >
                     <Plus className="h-4 w-4" />
                     Add Footprint
@@ -210,14 +210,14 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
           </div>
 
           {/* Business Bucket List */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-2 md:gap-4 py-2">
             <div>
-              <span className="font-medium text-gray-700 flex items-center gap-2">
+              <span className="font-medium text-gray-700 flex items-center gap-2 text-sm md:text-base">
                 <Target className="h-4 w-4 text-gray-500" />
                 Business Bucket List:
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {!isEditing ? (
                 travelDiary?.businessBucketList &&
                 travelDiary.businessBucketList.length > 0 ? (
@@ -234,7 +234,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     )}
                   </div>
                 ) : (
-                  <span className="text-gray-600">
+                  <span className="text-gray-600 text-sm">
                     No business destinations planned
                   </span>
                 )
@@ -244,13 +244,13 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     <div key={field.id} className="flex gap-2">
                       <input
                         {...register(`businessBucketList.${index}.value`)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        placeholder="Enter a business destination you want to visit"
+                        className="flex-1 min-w-0 border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        placeholder="Business destination"
                       />
                       <button
                         type="button"
                         onClick={() => removeBucket(index)}
-                        className="px-2 py-1 text-red-600 hover:text-red-800"
+                        className="flex-shrink-0 px-2 py-1 text-red-600 hover:text-red-800"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -259,10 +259,10 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                   <button
                     type="button"
                     onClick={addBucket}
-                    className="flex items-center gap-2 px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md hover:bg-indigo-50"
                   >
                     <Plus className="h-4 w-4" />
-                    Add Business Destination
+                    Add Destination
                   </button>
                 </div>
               )}
@@ -270,14 +270,14 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
           </div>
 
           {/* Deals on Wheels */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-2 md:gap-4 py-2">
             <div>
-              <span className="font-medium text-gray-700 flex items-center gap-2">
+              <span className="font-medium text-gray-700 flex items-center gap-2 text-sm md:text-base">
                 <Car className="h-4 w-4 text-gray-500" />
                 Deals on Wheels:
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {!isEditing ? (
                 travelDiary?.dealsOnWheels &&
                 travelDiary.dealsOnWheels.length > 0 ? (
@@ -292,7 +292,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-gray-600">No travel deals listed</span>
+                  <span className="text-gray-600 text-sm">No travel deals listed</span>
                 )
               ) : (
                 <div className="space-y-2">
@@ -301,13 +301,13 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                       <textarea
                         {...register(`dealsOnWheels.${index}.value`)}
                         rows={2}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
-                        placeholder="Describe a travel deal or offer"
+                        className="flex-1 min-w-0 border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                        placeholder="Travel deal or offer"
                       />
                       <button
                         type="button"
                         onClick={() => removeDeal(index)}
-                        className="px-2 py-1 text-red-600 hover:text-red-800 self-start mt-1"
+                        className="flex-shrink-0 px-2 py-1 text-red-600 hover:text-red-800 self-start"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -316,7 +316,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                   <button
                     type="button"
                     onClick={addDeal}
-                    className="flex items-center gap-2 px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md hover:bg-indigo-50"
                   >
                     <Plus className="h-4 w-4" />
                     Add Travel Deal
@@ -327,8 +327,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
           </div>
 
           {error && isEditing && (
-            <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
-              <div></div>
+            <div className="py-2">
               <div className="text-red-500 text-sm">{String(error)}</div>
             </div>
           )}

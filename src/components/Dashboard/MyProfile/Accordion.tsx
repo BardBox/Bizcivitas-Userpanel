@@ -28,7 +28,7 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
 }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-white  rounded-lg shadow-sm px-4">
+    <div className="bg-white rounded-lg shadow-sm px-2">
       <div className="w-full flex justify-between items-center py-4 px-2">
         <button
           className="flex items-center gap-3 text-left focus:outline-none flex-1"

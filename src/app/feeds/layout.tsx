@@ -1,10 +1,14 @@
 import FeedsLayoutClient from "./FeedsLayoutClient";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function FeedsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // No server-side cookie check; rely on client-side localStorage auth
-  return <FeedsLayoutClient>{children}</FeedsLayoutClient>;
+  return (
+    <ProtectedRoute>
+      <FeedsLayoutClient>{children}</FeedsLayoutClient>
+    </ProtectedRoute>
+  );
 }

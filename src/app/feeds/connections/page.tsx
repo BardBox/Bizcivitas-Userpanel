@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { Search, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
 import UserCard from "../../../components/Dashboard/UserCard";
 import { useGetConnectionsQuery } from "../../../../store/api/userApi";
+import { useGridLayout } from "@/hooks/useGridLayout";
 
 export default function ConnectionsPage() {
   const {
@@ -13,7 +14,16 @@ export default function ConnectionsPage() {
   } = useGetConnectionsQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(8); // Show 8 items per page
+
+  // Dynamic items per page based on screen resolution
+  const dynamicItemsPerPage = useGridLayout();
+  const [itemsPerPage, setItemsPerPage] = useState(dynamicItemsPerPage);
+
+  // Update itemsPerPage when screen size changes
+  React.useEffect(() => {
+    setItemsPerPage(dynamicItemsPerPage);
+    setCurrentPage(1); // Reset to first page when layout changes
+  }, [dynamicItemsPerPage]);
 
   // Get connections count from API data
   const connectionsCount = Array.isArray(connections) ? connections.length : 0;
@@ -243,8 +253,14 @@ export default function ConnectionsPage() {
               }}
               className="border border-gray-300 rounded px-2 py-1 text-sm"
             >
+              <option value={dynamicItemsPerPage}>
+                {dynamicItemsPerPage} per page (Auto)
+              </option>
+              <option value={6}>6 per page</option>
               <option value={8}>8 per page</option>
+              <option value={9}>9 per page</option>
               <option value={12}>12 per page</option>
+              <option value={16}>16 per page</option>
             </select>
           </div>
         </div>

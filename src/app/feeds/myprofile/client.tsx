@@ -112,8 +112,8 @@ const MyProfileClient: React.FC = () => {
             Unable to Load Profile
           </h1>
           <p className="text-gray-600 mb-6">
-            We&apos;re having trouble loading your profile information. Please try
-            again.
+            We&apos;re having trouble loading your profile information. Please
+            try again.
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -204,7 +204,7 @@ const MyProfileClient: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">

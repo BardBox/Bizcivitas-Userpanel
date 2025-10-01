@@ -183,7 +183,7 @@ export default function DashboardSidebar({
         {/* Horizontal Line */}
         <hr className="mb-6 border-gray-200" />
         {/* User Profile Section */}
-        <ProfileSection isCollapsed={isCollapsed} />
+        <ProfileSection isCollapsed={isCollapsed} onNavigate={handleNavClick} />
         {/* Toggle Button - Hide on mobile */}
         {!isMobile && (
           <div

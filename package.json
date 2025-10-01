@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
+    "dev:clean": "rm -rf .next && next dev",
     "build": "next build",
+    "build:clean": "rm -rf .next && next build",
     "start": "next start",
     "lint": "next lint",
+    "clean": "rm -rf .next",
     "fresh": "rm -rf .next node_modules package-lock.json && npm install && npm run dev"
   },
   "dependencies": {

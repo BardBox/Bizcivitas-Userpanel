@@ -49,7 +49,10 @@ export default function FeedsLayoutClient({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div
+        className="flex-1"
+        onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
+      >
         <DashboardHeader />
         <main className="p-3 md:p-6">{children}</main>
       </div>

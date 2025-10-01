@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isAuthenticated, clearAccessToken } from "@/lib/auth";
 
 export default function PublicRoute({
   children,
@@ -12,14 +13,28 @@ export default function PublicRoute({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem("accessToken");
+    // Check if user is already logged in with valid token
+    try {
+      const authenticated = isAuthenticated();
 
-    if (token) {
-      // User is logged in - redirect to feeds
-      router.replace("/feeds");
-    } else {
-      // User is not logged in - show login page
+      if (authenticated) {
+        // User has valid token - redirect to feeds
+        router.replace("/feeds");
+      } else {
+        // Clear any stale/invalid tokens
+        clearAccessToken();
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("role");
+
+        // Show public page
+        setIsReady(true);
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      // On error, clear tokens and show login
+      clearAccessToken();
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("role");
       setIsReady(true);
     }
   }, [router]);

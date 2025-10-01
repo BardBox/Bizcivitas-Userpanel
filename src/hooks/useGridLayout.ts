@@ -5,9 +5,12 @@ import { useState, useEffect } from "react";
  * Returns the number of items that should be displayed per page
  */
 export function useGridLayout() {
-  const [itemsPerPage, setItemsPerPage] = useState(8);
+  const [itemsPerPage, setItemsPerPage] = useState(8); // SSR-safe default
 
   useEffect(() => {
+    // Guard against SSR
+    if (typeof window === "undefined") return;
+
     function calculateItemsPerPage() {
       const width = window.innerWidth;
 
@@ -61,20 +64,28 @@ export function useGridLayout() {
  * Get grid configuration details for debugging or display purposes
  */
 export function useGridConfig() {
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<{
+    columns: number;
+    rows: number;
+    itemsPerPage: number;
+    breakpoint: "xs" | "sm" | "md" | "lg" | "xl";
+  }>({
     columns: 1,
     rows: 3,
     itemsPerPage: 8,
     breakpoint: "xs",
-  });
+  }); // SSR-safe default
 
   useEffect(() => {
+    // Guard against SSR
+    if (typeof window === "undefined") return;
+
     function calculateConfig() {
       const width = window.innerWidth;
 
       let columns = 1;
       let rows = 3;
-      let breakpoint = "xs";
+      let breakpoint: "xs" | "sm" | "md" | "lg" | "xl" = "xs";
 
       if (width >= 1280) {
         columns = 4;

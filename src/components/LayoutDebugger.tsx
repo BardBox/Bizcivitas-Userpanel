@@ -4,10 +4,15 @@ import { useGridConfig } from "@/hooks/useGridLayout";
 
 /**
  * Debug component to show current grid configuration
- * Add this temporarily to see how the layout adapts to screen size
+ * Only renders in development mode
  * Usage: <LayoutDebugger />
  */
 export default function LayoutDebugger() {
+  // Only show in development/non-production environments
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+
   const config = useGridConfig();
 
   return (

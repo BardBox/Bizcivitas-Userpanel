@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import {
   Target,
   TrendingUp,
@@ -59,6 +59,12 @@ const Bizleads: React.FC<BizleadsProps> = ({
   } = useForm({ defaultValues });
 
   const { fields, append, remove } = useFieldArray({
+    control,
+    name: "contacts",
+  });
+
+  // Use useWatch to subscribe to contacts values (replaces control._formValues)
+  const watchedContacts = useWatch({
     control,
     name: "contacts",
   });
@@ -184,7 +190,7 @@ const Bizleads: React.FC<BizleadsProps> = ({
                               />
                             ) : (
                               <span className="text-gray-900 font-medium px-2">
-                                {control._formValues.contacts[index]?.company || "-"}
+                                {watchedContacts?.[index]?.company || "-"}
                               </span>
                             )}
                           </td>
@@ -197,7 +203,7 @@ const Bizleads: React.FC<BizleadsProps> = ({
                               />
                             ) : (
                               <span className="text-gray-600 px-2">
-                                {control._formValues.contacts[index]?.name || "-"}
+                                {watchedContacts?.[index]?.name || "-"}
                               </span>
                             )}
                           </td>
@@ -210,7 +216,7 @@ const Bizleads: React.FC<BizleadsProps> = ({
                               />
                             ) : (
                               <span className="text-gray-600 px-2">
-                                {control._formValues.contacts[index]?.role || "-"}
+                                {watchedContacts?.[index]?.role || "-"}
                               </span>
                             )}
                             {isEditing && (

@@ -38,6 +38,13 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
     router.push(`/feeds/connections/${userId}`);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleCardClick();
+    }
+  };
+
   if (isLoading) {
     return <LoadingSkeleton type="userProfile" />;
   }
@@ -62,6 +69,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`View ${fullName}'s profile`}
       className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer"
     >
       {/* Header with Avatar and Basic Info */}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import imageCompression from "browser-image-compression";
 
 import ImageModal from "@/components/ui/ImageModal";
 import ImageCropModal from "@/components/ui/ImageCropModal";
@@ -10,65 +11,24 @@ import {
   useUpdateProfessionDetailsMutation,
 } from "../../../../../store/api/userApi";
 
-// Image compression function
+// Image compression function using browser-image-compression
 const compressImage = async (
   file: File,
   maxSizeMB: number = 1
 ): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+  const options = {
+    maxSizeMB,
+    maxWidthOrHeight: 800,
+    useWebWorker: true,
+  };
 
-        // Calculate new dimensions while maintaining aspect ratio
-        const maxDimension = 800; // Max width/height
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height);
-          width *= ratio;
-          height *= ratio;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Could not get canvas context"));
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to blob with quality adjustment
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Could not compress image"));
-              return;
-            }
-            const compressedFile = new File([blob], file.name, {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          },
-          "image/jpeg",
-          0.7 // Compression quality (0.7 = 70% quality)
-        );
-      };
-      img.onerror = () => {
-        reject(new Error("Failed to load image"));
-      };
-    };
-    reader.onerror = () => {
-      reject(new Error("Failed to read file"));
-    };
-  });
+  try {
+    const compressedFile = await imageCompression(file, options);
+    return compressedFile;
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    throw error;
+  }
 };
 
 interface CompanyLogoUploadProps {
@@ -128,7 +88,7 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
       if (event.target) {
         event.target.value = "";
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Clear the input on error
       if (event.target) {
@@ -157,7 +117,7 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
         URL.revokeObjectURL(selectedImageUrl);
         setSelectedImageUrl(null);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to process cropped image:", error);
       toast.error(error.message || "Failed to process the cropped image");
@@ -190,7 +150,7 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
       } else {
         throw new Error("Invalid response from server");
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Logo upload failed:", error);
 
@@ -243,14 +203,14 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
   return (
     <div className="text-center">
       <div
-        className="relative w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 overflow-hidden group cursor-pointer"
+        className="relative w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 overflow-hidden group cursor-pointer"
         onClick={handleLogoClick}
       >
         {displayLogoUrl ? (
           <img
             src={displayLogoUrl}
             alt={`${companyName || "Company"} Logo`}
-            className="w-full h-full object-cover rounded-xl"
+            className="w-full h-full object-cover rounded-full"
             onError={(e) => {
               // Fallback to placeholder if image fails to load
               const target = e.target as HTMLImageElement;
@@ -258,21 +218,21 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
               const parent = target.parentElement;
               if (parent) {
                 parent.innerHTML = `
-                  <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <div class="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded"></div>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div class="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-full"></div>
                   </div>
                 `;
               }
             }}
           />
         ) : (
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded"></div>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-full"></div>
           </div>
         )}
 
         {/* Upload overlay */}
-        <div className="absolute inset-0 rounded-xl bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+        <div className="absolute inset-0 rounded-full bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <svg
               className="w-4 h-4 text-white"
@@ -284,7 +244,13 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M12 4v16m8-8H4"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
               />
             </svg>
           </div>
@@ -292,7 +258,7 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
 
         {/* Loading indicator */}
         {isUploading && (
-          <div className="absolute inset-0 rounded-xl bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full  bg-opacity-50 flex items-center justify-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
           </div>
         )}
@@ -336,7 +302,7 @@ const CompanyLogoUpload: React.FC<CompanyLogoUploadProps> = ({
         title="Edit Company Logo"
         onSave={handleCroppedImageSave}
         aspectRatio={1} // Square aspect ratio for company logos
-        circularCrop={false}
+        circularCrop={true}
       />
     </div>
   );

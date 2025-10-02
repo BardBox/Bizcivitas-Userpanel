@@ -260,7 +260,6 @@ export default function ConnectionsPage() {
               <option value={8}>8 per page</option>
               <option value={9}>9 per page</option>
               <option value={12}>12 per page</option>
-              <option value={16}>16 per page</option>
             </select>
           </div>
         </div>

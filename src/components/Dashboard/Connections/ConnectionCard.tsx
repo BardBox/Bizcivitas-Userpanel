@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "next/navigation";
 import { User, UserPlus, Check } from "lucide-react";
 import {
   getAvatarUrl,
@@ -26,11 +27,16 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
   connectionStatus = "not_connected",
   onSendRequest,
 }) => {
+  const router = useRouter();
   const {
     data: userProfile,
     isLoading,
     error,
   } = useGetConnectionProfileQuery(userId);
+
+  const handleCardClick = () => {
+    router.push(`/feeds/connections/${userId}`);
+  };
 
   if (isLoading) {
     return <LoadingSkeleton type="userProfile" />;
@@ -54,7 +60,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
   const showCrown = shouldShowCrown(user?.membershipType);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 hover:border-blue-200">
+    <div
+      onClick={handleCardClick}
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer"
+    >
       {/* Header with Avatar and Basic Info */}
       <div className="flex items-start space-x-4 mb-4">
         {/* Avatar with membership border */}
@@ -142,7 +151,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
         </div>
       ) : (
         <button
-          onClick={() => onSendRequest(userId, fullName)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSendRequest(userId, fullName);
+          }}
           disabled={requestState !== "idle"}
           className={`w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
             requestState === "sent"

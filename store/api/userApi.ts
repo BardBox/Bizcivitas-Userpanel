@@ -33,6 +33,9 @@ export interface User {
       gstRegisteredState?: string;
       directNumber?: string;
       companyAddress?: string;
+      businessCountry?: string;
+      businessState?: string;
+      businessCity?: string;
     };
     addresses?: {
       address?: {
@@ -251,7 +254,10 @@ export const userApi = baseApi.injectEndpoints({
       providesTags: ["Connections"],
       transformResponse: (response: any) => {
         // Handle the actual API response structure: { data: { connections: [...] } }
-        if (response?.data?.connections && Array.isArray(response.data.connections)) {
+        if (
+          response?.data?.connections &&
+          Array.isArray(response.data.connections)
+        ) {
           return response.data.connections;
         } else if (response?.data && Array.isArray(response.data)) {
           return response.data;
@@ -264,7 +270,7 @@ export const userApi = baseApi.injectEndpoints({
     }),
     getConnectionProfile: builder.query<any, string>({
       query: (userId) => `/connections/user/${userId}`,
-      providesTags: (_, __, userId) => [{ type: 'Profile', id: userId }],
+      providesTags: (_, __, userId) => [{ type: "Profile", id: userId }],
       transformResponse: (response: any) => {
         // Handle the specific response structure: { data: { userDetails: {...} } }
         if (response?.data?.userDetails) {

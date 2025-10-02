@@ -27,7 +27,7 @@ interface BusinessDetailsProps {
     industry?: string;
     business?: string;
     businessSubcategory?: string;
-    businessAddress?: string;
+    companyAddress?: string;
     businessCity?: string;
     businessState?: string;
     businessCountry?: string;
@@ -46,22 +46,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   onEditStateChange,
   formRef,
 }) => {
-  console.log(
-    "🏢 BusinessDetails - Received professionalDetails:",
-    professionalDetails
-  );
-  console.log(
-    "🏢 BusinessDetails - businessCity:",
-    professionalDetails?.businessCity
-  );
-  console.log(
-    "🏢 BusinessDetails - businessState:",
-    professionalDetails?.businessState
-  );
-  console.log(
-    "🏢 BusinessDetails - businessCountry:",
-    professionalDetails?.businessCountry
-  );
+
   const defaultValues = {
     email: professionalDetails?.email || "",
     mobile: professionalDetails?.mobile?.toString() || "",
@@ -72,7 +57,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
     industry: professionalDetails?.industry || "",
     business: professionalDetails?.business || "",
     businessSubcategory: professionalDetails?.businessSubcategory || "",
-    businessAddress: professionalDetails?.businessAddress || "",
+    companyAddress: professionalDetails?.companyAddress || "",
     businessCity: professionalDetails?.businessCity || "",
     businessState: professionalDetails?.businessState || "",
     businessCountry: professionalDetails?.businessCountry || "",
@@ -102,7 +87,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         industry: professionalDetails?.industry || "",
         business: professionalDetails?.business || "",
         businessSubcategory: professionalDetails?.businessSubcategory || "",
-        businessAddress: professionalDetails?.businessAddress || "",
+        companyAddress: professionalDetails?.companyAddress || "",
         businessCity: professionalDetails?.businessCity || "",
         businessState: professionalDetails?.businessState || "",
         businessCountry: professionalDetails?.businessCountry || "",
@@ -119,7 +104,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           acc[key] = value;
         }
         return acc;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }, {} as Record<string, any>);
 
       await updateProfessionDetails(cleanedData).unwrap();
@@ -372,11 +357,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             <div>
               {!isEditing ? (
                 <span className="text-gray-600 whitespace-pre-wrap">
-                  {professionalDetails?.businessAddress || "-"}
+                  {professionalDetails?.companyAddress || "-"}
                 </span>
               ) : (
                 <textarea
-                  {...register("businessAddress")}
+                  {...register("companyAddress")}
                   rows={2}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
                   placeholder="Enter business address"

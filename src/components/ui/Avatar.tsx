@@ -85,13 +85,13 @@ const Avatar: React.FC<AvatarProps> = ({
       {/* Avatar container with optional membership border */}
       {showMembershipBorder ? (
         <div className={`${sizeClasses[size]} rounded-full ${borderClasses}`}>
-          <div className="w-full h-full rounded-full overflow-hidden ">
+          <div className="w-full h-full rounded-full overflow-hidden">
             {imageUrl && !imageError ? (
               <Image
                 src={imageUrl}
                 alt={alt}
                 fill
-                className="object-cover"
+                className="object-cover rounded-full"
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
                   setImageError(true);

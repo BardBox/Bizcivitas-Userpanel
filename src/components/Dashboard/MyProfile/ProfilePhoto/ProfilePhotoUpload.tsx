@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import imageCompression from "browser-image-compression";
 
 import Avatar from "@/components/ui/Avatar";
 import ImageModal from "@/components/ui/ImageModal";
@@ -12,65 +13,24 @@ import {
   useUpdateProfileMutation,
 } from "../../../../../store/api/userApi";
 
-// Image compression function
+// Image compression function using browser-image-compression
 const compressImage = async (
   file: File,
   maxSizeMB: number = 1
 ): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+  const options = {
+    maxSizeMB,
+    maxWidthOrHeight: 800,
+    useWebWorker: true,
+  };
 
-        // Calculate new dimensions while maintaining aspect ratio
-        const maxDimension = 800; // Max width/height
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height);
-          width *= ratio;
-          height *= ratio;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Could not get canvas context"));
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to blob with quality adjustment
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Could not compress image"));
-              return;
-            }
-            const compressedFile = new File([blob], file.name, {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          },
-          "image/jpeg",
-          0.7 // Compression quality (0.7 = 70% quality)
-        );
-      };
-      img.onerror = () => {
-        reject(new Error("Failed to load image"));
-      };
-    };
-    reader.onerror = () => {
-      reject(new Error("Failed to read file"));
-    };
-  });
+  try {
+    const compressedFile = await imageCompression(file, options);
+    return compressedFile;
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    throw error;
+  }
 };
 
 interface ProfilePhotoUploadProps {
@@ -119,7 +79,7 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       if (event.target) {
         event.target.value = "";
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Clear the input on error
       if (event.target) {
@@ -148,7 +108,7 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         URL.revokeObjectURL(selectedImageUrl);
         setSelectedImageUrl(null);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to process cropped image:", error);
       toast.error(error.message || "Failed to process the cropped image");
@@ -184,7 +144,7 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       } else {
         throw new Error("Invalid response from server");
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Upload failed:", error);
 
@@ -246,7 +206,7 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             showMembershipBorder={true}
             showCrown={user?.membershipType === "Core Member"}
             size="lg"
-            className="shadow-md"
+            className=""
           />
 
           {/* Upload overlay */}
@@ -262,7 +222,13 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 4v16m8-8H4"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                 />
               </svg>
             </div>
@@ -308,7 +274,7 @@ const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         title="Edit Profile Photo"
         onSave={handleCroppedImageSave}
         aspectRatio={1} // Square aspect ratio for profile photos
-        circularCrop={false}
+        circularCrop={true}
       />
     </div>
   );

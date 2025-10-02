@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
-import ReactCrop, {
-  Crop,
-  PixelCrop,
-  centerCrop,
-  makeAspectCrop,
-} from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import React, { useState, useCallback } from "react";
+import Cropper, { Area } from "react-easy-crop";
 
 interface ImageCropModalProps {
   isOpen: boolean;
@@ -20,24 +14,63 @@ interface ImageCropModalProps {
   circularCrop?: boolean;
 }
 
-function centerAspectCrop(
-  mediaWidth: number,
-  mediaHeight: number,
-  aspect: number
-) {
-  return centerCrop(
-    makeAspectCrop(
-      {
-        unit: "%",
-        width: 90,
-      },
-      aspect,
-      mediaWidth,
-      mediaHeight
-    ),
-    mediaWidth,
-    mediaHeight
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", (error) => reject(error));
+    image.src = url;
+  });
+
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area,
+  rotation = 0
+): Promise<Blob> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("No 2d context");
+  }
+
+  const maxSize = Math.max(image.width, image.height);
+  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+
+  canvas.width = safeArea;
+  canvas.height = safeArea;
+
+  ctx.translate(safeArea / 2, safeArea / 2);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.translate(-safeArea / 2, -safeArea / 2);
+
+  ctx.drawImage(
+    image,
+    safeArea / 2 - image.width * 0.5,
+    safeArea / 2 - image.height * 0.5
   );
+
+  const data = ctx.getImageData(0, 0, safeArea, safeArea);
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.putImageData(
+    data,
+    0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x,
+    0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Canvas is empty"));
+        return;
+      }
+      resolve(blob);
+    }, "image/jpeg", 0.95);
+  });
 }
 
 const ImageCropModal: React.FC<ImageCropModalProps> = ({
@@ -47,24 +80,20 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   imageAlt = "Image",
   title = "Edit Image",
   onSave,
-  aspectRatio = 1, // Default to square crop
+  aspectRatio = 1,
   circularCrop = false,
 }) => {
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [scale, setScale] = useState(1);
 
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  const onImageLoad = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      if (aspectRatio) {
-        const { width, height } = e.currentTarget;
-        setCrop(centerAspectCrop(width, height, aspectRatio));
-      }
+  const onCropComplete = useCallback(
+    (croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
     },
-    [aspectRatio]
+    []
   );
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -73,72 +102,15 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
     }
   };
 
-  const getCroppedImg = useCallback(
-    async (image: HTMLImageElement, crop: PixelCrop): Promise<Blob> => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-
-      if (!ctx) {
-        throw new Error("No 2d context");
-      }
-
-      const scaleX = image.naturalWidth / image.width;
-      const scaleY = image.naturalHeight / image.height;
-
-      // Set canvas size to exact crop dimensions
-      canvas.width = crop.width * scaleX;
-      canvas.height = crop.height * scaleY;
-
-      ctx.imageSmoothingQuality = "high";
-
-      // Fill with white background to handle transparent images (PNG/WebP)
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Calculate source coordinates in original image
-      const sourceX = crop.x * scaleX;
-      const sourceY = crop.y * scaleY;
-      const sourceWidth = crop.width * scaleX;
-      const sourceHeight = crop.height * scaleY;
-
-      // Draw the cropped portion on top of white background
-      ctx.drawImage(
-        image,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      return new Promise((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Canvas is empty"));
-              return;
-            }
-            resolve(blob);
-          },
-          "image/jpeg",
-          0.9
-        );
-      });
-    },
-    []
-  );
-
   const handleSave = async () => {
-    if (!imgRef.current || !completedCrop || !onSave) return;
+    if (!imageSrc || !croppedAreaPixels || !onSave) return;
 
     setIsProcessing(true);
     try {
       const croppedImageBlob = await getCroppedImg(
-        imgRef.current,
-        completedCrop
+        imageSrc,
+        croppedAreaPixels,
+        rotation
       );
       onSave(croppedImageBlob);
       onClose();
@@ -153,7 +125,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center  bg-opacity-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4"
       onClick={handleBackdropClick}
     >
       <div className="relative max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
@@ -163,7 +135,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleSave}
-              disabled={!completedCrop || isProcessing}
+              disabled={!croppedAreaPixels || isProcessing}
               className="px-4 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isProcessing ? "Processing..." : "Save"}
@@ -195,7 +167,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
             <span className="text-xs text-gray-600">Zoom:</span>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setScale(Math.max(0.5, scale - 0.1))}
+                onClick={() => setZoom(Math.max(1, zoom - 0.1))}
                 className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded hover:bg-gray-50"
               >
                 <svg
@@ -214,15 +186,15 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
               </button>
               <input
                 type="range"
-                min="0.5"
+                min="1"
                 max="3"
                 step="0.1"
-                value={scale}
-                onChange={(e) => setScale(Number(e.target.value))}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
                 className="w-24"
               />
               <button
-                onClick={() => setScale(Math.min(3, scale + 0.1))}
+                onClick={() => setZoom(Math.min(3, zoom + 0.1))}
                 className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded hover:bg-gray-50"
               >
                 <svg
@@ -240,11 +212,11 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 </svg>
               </button>
               <span className="text-xs text-gray-500 min-w-[3rem]">
-                {(scale * 100).toFixed(0)}%
+                {(zoom * 100).toFixed(0)}%
               </span>
             </div>
             <button
-              onClick={() => setScale(1)}
+              onClick={() => setZoom(1)}
               className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50"
             >
               Reset
@@ -255,29 +227,20 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
         {/* Image Editor */}
         <div className="p-4">
           {imageSrc ? (
-            <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
-              <ReactCrop
+            <div className="aspect-square bg-gray-900 rounded-lg overflow-hidden relative">
+              <Cropper
+                image={imageSrc}
                 crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                onComplete={(c) => setCompletedCrop(c)}
+                zoom={zoom}
+                rotation={rotation}
                 aspect={aspectRatio}
-                circularCrop={circularCrop}
-                className="w-full h-full"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imgRef}
-                  alt={imageAlt}
-                  src={imageSrc}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    transform: `scale(${scale})`,
-                  }}
-                  onLoad={onImageLoad}
-                  className="w-full h-full object-cover transition-transform duration-200"
-                />
-              </ReactCrop>
+                cropShape={circularCrop ? "round" : "rect"}
+                showGrid={!circularCrop}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onRotationChange={setRotation}
+                onCropComplete={onCropComplete}
+              />
             </div>
           ) : (
             <div className="aspect-square flex items-center justify-center bg-gray-100 rounded-lg">

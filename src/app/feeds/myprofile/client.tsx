@@ -56,6 +56,9 @@ const MyProfileClient: React.FC = () => {
         mobile: user?.mobile,
         location: user?.city || profile?.addresses?.address?.city,
         companyLogo: profile?.professionalDetails?.companyLogo,
+        businessCity: profile?.businessAddress?.city,
+        businessState: profile?.businessAddress?.state,
+        businessCountry: profile?.businessAddress?.country,
       },
       leads: {
         given: profile?.myBio?.myGives,

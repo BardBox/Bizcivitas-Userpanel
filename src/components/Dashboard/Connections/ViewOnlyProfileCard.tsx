@@ -1,6 +1,7 @@
 import React from "react";
-import { User, MessageCircle, UserPlus } from "lucide-react";
+import { User, MessageCircle, UserPlus, UserMinus } from "lucide-react";
 import ProfilePreview from "@/components/Dashboard/MyProfile/ProfilePhoto/ProfilePreview";
+import { ConnectionStatusInfo } from "../../../../types";
 
 // Capitalize first letter utility
 const capitalize = (str?: string) =>
@@ -27,13 +28,17 @@ interface ViewOnlyProfileCardProps {
     isActive?: boolean;
     joiningDate?: string;
   };
+  connectionStatus?: ConnectionStatusInfo;
   onConnect?: () => void;
+  onRemoveConnection?: () => void;
   onMessage?: () => void;
 }
 
 const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
   profile,
+  connectionStatus = { status: "none", connectionId: null },
   onConnect,
+  onRemoveConnection,
   onMessage,
 }) => {
   // Handle null/undefined profile
@@ -48,25 +53,26 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
     );
   }
 
-  const fullName = `${capitalize(profile?.fname)} ${profile?.lname || ''}`.trim();
+  const fullName = `${capitalize(profile?.fname)} ${
+    profile?.lname || ""
+  }`.trim();
 
   // Helper function to format date
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not available';
+    if (!dateString) return "Not available";
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch {
-      return 'Not available';
+      return "Not available";
     }
   };
 
   return (
     <div className="bg-white rounded-xl flex flex-col items-center justify-center shadow-lg border border-gray-100 overflow-hidden">
-
       {/* Profile Photo Section using ProfilePreview */}
       <div className="pt-6">
         <ProfilePreview
@@ -91,13 +97,46 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
           <MessageCircle className="h-4 w-4 mr-2" />
           Message
         </button>
-        <button
-          onClick={onConnect}
-          className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Connect
-        </button>
+
+        {connectionStatus.status === "none" && (
+          <button
+            onClick={onConnect}
+            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Connect
+          </button>
+        )}
+
+        {connectionStatus.status === "pending_sent" && (
+          <button
+            onClick={onRemoveConnection}
+            className="flex items-center bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors text-sm"
+          >
+            <UserMinus className="h-4 w-4 mr-2" />
+            Cancel Request
+          </button>
+        )}
+
+        {connectionStatus.status === "pending_received" && (
+          <button
+            onClick={onConnect}
+            className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Accept Request
+          </button>
+        )}
+
+        {connectionStatus.status === "connected" && (
+          <button
+            onClick={onRemoveConnection}
+            className="flex items-center bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+          >
+            <UserMinus className="h-4 w-4 mr-2" />
+            Remove Connection
+          </button>
+        )}
       </div>
 
       {/* Business Information */}
@@ -109,7 +148,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
               alt={`${profile.business.name} logo`}
               className="w-16 h-16 mx-auto rounded-lg object-contain"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).style.display = "none";
               }}
             />
           </div>

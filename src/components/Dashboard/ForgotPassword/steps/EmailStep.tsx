@@ -1,5 +1,8 @@
 import React, { JSX, useState } from "react";
-import { ApiResponse, StepProps } from "../../../../../types/PasswordTypes";
+import {
+  PasswordResetApiResponse,
+  StepProps,
+} from "../../../../../types/PasswordTypes";
 
 export default function EmailStep({
   formData,
@@ -18,13 +21,16 @@ export default function EmailStep({
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/send-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email }),
+        }
+      );
 
-      const data: ApiResponse = await response.json();
+      const data: PasswordResetApiResponse = await response.json();
 
       if (response.ok && data.success) {
         setCompletedSteps((prev) => [...prev, 1]);

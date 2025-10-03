@@ -1,6 +1,7 @@
-import React from 'react';
-import { notFound } from 'next/navigation';
-import ConnectionDetailsClient from './client';
+import React from "react";
+import { notFound } from "next/navigation";
+
+import ConnectionDetailsClient from "./client";
 
 interface ConnectionDetailsPageProps {
   params: Promise<{
@@ -9,7 +10,9 @@ interface ConnectionDetailsPageProps {
 }
 
 // This is a Server Component for better SEO and performance
-export default async function ConnectionDetailsPage({ params }: ConnectionDetailsPageProps) {
+export default async function ConnectionDetailsPage({
+  params,
+}: ConnectionDetailsPageProps) {
   const { slug } = await params;
 
   if (!slug) {
@@ -29,7 +32,7 @@ export async function generateMetadata({ params }: ConnectionDetailsPageProps) {
     openGraph: {
       title: `Connection Profile - BizCivitas`,
       description: `Professional networking and business connections.`,
-      type: 'profile',
+      type: "profile",
     },
   };
 }

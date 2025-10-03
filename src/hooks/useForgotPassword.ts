@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ApiResponse } from "../../types/PasswordTypes";
+import { PasswordResetApiResponse } from "../../types/PasswordTypes";
 
 interface UseForgotPasswordReturn {
   loading: boolean;
@@ -32,7 +32,7 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
         body: JSON.stringify({ email }),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: PasswordResetApiResponse = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Failed to send OTP");
@@ -63,7 +63,7 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
         body: JSON.stringify({ email, otp }),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: PasswordResetApiResponse = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Failed to verify OTP");
@@ -94,7 +94,7 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
         body: JSON.stringify({ email, newPassword }),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: PasswordResetApiResponse = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Failed to reset password");

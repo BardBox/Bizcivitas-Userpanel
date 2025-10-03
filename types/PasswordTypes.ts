@@ -25,7 +25,7 @@ export interface StepTabsProps {
   completedSteps: number[];
   onStepClick: (stepId: number) => void;
 }
-export interface ApiResponse {
+export interface PasswordResetApiResponse {
   success: boolean;
   message: string;
   data?: any;

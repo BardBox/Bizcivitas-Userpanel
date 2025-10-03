@@ -1,5 +1,8 @@
 import React, { JSX, useState } from "react";
-import { StepProps, ApiResponse } from "../../../../../types/PasswordTypes";
+import {
+  StepProps,
+  PasswordResetApiResponse,
+} from "../../../../../types/PasswordTypes";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
@@ -55,17 +58,20 @@ export default function PasswordStep({
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: formData.otp,
-          newPassword: formData.newpassword,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            otp: formData.otp,
+            newPassword: formData.newpassword,
+          }),
+        }
+      );
 
-      const data: ApiResponse = await response.json();
+      const data: PasswordResetApiResponse = await response.json();
 
       if (response.ok && data.success) {
         setCompletedSteps((prev) => [...prev, 3]);

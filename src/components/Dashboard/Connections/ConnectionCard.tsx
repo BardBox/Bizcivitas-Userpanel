@@ -11,12 +11,16 @@ import {
 } from "@/utils/Feeds/connections/userHelpers";
 import LoadingSkeleton from "./LoadingSkeleton";
 import { useGetConnectionProfileQuery } from "../../../../store/api/userApi";
+import {
+  ConnectionRequestState,
+  ConnectionCardStatus,
+} from "../../../../types/connection.types";
 
 interface ConnectionCardProps {
   userId: string;
   connectionDate: string;
-  requestState: "idle" | "sending" | "sent";
-  connectionStatus?: "self" | "connected" | "not_connected";
+  requestState: ConnectionRequestState;
+  connectionStatus?: ConnectionCardStatus;
   onSendRequest: (userId: string, userName: string) => void;
 }
 

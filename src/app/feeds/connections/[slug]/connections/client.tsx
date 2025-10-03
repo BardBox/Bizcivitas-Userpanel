@@ -4,7 +4,12 @@ import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Users, Search } from "lucide-react";
 import ConnectionCard from "@/components/Dashboard/Connections/ConnectionCard";
-import { usePagination, Pagination } from "@/components/Dashboard/Pagination";
+import {
+  usePagination,
+  Pagination,
+  PaginationInfo,
+  PaginationControls,
+} from "@/components/Dashboard/Pagination";
 import StatsCard from "@/components/Dashboard/StatsCard";
 import LoadingSkeleton from "@/components/Dashboard/Connections/LoadingSkeleton";
 import {
@@ -61,7 +66,7 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
   }, [searchTerm, acceptedConnections]);
 
   // Initialize pagination
-  const pagination = usePagination(filteredConnections, {
+  const pagination = usePagination<Connection>(filteredConnections, {
     initialItemsPerPage: 8,
     itemsPerPageOptions: [8, 12, 16, 20],
     resetPageOnDataChange: true,
@@ -72,20 +77,24 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
 
   // Get current user's connections to check existing relationships
   const currentUserConnections = currentUserProfile?.connections || [];
-  const currentUserConnectionIds = new Set(
-    currentUserConnections
-      .filter((conn: Connection) => conn.isAccepted)
-      .map((conn: Connection) => {
-        if (conn.user?._id) {
-          return conn.user._id;
-        } else if (conn.sender && conn.receiver) {
-          return conn.sender === currentUserProfile?._id
-            ? conn.receiver
-            : conn.sender;
-        }
-        return null;
-      })
-      .filter((id): id is string => id !== null)
+  const currentUserConnectionIds = useMemo(
+    () =>
+      new Set(
+        currentUserConnections
+          .filter((conn: Connection) => conn.isAccepted)
+          .map((conn: Connection) => {
+            if (conn.user?._id) {
+              return conn.user._id;
+            } else if (conn.sender && conn.receiver) {
+              return conn.sender === currentUserProfile?._id
+                ? conn.receiver
+                : conn.sender;
+            }
+            return null;
+          })
+          .filter((id): id is string => id !== null)
+      ),
+    [currentUserConnections, currentUserProfile?._id]
   );
 
   // Helper function to determine connection status
@@ -191,18 +200,54 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+            {/* Search Bar, Items Per Page, and Pagination Info */}
+            <div className="flex items-center space-x-6">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search connections..."
+                  className="block w-64 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Search connections..."
-                className="block w-64 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+
+              {/* Items Per Page Selector */}
+              {filteredConnections.length > 0 && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <label className="text-gray-600">Show:</label>
+                  <select
+                    value={pagination.state.itemsPerPage}
+                    onChange={(e) => {
+                      pagination.actions.setItemsPerPage(
+                        Number(e.target.value)
+                      );
+                      pagination.actions.goToFirstPage();
+                    }}
+                    className="border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {[8, 12, 16, 20].map((option) => (
+                      <option key={option} value={option}>
+                        {option} per page
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Pagination Info */}
+              {filteredConnections.length > 0 && (
+                <PaginationInfo
+                  state={pagination.state}
+                  itemName="members"
+                  searchTerm={searchTerm}
+                  showItemsPerPage={false}
+                  className="text-sm"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -253,20 +298,6 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
               </div>
             </div>
 
-            {/* Pagination Info */}
-            <div className="mb-6">
-              <Pagination
-                state={pagination.state}
-                actions={pagination.actions}
-                itemName="connections"
-                searchTerm={searchTerm}
-                showInfo={true}
-                showItemsPerPage={true}
-                layout="inline"
-                className="mb-0"
-              />
-            </div>
-
             {/* Connections Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {currentConnections.map((connection) => {
@@ -295,15 +326,17 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
 
             {/* Pagination Controls */}
             <div className="mt-8">
-              <Pagination
+              <PaginationControls
                 state={pagination.state}
                 actions={pagination.actions}
-                itemName="connections"
-                searchTerm={searchTerm}
-                showInfo={false}
-                showItemsPerPage={false}
-                layout="stacked"
-                controlsClassName="justify-center"
+                showFirstLastButtons={true}
+                showPageNumbers={true}
+                maxVisiblePages={5}
+                size="md"
+                className="flex justify-center"
+                onPageChange={() =>
+                  window.scrollTo({ top: 0, behavior: "smooth" })
+                }
               />
             </div>
           </>

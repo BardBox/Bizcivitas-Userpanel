@@ -1,191 +1,12 @@
 import { baseApi } from "./baseApi";
+import { User, FullProfile, ApiResponse } from "../../types/user.types";
+import {
+  ConnectionActionPayload,
+  ConnectionRequest,
+} from "../../types/connection.types";
 
-export interface User {
-  _id?: string;
-  id?: string; // Some APIs return 'id' instead of '_id'
-  fname: string;
-  lname: string;
-  email: string;
-  avatar?: string;
-  role?: string;
-  mobile?: number;
-  contactNo?: number; // From connections API
-  username?: string;
-  gender?: string;
-  membershipType?: string;
-  membershipStatus?: boolean;
-  renewalDate?: string;
-  paymentSummary?: any;
-  website?: string;
-  community?: {
-    communityName: string;
-    region: string;
-    _id: string;
-  } | null;
-  profile?: {
-    professionalDetails?: {
-      classification?: string;
-      companyName?: string;
-      myBusiness?: string;
-      industry?: string;
-      business?: string;
-      businessSubcategory?: string;
-      gstRegisteredState?: string;
-      directNumber?: string;
-      companyAddress?: string;
-      businessCountry?: string;
-      businessState?: string;
-      businessCity?: string;
-    };
-    addresses?: {
-      address?: {
-        city?: string;
-        country?: string;
-        state?: string;
-      };
-    };
-  };
-  // Additional fields from actual API response
-  classification?: string | null;
-  companyName?: string | null;
-  myBusiness?: string | null;
-  industry?: string | null;
-  city?: string | null;
-  country?: string | null;
-  state?: string | null;
-  business?: string | null;
-  businessSubcategory?: string;
-  region?: string;
-  // Connections data
-  connections?: Array<{
-    _id: string;
-    user?: {
-      _id: string;
-      name: string;
-      avatar?: string;
-    };
-    sender?: string;
-    receiver?: string;
-    isAccepted: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-  }>;
-}
-
-export interface FullProfile {
-  _id: string;
-  contactDetails?: {
-    email?: string;
-    mobileNumber?: string;
-    isEmailVerified?: boolean;
-    website?: string;
-    socialNetworkLinks?: Array<any>;
-  };
-  addresses?: {
-    address?: {
-      addressLine1?: string;
-      addressLine2?: string;
-      city?: string;
-      state?: string;
-      country?: string;
-      pincode?: number;
-    };
-    billing?: {
-      addressLine1?: string;
-      addressLine2?: string;
-      city?: string;
-      state?: string;
-      country?: string;
-      pincode?: number;
-    };
-  };
-  myBio?: {
-    mySkills?: string[];
-    myAsk?: string[];
-    myGives?: string[];
-    tags?: string[];
-    hobbiesAndInterests?: string;
-    cityOfResidence?: string;
-    myBurningDesireIsTo?: string;
-    myKeyToSuccess?: string;
-    previousTypesOfJobs?: string;
-    somethingNoOneHereKnowsAboutMe?: string;
-    yearsInBusiness?: number;
-    yearsInThatCity?: number;
-  };
-  professionalDetails?: {
-    classification?: string;
-    companyAddress?: string;
-    companyName?: string;
-    directNumber?: string;
-    gstRegisteredState?: string;
-    industry?: string;
-    membershipStatus?: string;
-    myBusiness?: string;
-    renewalDueDate?: string;
-    business?: string;
-    businessSubcategory?: string;
-    companyLogo?: string;
-    businessAddress?: string;
-    businessCity?: string;
-    businessState?: string;
-    businessCountry?: string;
-  };
-  travelDiary?: {
-    businessBucketList?: string[];
-    dealsOnWheels?: string[];
-    dreamDestination?: string;
-    myFootprints?: string[];
-  };
-
-  businessNeeds?: {
-    current?: string[];
-    future?: string[];
-  };
-  community?: {
-    id: string;
-    name: string;
-    image?: string;
-  };
-  coreGroup?: {
-    id: string;
-    name: string;
-  };
-  visibility?: {
-    professionalDetails?: boolean;
-  };
-  billingAddress?: {
-    addressLine1?: string;
-    addressLine2?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-  };
-  businessAddress?: {
-    addressLine1?: string;
-    addressLine2?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-  };
-  mySkillItems?: Array<{
-    _id: string;
-    name: string;
-    score: number;
-  }>;
-  weeklyPresentation?: {
-    title?: string;
-    description?: string;
-    presentationDate?: string;
-  };
-}
-
-interface ApiResponse<T> {
-  statusCode: number;
-  data: T;
-  message: string;
-  success: boolean;
-}
+// Re-export types for backward compatibility
+export type { User, FullProfile, ApiResponse };
 
 // Inject user endpoints into baseApi
 export const userApi = baseApi.injectEndpoints({
@@ -284,6 +105,33 @@ export const userApi = baseApi.injectEndpoints({
         }
       },
     }),
+    deleteConnection: builder.mutation<any, ConnectionActionPayload>({
+      query: (data) => ({
+        url: "/connections/delete-connection",
+        method: "DELETE",
+        body: data,
+        credentials: "include",
+      }),
+      invalidatesTags: ["Connections", "Profile"],
+    }),
+    sendConnectionRequest: builder.mutation<any, ConnectionRequest>({
+      query: (data) => ({
+        url: "/connections/send-request",
+        method: "POST",
+        body: data,
+        credentials: "include",
+      }),
+      invalidatesTags: ["Connections", "Profile"],
+    }),
+    acceptConnectionRequest: builder.mutation<any, ConnectionActionPayload>({
+      query: (data) => ({
+        url: "/connections/accept-request",
+        method: "POST",
+        body: data,
+        credentials: "include",
+      }),
+      invalidatesTags: ["Connections", "Profile"],
+    }),
     logout: builder.mutation<{ message: string }, void>({
       query: () => ({
         url: "/users/logout",
@@ -293,6 +141,13 @@ export const userApi = baseApi.injectEndpoints({
       invalidatesTags: ["User", "Profile"],
       transformResponse: (response: ApiResponse<{ message: string }>) =>
         response.data,
+    }),
+    getSuggestionsAll: builder.query<any, string>({
+      query: () => "/connections/getSuggestionsAll",
+      providesTags: ["Connections"],
+      transformResponse: (response: any) => {
+        return response?.data?.suggestions || [];
+      },
     }),
   }),
 });
@@ -304,12 +159,16 @@ export const {
   useUpdateProfileMutation,
   useGetConnectionsQuery,
   useGetConnectionProfileQuery,
+  useDeleteConnectionMutation,
+  useSendConnectionRequestMutation,
+  useAcceptConnectionRequestMutation,
   useLogoutMutation,
   useUpdateProfessionDetailsMutation,
   useUpdateMyBioMutation,
   useUpdateTravelDiaryMutation,
   useUpdateContactDetailsMutation,
   useUpdatePersonalDetailsMutation,
+  useGetSuggestionsAllQuery,
 } = userApi;
 
 // Utility function

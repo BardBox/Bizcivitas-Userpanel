@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Search, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
 import UserCard from "../../../components/Dashboard/UserCard";
+import AllMembers from "../../../components/Dashboard/Connections/AllMembers";
 import { useGetConnectionsQuery } from "../../../../store/api/userApi";
 import { useGridLayout } from "@/hooks/useGridLayout";
 
@@ -97,6 +98,8 @@ export default function ConnectionsPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const [activeTab, setActiveTab] = useState("my-network"); // or 'connect-members'
 
   // Reset to page 1 when search changes
   React.useEffect(() => {
@@ -200,13 +203,62 @@ export default function ConnectionsPage() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 md:flex">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                My Network
-              </button>
-              <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-                Connect Members
-              </button>
+            <div className="flex items-center space-x-4">
+              {/* Tabs */}
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setActiveTab("my-network")}
+                  className={
+                    activeTab === "my-network"
+                      ? "bg-blue-600 text-white px-4 py-2 rounded-lg" // Active style
+                      : "border border-gray-300 text-gray-700 px-4 py-2 rounded-lg" // Inactive style
+                  }
+                >
+                  My Network
+                </button>
+                <button
+                  onClick={() => setActiveTab("connect-members")}
+                  className={
+                    activeTab === "connect-members"
+                      ? "bg-blue-600 text-white px-4 py-2 rounded-lg" // Active style
+                      : "border border-gray-300 text-gray-700 px-4 py-2 rounded-lg" // Inactive style
+                  }
+                >
+                  Connect Members
+                </button>
+              </div>
+
+              {/* Show pagination info and selector for My Network tab */}
+              {activeTab === "my-network" && connectionsCount > 0 && (
+                <div className="flex items-center gap-4 ml-4 text-sm text-gray-600">
+                  <span>
+                    Showing {startIndex + 1}-
+                    {Math.min(endIndex, filteredUsers.length)} of{" "}
+                    {filteredUsers.length} members (Page {currentPage} of{" "}
+                    {totalPages})
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="itemsPerPage">Show:</label>
+                    <select
+                      id="itemsPerPage"
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-2 py-1"
+                    >
+                      <option value={dynamicItemsPerPage}>
+                        {dynamicItemsPerPage} per page (Auto)
+                      </option>
+                      <option value={6}>6 per page</option>
+                      <option value={8}>8 per page</option>
+                      <option value={9}>9 per page</option>
+                      <option value={12}>12 per page</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -224,63 +276,60 @@ export default function ConnectionsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6"></div>
 
-        {/* Results Summary */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+        {/* Search query results indicator */}
+        {activeTab === "my-network" && connectionsCount > 0 && searchQuery && (
+          <div className="mb-6">
             <p className="text-gray-600">
-              Showing {startIndex + 1}-
-              {Math.min(endIndex, filteredUsers.length)} of{" "}
-              {filteredUsers.length} members
-              {searchQuery && (
-                <span className="ml-2 text-blue-600 font-medium">
-                  for &quot;{searchQuery}&quot;
-                </span>
-              )}
+              <span className="text-blue-600 font-medium">
+                Search results for &quot;{searchQuery}&quot;
+              </span>
             </p>
           </div>
+        )}
 
-          {/* Items per page selector */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
-              Show:
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
-            >
-              <option value={dynamicItemsPerPage}>
-                {dynamicItemsPerPage} per page (Auto)
-              </option>
-              <option value={6}>6 per page</option>
-              <option value={8}>8 per page</option>
-              <option value={9}>9 per page</option>
-              <option value={12}>12 per page</option>
-            </select>
-          </div>
-        </div>
+        {/* Content based on active tab */}
+        {activeTab === "my-network" && (
+          <>
+            {connectionsCount === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No connections yet
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Start connecting with other members to build your network.
+                </p>
+                <button
+                  onClick={() => setActiveTab("connect-members")}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Find Members
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {currentUsers.map((user) => (
+                  <UserCard
+                    key={user.id}
+                    id={user.id || ""}
+                    name={user.name}
+                    title={user.title}
+                    company={user.company}
+                    avatar={user.avatar}
+                    isOnline={user.isOnline}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
-        {/* Members Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {currentUsers.map((user) => (
-            <UserCard
-              key={user.id}
-              id={user.id || ""}
-              name={user.name}
-              title={user.title}
-              company={user.company}
-              avatar={user.avatar}
-              isOnline={user.isOnline}
-            />
-          ))}
-        </div>
+        {activeTab === "connect-members" && (
+          <AllMembers searchQuery={searchQuery} />
+        )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination - Only show for My Network tab */}
+        {activeTab === "my-network" && totalPages > 1 && (
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Pagination Info */}
             <div className="text-sm text-gray-600">
@@ -361,8 +410,10 @@ export default function ConnectionsPage() {
           </div>
         )}
 
-        {/* No Results */}
-        {currentUsers.length === 0 &&
+        {/* No Results for Search */}
+        {activeTab === "my-network" &&
+          connectionsCount > 0 &&
+          currentUsers.length === 0 &&
           filteredUsers.length === 0 &&
           searchQuery && (
             <div className="text-center py-12">
@@ -382,22 +433,6 @@ export default function ConnectionsPage() {
               </button>
             </div>
           )}
-
-        {/* No Connections */}
-        {connectionsCount === 0 && !connectionsLoading && (
-          <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No connections yet
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Start connecting with other members to build your network.
-            </p>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Find Members
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

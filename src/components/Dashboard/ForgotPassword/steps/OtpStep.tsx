@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect, JSX } from "react";
-import { ApiResponse, StepProps } from "../../../../../types/PasswordTypes";
+import {
+  PasswordResetApiResponse,
+  StepProps,
+} from "../../../../../types/PasswordTypes";
 
 export default function OtpStep({
   formData,
@@ -54,16 +57,19 @@ export default function OtpStep({
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: otpValue,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/verify-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            otp: otpValue,
+          }),
+        }
+      );
 
-      const data: ApiResponse = await response.json();
+      const data: PasswordResetApiResponse = await response.json();
 
       if (response.ok && data.success) {
         setFormData((prev) => ({ ...prev, otp: otpValue }));
@@ -86,11 +92,14 @@ export default function OtpStep({
     setCanResend(false);
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
-      });
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/send-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email }),
+        }
+      );
     } catch (err) {
       console.error("Failed to resend OTP:", err);
     }
@@ -117,7 +126,9 @@ export default function OtpStep({
         {otp.map((digit, index) => (
           <input
             key={index}
-            ref={(el) => { inputRefs.current[index] = el; }}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
             type="text"
             value={digit}
             onChange={(e) => handleOtpChange(index, e.target.value)}

@@ -14,7 +14,13 @@ import ViewOnlyConnections from "@/components/Dashboard/Connections/ViewOnlyConn
 import { ArrowLeft } from "lucide-react";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
-import { useGetConnectionProfileQuery } from "../../../../../store/api/userApi";
+import {
+  useGetConnectionProfileQuery,
+  useGetCurrentUserQuery,
+  useDeleteConnectionMutation,
+  useSendConnectionRequestMutation,
+  useAcceptConnectionRequestMutation,
+} from "../../../../../store/api/userApi";
 
 interface ConnectionDetailsClientProps {
   slug: string;
@@ -31,6 +37,9 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   const router = useRouter();
   const dispatch = useAppDispatch();
 
+  // Get current user
+  const { data: currentUser } = useGetCurrentUserQuery();
+
   // Use our API endpoint to fetch connection profile by ID
   const {
     data: connectionProfile,
@@ -40,10 +49,50 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     skip: !slug || !isMounted,
   });
 
+  // Mutations for connection actions
+  const [deleteConnection] = useDeleteConnectionMutation();
+  const [sendConnectionRequest] = useSendConnectionRequestMutation();
+  const [acceptConnectionRequest] = useAcceptConnectionRequestMutation();
+
   // Handle client-side mounting
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Determine connection status
+  const connectionStatus = useMemo((): {
+    status: "none" | "pending_sent" | "pending_received" | "connected";
+    connectionId: string | null;
+  } => {
+    if (!currentUser || !connectionProfile)
+      return { status: "none", connectionId: null };
+
+    const currentUserId = currentUser._id || currentUser.id;
+    const connections = connectionProfile.connections || [];
+
+    // Find connection between current user and viewed profile
+    const connection = connections.find((conn: any) => {
+      const sender = conn.sender?._id || conn.sender;
+      const receiver = conn.receiver?._id || conn.receiver;
+      return sender === currentUserId || receiver === currentUserId;
+    });
+
+    if (!connection) {
+      return { status: "none", connectionId: null };
+    }
+
+    if (connection.isAccepted) {
+      return { status: "connected", connectionId: connection._id };
+    }
+
+    // Check if current user is sender or receiver
+    const sender = connection.sender?._id || connection.sender;
+    if (sender === currentUserId) {
+      return { status: "pending_sent", connectionId: connection._id };
+    } else {
+      return { status: "pending_received", connectionId: connection._id };
+    }
+  }, [currentUser, connectionProfile]);
 
   // Normalize connection profile data to match myprofile structure
   const normalizedData = useMemo(() => {
@@ -140,18 +189,68 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
 
   const handleConnect = async () => {
     try {
-      dispatch(
-        addToast({
-          type: "success",
-          message: `Connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}`,
-          duration: 3000,
-        })
-      );
-    } catch (error) {
+      if (
+        connectionStatus.status === "pending_received" &&
+        connectionStatus.connectionId
+      ) {
+        // Accept connection request
+        await acceptConnectionRequest({
+          connectionId: connectionStatus.connectionId,
+        }).unwrap();
+        dispatch(
+          addToast({
+            type: "success",
+            message: `Connection request accepted!`,
+            duration: 3000,
+          })
+        );
+      } else {
+        // Send new connection request
+        await sendConnectionRequest({ receiverId: slug }).unwrap();
+        dispatch(
+          addToast({
+            type: "success",
+            message: `Connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}`,
+            duration: 3000,
+          })
+        );
+      }
+    } catch (error: any) {
       dispatch(
         addToast({
           type: "error",
-          message: "Failed to send connection request",
+          message: error?.data?.message || "Failed to send connection request",
+          duration: 3000,
+        })
+      );
+    }
+  };
+
+  const handleRemoveConnection = async () => {
+    if (!connectionStatus.connectionId) return;
+
+    try {
+      await deleteConnection({
+        connectionId: connectionStatus.connectionId,
+      }).unwrap();
+
+      const actionText =
+        connectionStatus.status === "connected"
+          ? "Connection removed successfully"
+          : "Connection request cancelled";
+
+      dispatch(
+        addToast({
+          type: "success",
+          message: actionText,
+          duration: 3000,
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        addToast({
+          type: "error",
+          message: error?.data?.message || "Failed to remove connection",
           duration: 3000,
         })
       );
@@ -284,7 +383,9 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
               {personalCardData && (
                 <ViewOnlyProfileCard
                   profile={personalCardData}
+                  connectionStatus={connectionStatus}
                   onConnect={handleConnect}
+                  onRemoveConnection={handleRemoveConnection}
                   onMessage={handleMessage}
                 />
               )}

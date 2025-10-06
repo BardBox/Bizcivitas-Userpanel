@@ -3,6 +3,7 @@ import { User, FullProfile, ApiResponse } from "../../types/user.types";
 import {
   ConnectionActionPayload,
   ConnectionRequest,
+  ConnectionRequestsApiResponse,
 } from "../../types/connection.types";
 
 // Re-export types for backward compatibility
@@ -149,6 +150,13 @@ export const userApi = baseApi.injectEndpoints({
         return response?.data?.suggestions || [];
       },
     }),
+    getConnectionRequests: builder.query<
+      ConnectionRequestsApiResponse,
+      "sent" | "received"
+    >({
+      query: (type) => `/connections/${type}/connection-requests`,
+      providesTags: ["Connections"],
+    }),
   }),
 });
 
@@ -169,6 +177,7 @@ export const {
   useUpdateContactDetailsMutation,
   useUpdatePersonalDetailsMutation,
   useGetSuggestionsAllQuery,
+  useGetConnectionRequestsQuery,
 } = userApi;
 
 // Utility function

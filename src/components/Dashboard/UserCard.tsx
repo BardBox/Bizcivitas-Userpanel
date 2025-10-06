@@ -11,6 +11,7 @@ interface UserCardProps {
   company: string;
   avatar?: string;
   isOnline?: boolean;
+  referrerTab?: string; // Optional: to preserve the tab when navigating back
 }
 
 const UserCard: React.FC<UserCardProps> = ({
@@ -20,6 +21,7 @@ const UserCard: React.FC<UserCardProps> = ({
   company,
   avatar,
   isOnline = false,
+  referrerTab,
 }) => {
   const router = useRouter();
 
@@ -30,7 +32,11 @@ const UserCard: React.FC<UserCardProps> = ({
 
   const handleCardClick = () => {
     // Use ID directly instead of slug for now, since API works with IDs
-    router.push(`/feeds/connections/${id}`);
+    // Preserve referrer tab if provided
+    const url = referrerTab
+      ? `/feeds/connections/${id}?from=${referrerTab}`
+      : `/feeds/connections/${id}`;
+    router.push(url);
   };
 
   return (

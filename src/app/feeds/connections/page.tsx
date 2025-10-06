@@ -1,18 +1,37 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Search, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import {
+  Search,
+  Users,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import UserCard from "../../../components/Dashboard/UserCard";
 import AllMembers from "../../../components/Dashboard/Connections/AllMembers";
-import { useGetConnectionsQuery } from "../../../../store/api/userApi";
+import {
+  useGetConnectionsQuery,
+  useGetConnectionRequestsQuery,
+} from "../../../../store/api/userApi";
 import { useGridLayout } from "@/hooks/useGridLayout";
 
 export default function ConnectionsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     data: connections,
     isLoading: connectionsLoading,
     error,
   } = useGetConnectionsQuery();
+
+  // Fetch received requests for badge count
+  const { data: receivedRequestsData } =
+    useGetConnectionRequestsQuery("received");
+  const receivedCount = receivedRequestsData?.data?.connections?.length || 0;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -99,7 +118,42 @@ export default function ConnectionsPage() {
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
-  const [activeTab, setActiveTab] = useState("my-network"); // or 'connect-members'
+  // Get initial tab from URL params, default to "my-network"
+  const initialTab =
+    searchParams.get("tab") === "connect-members"
+      ? "connect-members"
+      : "my-network";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Update tab state when URL params change
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "connect-members" || tabParam === "my-network") {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  // Function to update tab with URL param
+  const handleTabChange = (tab: "my-network" | "connect-members") => {
+    setActiveTab(tab);
+    // Update URL without full page reload
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.push(`/feeds/connections?${params.toString()}`, { scroll: false });
+  };
+
+  // State to track Connect Members pagination
+  const [membersPaginationState, setMembersPaginationState] = useState<{
+    startIndex: number;
+    endIndex: number;
+    totalItems: number;
+    itemsPerPage: number;
+  }>({
+    startIndex: 0,
+    endIndex: 0,
+    totalItems: 0,
+    itemsPerPage: 12,
+  });
 
   // Reset to page 1 when search changes
   React.useEffect(() => {
@@ -169,97 +223,124 @@ export default function ConnectionsPage() {
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-3">
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  My Connections
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {connectionsCount} connections
-                </p>
-              </div>
-
-              {/* Search Bar */}
-              <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  </button>
-                )}
-              </div>
+          {/* Top Row - Title and Tabs */}
+          <div className="flex items-center justify-between py-4 border-b border-gray-100">
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">
+                My Connections
+              </h1>
+              <p className="text-sm text-gray-600">
+                {connectionsCount} connections
+              </p>
             </div>
 
-            <div className="flex items-center space-x-4">
-              {/* Tabs */}
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setActiveTab("my-network")}
-                  className={
-                    activeTab === "my-network"
-                      ? "bg-blue-600 text-white px-4 py-2 rounded-lg" // Active style
-                      : "border border-gray-300 text-gray-700 px-4 py-2 rounded-lg" // Inactive style
-                  }
-                >
-                  My Network
-                </button>
-                <button
-                  onClick={() => setActiveTab("connect-members")}
-                  className={
-                    activeTab === "connect-members"
-                      ? "bg-blue-600 text-white px-4 py-2 rounded-lg" // Active style
-                      : "border border-gray-300 text-gray-700 px-4 py-2 rounded-lg" // Inactive style
-                  }
-                >
-                  Connect Members
-                </button>
-              </div>
+            {/* Tabs and Actions */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => handleTabChange("my-network")}
+                className={
+                  activeTab === "my-network"
+                    ? "bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    : "border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                }
+              >
+                My Network
+              </button>
+              <button
+                onClick={() => handleTabChange("connect-members")}
+                className={
+                  activeTab === "connect-members"
+                    ? "bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    : "border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                }
+              >
+                Connect Members
+              </button>
 
-              {/* Show pagination info and selector for My Network tab */}
-              {activeTab === "my-network" && connectionsCount > 0 && (
-                <div className="flex items-center gap-4 ml-4 text-sm text-gray-600">
-                  <span>
-                    Showing {startIndex + 1}-
-                    {Math.min(endIndex, filteredUsers.length)} of{" "}
-                    {filteredUsers.length} members (Page {currentPage} of{" "}
-                    {totalPages})
+              {/* Connection Requests Button with Badge */}
+              <button
+                onClick={() => router.push("/feeds/connections/requests")}
+                className="relative flex items-center space-x-2 border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                <Inbox className="w-5 h-5" />
+                <span className="font-medium">Requests</span>
+                {receivedCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                    {receivedCount > 99 ? "99+" : receivedCount}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="itemsPerPage">Show:</label>
-                    <select
-                      id="itemsPerPage"
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="border border-gray-300 rounded px-2 py-1"
-                    >
-                      <option value={dynamicItemsPerPage}>
-                        {dynamicItemsPerPage} per page (Auto)
-                      </option>
-                      <option value={6}>6 per page</option>
-                      <option value={8}>8 per page</option>
-                      <option value={9}>9 per page</option>
-                      <option value={12}>12 per page</option>
-                    </select>
-                  </div>
-                </div>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Row - Search and Filters */}
+          <div className="flex items-center justify-between py-3">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search connections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                </button>
               )}
             </div>
+
+            {/* Pagination info and items per page selector */}
+            {activeTab === "my-network" && connectionsCount > 0 && (
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span>
+                  Showing {startIndex + 1}-
+                  {Math.min(endIndex, filteredUsers.length)} of{" "}
+                  {filteredUsers.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="itemsPerPage" className="text-sm">
+                    Show:
+                  </label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value={dynamicItemsPerPage}>
+                      {dynamicItemsPerPage} (Auto)
+                    </option>
+                    <option value={6}>6 per page</option>
+                    <option value={8}>8 per page</option>
+                    <option value={9}>9 per page</option>
+                    <option value={12}>12 per page</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Connect Members pagination info */}
+            {activeTab === "connect-members" &&
+              membersPaginationState.totalItems > 0 && (
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>
+                    Showing {membersPaginationState.startIndex + 1}-
+                    {membersPaginationState.endIndex} of{" "}
+                    {membersPaginationState.totalItems}
+                  </span>
+                </div>
+              )}
           </div>
         </div>
         <div className="flex items-center space-x-4 md:hidden">
@@ -300,7 +381,7 @@ export default function ConnectionsPage() {
                   Start connecting with other members to build your network.
                 </p>
                 <button
-                  onClick={() => setActiveTab("connect-members")}
+                  onClick={() => handleTabChange("connect-members")}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Find Members
@@ -317,6 +398,7 @@ export default function ConnectionsPage() {
                     company={user.company}
                     avatar={user.avatar}
                     isOnline={user.isOnline}
+                    referrerTab={activeTab}
                   />
                 ))}
               </div>
@@ -325,7 +407,11 @@ export default function ConnectionsPage() {
         )}
 
         {activeTab === "connect-members" && (
-          <AllMembers searchQuery={searchQuery} />
+          <AllMembers
+            searchQuery={searchQuery}
+            referrerTab={activeTab}
+            onPaginationChange={setMembersPaginationState}
+          />
         )}
 
         {/* Pagination - Only show for My Network tab */}

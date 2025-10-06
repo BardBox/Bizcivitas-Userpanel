@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AccordionItem } from "@/components/Dashboard/MyProfile/Accordion";
 import ViewOnlyProfileCard from "@/components/Dashboard/Connections/ViewOnlyProfileCard";
 import PersonalDetails from "@/components/Dashboard/MyProfile/PersonalDetails/PersonalDetails";
@@ -35,7 +35,11 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+
+  // Get referrer tab from URL params
+  const referrerTab = searchParams.get("from");
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();
@@ -291,7 +295,13 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
             Unable to load connection details.
           </p>
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              if (referrerTab) {
+                router.push(`/feeds/connections?tab=${referrerTab}`);
+              } else {
+                router.back();
+              }
+            }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mr-2"
           >
             Go Back
@@ -365,7 +375,14 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => {
+                // Navigate back with the correct tab if referrer exists
+                if (referrerTab) {
+                  router.push(`/feeds/connections?tab=${referrerTab}`);
+                } else {
+                  router.back();
+                }
+              }}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />

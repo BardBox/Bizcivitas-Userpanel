@@ -46,13 +46,12 @@ export const eventsApiLatest = baseApi.injectEndpoints({
       transformResponse: (response: EventsApiResponse): FrontendEvent[] => {
         try {
           if (!response || !response.data || !Array.isArray(response.data)) {
-            console.error("Invalid events API response:", response);
+            // Return empty array for invalid response structure
             return [];
           }
           return response.data.map(convertMongoEventToFrontend);
         } catch (error) {
-          console.error("Error transforming events response:", error);
-          console.error("Response data:", response);
+          // Return empty array on transformation error
           return [];
         }
       },
@@ -68,14 +67,11 @@ export const eventsApiLatest = baseApi.injectEndpoints({
       transformResponse: (response: EventApiResponse): FrontendEvent => {
         try {
           if (!response || !response.data) {
-            console.error("Invalid event API response:", response);
             throw new Error("Invalid response structure");
           }
           return convertMongoEventToFrontend(response.data);
         } catch (error) {
-          console.error("Error transforming event response:", error);
-          console.error("Response data:", response);
-          throw error;
+          throw new Error("Failed to transform event");
         }
       },
       providesTags: (result, error, id) => [{ type: "Event", id }],

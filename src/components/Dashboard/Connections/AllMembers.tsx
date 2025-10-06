@@ -30,9 +30,20 @@ interface CardMember {
 
 interface AllMembersProps {
   searchQuery?: string;
+  referrerTab?: string;
+  onPaginationChange?: (state: {
+    startIndex: number;
+    endIndex: number;
+    totalItems: number;
+    itemsPerPage: number;
+  }) => void;
 }
 
-const AllMembers: React.FC<AllMembersProps> = ({ searchQuery = "" }) => {
+const AllMembers: React.FC<AllMembersProps> = ({
+  searchQuery = "",
+  referrerTab = "connect-members",
+  onPaginationChange,
+}) => {
   const { data: suggestions, isLoading, error } = useGetSuggestionsAllQuery("");
 
   const getAvatarUrl = (avatarPath?: string) => {
@@ -102,6 +113,18 @@ const AllMembers: React.FC<AllMembersProps> = ({ searchQuery = "" }) => {
   });
 
   const currentMembers: CardMember[] = paginatedData(filteredMembers);
+
+  // Notify parent component about pagination changes
+  React.useEffect(() => {
+    if (onPaginationChange) {
+      onPaginationChange({
+        startIndex: paginationState.startIndex,
+        endIndex: paginationState.endIndex,
+        totalItems: paginationState.totalItems,
+        itemsPerPage: paginationState.itemsPerPage,
+      });
+    }
+  }, [paginationState, onPaginationChange]);
 
   // Loading state - After all hooks
   if (isLoading) {
@@ -177,36 +200,6 @@ const AllMembers: React.FC<AllMembersProps> = ({ searchQuery = "" }) => {
 
   return (
     <>
-      {/* Results count and items per page */}
-      <div className="mb-4 flex justify-between items-center">
-        <p className="text-sm text-gray-600">
-          Showing {paginationState.startIndex + 1}-{paginationState.endIndex} of{" "}
-          {paginationState.totalItems} members
-          {searchQuery && (
-            <span className="ml-2 text-blue-600 font-medium">
-              for &quot;{searchQuery}&quot;
-            </span>
-          )}
-        </p>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">Show:</span>
-          <select
-            value={paginationState.itemsPerPage}
-            onChange={(e) => {
-              paginationActions.setItemsPerPage(Number(e.target.value));
-              paginationActions.goToFirstPage();
-            }}
-            className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            {[12, 24, 36, 48].map((option) => (
-              <option key={option} value={option}>
-                {option} per page
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
       {/* Members Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {currentMembers.map((member) => (
@@ -218,6 +211,7 @@ const AllMembers: React.FC<AllMembersProps> = ({ searchQuery = "" }) => {
             company={member.company}
             avatar={member.avatar}
             isOnline={member.isOnline}
+            referrerTab={referrerTab}
           />
         ))}
       </div>

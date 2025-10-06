@@ -31,7 +31,7 @@ const PersonalProfileCard: React.FC<PersonalProfileCardProps> = ({
   profile,
 }) => {
   return (
-    <div className=" rounded-xl flex flex-col items-center justify-center border border-gray-100 overflow-hidden ">
+    <div className=" rounded-xl flex flex-col items-center justify-center border bg-white border-gray-100 overflow-hidden ">
       <ProfilePhotoUpload />
       <h2 className="text-xl sm:text-[24px] font-bold text-gray-900 mb-1">
         <span>

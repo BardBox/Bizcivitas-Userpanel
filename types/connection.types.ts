@@ -152,3 +152,28 @@ export interface SuggestionsApiResponse {
   message: string;
   success: boolean;
 }
+
+/**
+ * Individual connection request item
+ * Extracted from ConnectionRequestsApiResponse for component usage
+ * Represents a single sent or received connection request
+ *
+ * @example
+ * const request: ConnectionRequestItem = {
+ *   connectionId: "123",
+ *   type: "received",
+ *   sender: { id: "456", fname: "John", ... },
+ *   receiver: { id: "789", fname: "Jane", ... }
+ * };
+ */
+export type ConnectionRequestItem =
+  ConnectionRequestsApiResponse["data"]["connections"][number];
+
+/**
+ * User information in a connection request
+ * Extracted from ConnectionRequestItem sender/receiver
+ * Contains basic user details for displaying in request cards
+ *
+ * Note: Both sender and receiver share this same type structure
+ */
+export type ConnectionRequestUser = ConnectionRequestItem["sender"];

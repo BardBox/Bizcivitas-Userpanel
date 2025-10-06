@@ -66,7 +66,10 @@ export default function LoginPage() {
         setError("Invalid email or password.");
       } else if (error.message.includes("403")) {
         setError("Account not activated. Please check your email.");
-      } else if (error.name === "TypeError" && error.message.includes("fetch")) {
+      } else if (
+        error.name === "TypeError" &&
+        error.message.includes("fetch")
+      ) {
         setError(
           "Network error: Cannot connect to server. Please check your connection."
         );
@@ -79,10 +82,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-indigo-100">
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full ">
             <svg
               className="h-6 w-6 text-indigo-600"
               fill="none"

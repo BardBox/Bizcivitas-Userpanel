@@ -13,7 +13,7 @@ export default function FeedsLayoutClient({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-dashboard-primary">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <DashboardSidebar />
@@ -29,14 +29,14 @@ export default function FeedsLayoutClient({
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed left-0 top-0 h-full w-64 bg-white z-50 transform transition-transform duration-300 ease-in-out md:hidden
+        className={`fixed left-0 top-0 h-full w-64 bg-dashboard-primary z-50 transform transition-transform duration-300 ease-in-out md:hidden
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">Menu</h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-dashboard-primary rounded-lg"
           >
             <X className="h-5 w-5" />
           </button>

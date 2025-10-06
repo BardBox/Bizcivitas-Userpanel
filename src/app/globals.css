@@ -34,7 +34,7 @@
 }
 
 .reactEasyCrop_CropAreaGrid::before {
-  content: ' ';
+  content: " ";
   box-sizing: border-box;
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -47,7 +47,7 @@
 }
 
 .reactEasyCrop_CropAreaGrid::after {
-  content: ' ';
+  content: " ";
   box-sizing: border-box;
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -126,8 +126,8 @@ body {
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+  --color-dashboard-primary: #f0f0f0;
 
-  --color-dashboard-primary: #4a62ad;
   --color-dashboard-orange: #f59e0b;
   --color-dashboard-gray: #6b7280;
   --color-dashboard-card-bg: #ffffff;

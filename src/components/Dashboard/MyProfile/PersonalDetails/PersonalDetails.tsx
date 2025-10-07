@@ -1,13 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Heart, Target } from "lucide-react";
+import { Heart, Target, Award, Plus, Trash2 } from "lucide-react";
 import { useUpdateMyBioMutation } from "../../../../../store/api/userApi";
+import { useAppDispatch } from "../../../../../store/hooks";
+import { addToast } from "../../../../../store/toastSlice";
+
+interface SkillItem {
+  _id: string;
+  name: string;
+  score: number;
+}
 
 interface PersonalDetailsProps {
   personalDetails: {
     hobbiesAndInterests?: string;
     myBurningDesireIsTo?: string;
   };
+  mySkillItems?: SkillItem[];
   isEditing?: boolean; // Controlled by parent (accordion)
   onEditStateChange?: (isEditing: boolean) => void;
   formRef?: React.RefObject<HTMLFormElement | null>;
@@ -15,10 +24,15 @@ interface PersonalDetailsProps {
 
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   personalDetails,
+  mySkillItems = [],
   isEditing = false,
   onEditStateChange,
   formRef,
 }) => {
+  const dispatch = useAppDispatch();
+  const [localSkills, setLocalSkills] = useState<SkillItem[]>(mySkillItems);
+  const [newSkillName, setNewSkillName] = useState("");
+
   const defaultValues = {
     hobbiesAndInterests: personalDetails?.hobbiesAndInterests || "",
     myBurningDesireIsTo: personalDetails?.myBurningDesireIsTo || "",
@@ -34,6 +48,30 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
   const [updateMyBio, { isLoading }] = useUpdateMyBioMutation();
 
+  // Sync localSkills when mySkillItems prop changes (only when not editing)
+  React.useEffect(() => {
+    if (!isEditing) {
+      setLocalSkills(mySkillItems);
+    }
+  }, [isEditing, mySkillItems]);
+
+  const handleAddSkill = () => {
+    if (!newSkillName.trim()) return;
+
+    const newSkill: SkillItem = {
+      _id: `temp-${Date.now()}`,
+      name: newSkillName.trim(),
+      score: 0,
+    };
+
+    setLocalSkills([...localSkills, newSkill]);
+    setNewSkillName("");
+  };
+
+  const handleRemoveSkill = (skillId: string) => {
+    setLocalSkills(localSkills.filter((skill) => skill._id !== skillId));
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
     try {
@@ -45,6 +83,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       };
 
       await updateMyBio(bioData).unwrap();
+      // TODO: Save skills to backend
+      console.log("Saving skills:", localSkills);
       onEditStateChange?.(false);
     } catch (err) {
       console.error("Failed to update personal details:", err);
@@ -53,6 +93,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
   const handleCancel = () => {
     reset(defaultValues);
+    setLocalSkills(mySkillItems);
+    setNewSkillName("");
     onEditStateChange?.(false);
   };
 
@@ -104,6 +146,106 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
                   placeholder="Enter your hobbies and interests"
                 />
+              )}
+            </div>
+          </div>
+
+          {/* My Skills Section */}
+          <div className="grid grid-cols-[35%_1fr] gap-4 py-2 border-t border-gray-100 pt-4">
+            <div>
+              <span className="font-medium text-gray-700 flex items-center gap-2">
+                <Award className="h-4 w-4 text-gray-500" />
+                My Skills:
+              </span>
+            </div>
+            <div>
+              {!isEditing ? (
+                // View Mode
+                localSkills.length === 0 ? (
+                  <span className="text-gray-400 text-sm italic">
+                    No skills added yet
+                  </span>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {localSkills.map((skill) => (
+                      <div
+                        key={skill._id}
+                        className="inline-flex items-center gap-2 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-lg px-3 py-1.5 hover:shadow-sm transition-all group"
+                      >
+                        <span className="text-sm font-medium text-gray-900">
+                          {skill.name}
+                        </span>
+                        <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full">
+                          <Award className="h-3 w-3 text-yellow-500" />
+                          <span className="text-xs font-bold text-gray-700">
+                            {skill.score}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                // Edit Mode
+                <div className="space-y-3">
+                  {/* Add New Skill */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newSkillName}
+                      onChange={(e) => setNewSkillName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddSkill();
+                        }
+                      }}
+                      placeholder="Add a skill (e.g., Project Management)"
+                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      maxLength={50}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddSkill}
+                      disabled={!newSkillName.trim()}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Current Skills List */}
+                  {localSkills.length > 0 && (
+                    <div className="space-y-2">
+                      {localSkills.map((skill) => (
+                        <div
+                          key={skill._id}
+                          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-md px-3 py-2"
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {skill.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {skill.score}{" "}
+                              {skill.score === 1
+                                ? "endorsement"
+                                : "endorsements"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSkill(skill._id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                            title="Remove skill"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

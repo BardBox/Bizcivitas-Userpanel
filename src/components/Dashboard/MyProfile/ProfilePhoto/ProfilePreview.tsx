@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import Image from "next/image";
 import ProfilePhotoUpload from "./ProfilePhotoUpload";
+import ImageModal from "@/components/ui/ImageModal";
 import { useGetCurrentUserQuery } from "../../../../../store/api/userApi";
 
 interface ProfilePreviewProps {
@@ -203,40 +204,22 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
       )}
 
       {/* Preview Modal */}
-      {showPreviewModal && (
-        <div
-          className="fixed inset-0  bg-opacity-75 flex items-center justify-center z-50"
-          onClick={() => setShowPreviewModal(false)}
-        >
-          <div className="relative">
-            <button
-              onClick={() => setShowPreviewModal(false)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-            >
-              <svg
-                className="h-8 w-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-            <Image
-              src={currentImageUrl || "/images/default-avatar.svg"}
-              alt="Profile Preview"
-              width={400}
-              height={400}
-              className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
-            />
-          </div>
-        </div>
-      )}
+      <ImageModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        imageSrc={currentImageUrl || undefined}
+        imageAlt={`${user?.fname || ""} ${user?.lname || ""} Profile Photo`}
+        title="Profile Photo"
+        showEditButton={showEditButton}
+        onEdit={
+          showEditButton
+            ? () => {
+                setShowPreviewModal(false);
+                setShowUploadModal(true);
+              }
+            : undefined
+        }
+      />
     </>
   );
 };

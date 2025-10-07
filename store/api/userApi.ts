@@ -63,6 +63,14 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Profile"],
     }),
+    updateAddressDetails: builder.mutation<any, object>({
+      query: (data) => ({
+        url: "/profiles/addressesDetails",
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["Profile"],
+    }),
     updatePersonalDetails: builder.mutation<any, object>({
       query: (data) => ({
         url: "/profiles/personalDetails",
@@ -70,6 +78,20 @@ export const userApi = baseApi.injectEndpoints({
         body: data,
       }),
       invalidatesTags: ["Profile", "User"],
+    }),
+    endorseSkill: builder.mutation<
+      any,
+      { skillId: string; targetUserId: string }
+    >({
+      query: ({ skillId, targetUserId }) => ({
+        url: `/profiles/skills/${skillId}/increment`,
+        method: "POST",
+        body: { targetUserId },
+      }),
+      invalidatesTags: (_, __, { targetUserId }) => [
+        { type: "Profile", id: targetUserId },
+        "Profile",
+      ],
     }),
     getConnections: builder.query<User[], void>({
       query: () => "/connections",
@@ -175,7 +197,9 @@ export const {
   useUpdateMyBioMutation,
   useUpdateTravelDiaryMutation,
   useUpdateContactDetailsMutation,
+  useUpdateAddressDetailsMutation,
   useUpdatePersonalDetailsMutation,
+  useEndorseSkillMutation,
   useGetSuggestionsAllQuery,
   useGetConnectionRequestsQuery,
 } = userApi;

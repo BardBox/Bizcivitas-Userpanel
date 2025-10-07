@@ -20,24 +20,29 @@ interface ConnectionsAndShareProps {
       website?: string;
     };
   };
+  isOwnProfile?: boolean; // true for logged-in user's profile, false for viewing others
+  onConnect?: () => void; // Custom connect handler for connection profiles
+  onMessage?: () => void; // Custom message handler for connection profiles
+  userId?: string; // User ID for connection profile URL
 }
 
 const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   userProfile,
+  isOwnProfile = true,
+  onConnect: customConnect,
+  onMessage: customMessage,
+  userId,
 }) => {
   const dispatch = useAppDispatch();
   const { data: currentUser } = useGetCurrentUserQuery();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
-  // Generate profile URL using user ID
+  // Generate profile URL
   const getProfileUrl = () => {
-    const userId = currentUser?._id || currentUser?.id;
-    if (userId) {
-      // Create a slug from user name or use ID
-      const slug = `${userProfile.fname}-${userProfile.lname}`
-        .toLowerCase()
-        .replace(/\s+/g, "-");
-      return `${window.location.origin}/feeds/connections/${slug}`;
+    if (isOwnProfile) {
+      return `${window.location.origin}/feeds/myprofile`;
+    } else if (userId) {
+      return `${window.location.origin}/feeds/connections/${userId}`;
     }
     return window.location.href;
   };
@@ -57,25 +62,31 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   };
 
   const handleMessage = () => {
-    // You can implement messaging logic here
-    dispatch(
-      addToast({
-        type: "info",
-        message: "Messaging feature coming soon",
-        duration: 3000,
-      })
-    );
+    if (customMessage) {
+      customMessage();
+    } else {
+      dispatch(
+        addToast({
+          type: "info",
+          message: "Messaging feature coming soon",
+          duration: 3000,
+        })
+      );
+    }
   };
 
   const handleConnect = () => {
-    // Add connection logic here
-    dispatch(
-      addToast({
-        type: "success",
-        message: "Connection request sent",
-        duration: 3000,
-      })
-    );
+    if (customConnect) {
+      customConnect();
+    } else {
+      dispatch(
+        addToast({
+          type: "success",
+          message: "Connection request sent",
+          duration: 3000,
+        })
+      );
+    }
   };
 
   const handleShare = async () => {

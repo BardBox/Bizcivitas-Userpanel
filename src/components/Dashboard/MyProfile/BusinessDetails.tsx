@@ -13,7 +13,16 @@ import {
   Trophy,
 } from "lucide-react";
 import { businessCategories } from "../data/businessCategories";
-import { useUpdateProfessionDetailsMutation } from "../../../../store/api/userApi";
+import {
+  useUpdateProfessionDetailsMutation,
+  useUpdateAddressDetailsMutation,
+} from "../../../../store/api/userApi";
+import LocationDropdowns, {
+  getCountryISOCode,
+  getStateISOCode,
+  getCountryName,
+  getStateName,
+} from "../../ui/LocationDropdowns";
 
 interface BusinessDetailsProps {
   professionalDetails?: {
@@ -46,7 +55,6 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   onEditStateChange,
   formRef,
 }) => {
-
   const defaultValues = {
     email: professionalDetails?.email || "",
     mobile: professionalDetails?.mobile?.toString() || "",
@@ -68,11 +76,18 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({ defaultValues });
 
   const [updateProfessionDetails, { isLoading, error }] =
     useUpdateProfessionDetailsMutation();
+  const [updateAddressDetails] = useUpdateAddressDetailsMutation();
+
+  // Location dropdown states (using ISO codes)
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
 
   // Reset form when professionalDetails changes to include new fields
   useEffect(() => {
@@ -92,25 +107,64 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         businessState: professionalDetails?.businessState || "",
         businessCountry: professionalDetails?.businessCountry || "",
       });
+
+      // Initialize location dropdowns with ISO codes
+      const countryISO = getCountryISOCode(
+        professionalDetails?.businessCountry || ""
+      );
+      const stateISO = getStateISOCode(
+        countryISO,
+        professionalDetails?.businessState || ""
+      );
+
+      setSelectedCountry(countryISO);
+      setSelectedState(stateISO);
+      setSelectedCity(professionalDetails?.businessCity || "");
     }
   }, [professionalDetails, reset]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
     try {
-      // Clean the data - remove empty strings and undefined values
-      const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
-        if (value !== "" && value !== undefined && value !== null) {
-          acc[key] = value;
-        }
-        return acc;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }, {} as Record<string, any>);
+      // Remove old location fields from form data
+      const { businessCity, businessState, businessCountry, ...formData } =
+        data;
 
-      await updateProfessionDetails(cleanedData).unwrap();
+      // Clean professional details data - remove empty strings and undefined values
+      const cleanedData = Object.entries(formData).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            acc[key] = value;
+          }
+          return acc;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        },
+        {} as Record<string, any>
+      );
+
+      // Prepare addresses data - only send address fields we're updating
+      const addressesData = {
+        addresses: {
+          address: {
+            city: selectedCity || "",
+            state: selectedState
+              ? getStateName(selectedCountry, selectedState)
+              : "",
+            country: selectedCountry ? getCountryName(selectedCountry) : "",
+          },
+          billing: {}, // Empty object required by backend
+        },
+      };
+
+      // Call both mutations in parallel
+      await Promise.all([
+        updateProfessionDetails(cleanedData).unwrap(),
+        updateAddressDetails(addressesData).unwrap(),
+      ]);
+
       onEditStateChange?.(false);
     } catch (err) {
-      console.error("Failed to update business details:", err);
+      // Failed to update business details
     }
   };
 
@@ -370,70 +424,39 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             </div>
           </div>
 
-          {/* Business City */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
-            <div>
-              <span className="font-medium text-gray-700 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-gray-500" />
-                Business City:
-              </span>
-            </div>
-            <div>
-              {!isEditing ? (
-                <span className="text-gray-600">
-                  {professionalDetails?.businessCity || "-"}
-                </span>
-              ) : (
-                <input
-                  {...register("businessCity")}
-                  className="w-full border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  placeholder="Enter business city"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Business State */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
-            <div>
-              <span className="font-medium text-gray-700 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-gray-500" />
-                Business State:
-              </span>
-            </div>
-            <div>
-              {!isEditing ? (
-                <span className="text-gray-600">
-                  {professionalDetails?.businessState || "-"}
-                </span>
-              ) : (
-                <input
-                  {...register("businessState")}
-                  className="w-full border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  placeholder="Enter business state"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Business Country */}
+          {/* Business Location - Country, State, City */}
           <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Globe className="h-4 w-4 text-gray-500" />
-                Business Country:
+                Business Location:
               </span>
             </div>
             <div>
               {!isEditing ? (
-                <span className="text-gray-600">
-                  {professionalDetails?.businessCountry || "-"}
-                </span>
+                <div className="text-gray-600 space-y-1">
+                  <div>
+                    <span className="font-medium">City: </span>
+                    {professionalDetails?.businessCity || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">State: </span>
+                    {professionalDetails?.businessState || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Country: </span>
+                    {professionalDetails?.businessCountry || "-"}
+                  </div>
+                </div>
               ) : (
-                <input
-                  {...register("businessCountry")}
-                  className="w-full border border-gray-300 rounded-md px-3 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  placeholder="Enter business country"
+                <LocationDropdowns
+                  countryValue={selectedCountry}
+                  stateValue={selectedState}
+                  cityValue={selectedCity}
+                  onCountryChange={setSelectedCountry}
+                  onStateChange={setSelectedState}
+                  onCityChange={setSelectedCity}
+                  disabled={false}
                 />
               )}
             </div>

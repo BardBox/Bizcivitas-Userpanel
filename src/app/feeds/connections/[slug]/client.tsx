@@ -141,6 +141,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       needs: profile?.myBio?.myAsk || [],
       travel: profile?.travelDiary,
       presentation: profile?.weeklyPresentation,
+      skills: profile?.mySkillItems ?? [],
       contacts: profile?.contactDetails,
       connections: user?.connections || [],
       membership: {
@@ -169,6 +170,13 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       return `${baseUrl}/image/${avatarPath}`;
     };
 
+    // Get company logo URL
+    const getCompanyLogoUrl = (logoPath?: string) => {
+      if (!logoPath || logoPath.startsWith("http")) return logoPath;
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      return `${baseUrl}/image/${logoPath}`;
+    };
+
     return {
       fname: user?.fname,
       lname: user?.lname,
@@ -183,7 +191,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       },
       business: {
         name: profile?.professionalDetails?.companyName,
-        logo: profile?.professionalDetails?.companyLogo,
+        logo: getCompanyLogoUrl(profile?.professionalDetails?.companyLogo),
       },
       location: user?.region,
       isActive: user?.isActive,
@@ -404,6 +412,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
                   onConnect={handleConnect}
                   onRemoveConnection={handleRemoveConnection}
                   onMessage={handleMessage}
+                  userId={slug}
                 />
               )}
             </div>
@@ -420,6 +429,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
             >
               <PersonalDetails
                 personalDetails={normalizedData.personal}
+                mySkillItems={normalizedData.skills}
                 isEditing={false} // Always read-only
                 onEditStateChange={() => {}} // No-op
                 formRef={React.createRef<HTMLFormElement>()}

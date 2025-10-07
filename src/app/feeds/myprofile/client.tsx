@@ -56,9 +56,17 @@ const MyProfileClient: React.FC = () => {
         mobile: user?.mobile,
         location: user?.city || profile?.addresses?.address?.city,
         companyLogo: profile?.professionalDetails?.companyLogo,
-        businessCity: profile?.businessAddress?.city,
-        businessState: profile?.businessAddress?.state,
-        businessCountry: profile?.businessAddress?.country,
+        // Business location data comes from professionalDetails (can be updated by user)
+        // Fallback to addresses.address if not set in professionalDetails
+        businessCity:
+          profile?.professionalDetails?.businessCity ||
+          profile?.addresses?.address?.city,
+        businessState:
+          profile?.professionalDetails?.businessState ||
+          profile?.addresses?.address?.state,
+        businessCountry:
+          profile?.professionalDetails?.businessCountry ||
+          profile?.addresses?.address?.country,
       },
       leads: {
         given: profile?.myBio?.myGives,
@@ -67,6 +75,7 @@ const MyProfileClient: React.FC = () => {
       needs: profile?.myBio?.myAsk,
       travel: profile?.travelDiary,
       presentation: profile?.weeklyPresentation,
+      skills: profile?.mySkillItems ?? [],
     };
   }, [user, profile]);
 
@@ -232,6 +241,7 @@ const MyProfileClient: React.FC = () => {
             >
               <PersonalDetails
                 personalDetails={normalizedData.personal}
+                mySkillItems={normalizedData.skills}
                 isEditing={isEditingPersonal}
                 onEditStateChange={setIsEditingPersonal}
                 formRef={personalFormRef}

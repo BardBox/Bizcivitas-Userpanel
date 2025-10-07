@@ -13,7 +13,6 @@ interface MySkillsProps {
   mySkillItems?: SkillItem[];
   isEditing?: boolean;
   onEditStateChange?: (editing: boolean) => void;
-  formRef?: React.RefObject<HTMLFormElement | null>;
 }
 
 const MySkills: React.FC<MySkillsProps> = ({
@@ -30,7 +29,7 @@ const MySkills: React.FC<MySkillsProps> = ({
     if (!newSkillName.trim()) return;
 
     const newSkill: SkillItem = {
-      _id: `temp-${Date.now()}`, // Temporary ID for new skills
+      _id: `temp-${crypto.randomUUID()}`, // Temporary ID for new skills using UUID for uniqueness
       name: newSkillName.trim(),
       score: 0,
     };
@@ -222,9 +221,6 @@ export const useMySkillsWithAccordion = (initialSkills?: SkillItem[]) => {
 
   const handleEditStateChange = (editing: boolean) => setIsEditing(editing);
 
-  // Dummy formRef for compatibility
-  const formRef = React.useRef<HTMLFormElement>(null);
-
   return {
     isEditing,
     isLoading,
@@ -232,6 +228,5 @@ export const useMySkillsWithAccordion = (initialSkills?: SkillItem[]) => {
     handleCancel,
     handleSave,
     handleEditStateChange,
-    formRef,
   };
 };

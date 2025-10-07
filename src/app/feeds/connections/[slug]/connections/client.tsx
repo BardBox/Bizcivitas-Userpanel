@@ -15,6 +15,8 @@ import LoadingSkeleton from "@/components/Dashboard/Connections/LoadingSkeleton"
 import {
   useGetConnectionProfileQuery,
   useGetCurrentUserQuery,
+  useGetConnectionsQuery,
+  useGetConnectionRequestsQuery,
 } from "../../../../../../store/api/userApi";
 
 interface ConnectionsViewPageProps {
@@ -52,6 +54,18 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
   const { data: currentUserProfile, isLoading: isCurrentUserLoading } =
     useGetCurrentUserQuery();
 
+  // Get current user's connections list
+  const { data: currentUserConnections, isLoading: isConnectionsLoading } =
+    useGetConnectionsQuery();
+
+  // Get pending sent requests
+  const { data: sentRequests, isLoading: isSentRequestsLoading } =
+    useGetConnectionRequestsQuery("sent");
+
+  // Get pending received requests
+  const { data: receivedRequests, isLoading: isReceivedRequestsLoading } =
+    useGetConnectionRequestsQuery("received");
+
   // Prepare data for hooks (must be called before any conditional returns)
   const connections: Connection[] = connectionProfile?.connections || [];
   const acceptedConnections = connections.filter(
@@ -75,36 +89,65 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
   // Get current page data
   const currentConnections = pagination.paginatedData(filteredConnections);
 
-  // Get current user's connections to check existing relationships
-  const currentUserConnections = currentUserProfile?.connections || [];
+  // Get current user's connection IDs to check existing relationships
   const currentUserConnectionIds = useMemo(
     () =>
       new Set(
-        currentUserConnections
-          .filter((conn: Connection) => conn.isAccepted)
-          .map((conn: Connection) => {
-            if (conn.user?._id) {
-              return conn.user._id;
-            } else if (conn.sender && conn.receiver) {
-              return conn.sender === currentUserProfile?._id
-                ? conn.receiver
-                : conn.sender;
-            }
-            return null;
+        (currentUserConnections || [])
+          .map((user: any) => {
+            // The getConnections API returns User objects with _id or id
+            return user._id || user.id;
           })
-          .filter((id): id is string => id !== null)
+          .filter(Boolean)
       ),
-    [currentUserConnections, currentUserProfile?._id]
+    [currentUserConnections]
   );
 
+  // Get pending sent request user IDs and connection IDs
+  const sentRequestMap = useMemo(() => {
+    const map = new Map<string, string>(); // userId -> connectionId
+    const connections = sentRequests?.data?.connections || [];
+    connections.forEach((req) => {
+      const receiverId = req.receiver?.id;
+      if (receiverId && req.connectionId) {
+        map.set(receiverId, req.connectionId);
+      }
+    });
+    return map;
+  }, [sentRequests]);
+
+  // Get pending received request user IDs and connection IDs
+  const receivedRequestMap = useMemo(() => {
+    const map = new Map<string, string>(); // userId -> connectionId
+    const connections = receivedRequests?.data?.connections || [];
+    connections.forEach((req) => {
+      const senderId = req.sender?.id;
+      if (senderId && req.connectionId) {
+        map.set(senderId, req.connectionId);
+      }
+    });
+    return map;
+  }, [receivedRequests]);
+
   // Helper function to determine connection status
-  const getConnectionStatus = (userId: string) => {
+  const getConnectionStatus = (
+    userId: string
+  ): {
+    status: "self" | "connected" | "pending_sent" | "pending_received" | "none";
+    connectionId?: string;
+  } => {
     const isCurrentUser = userId === currentUserProfile?._id;
     const isAlreadyConnected = currentUserConnectionIds.has(userId);
+    const sentConnectionId = sentRequestMap.get(userId);
+    const receivedConnectionId = receivedRequestMap.get(userId);
 
-    if (isCurrentUser) return "self";
-    if (isAlreadyConnected) return "connected";
-    return "not_connected";
+    if (isCurrentUser) return { status: "self" };
+    if (isAlreadyConnected) return { status: "connected" };
+    if (sentConnectionId)
+      return { status: "pending_sent", connectionId: sentConnectionId };
+    if (receivedConnectionId)
+      return { status: "pending_received", connectionId: receivedConnectionId };
+    return { status: "none" };
   };
 
   const clearSearch = () => {
@@ -138,7 +181,13 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
     }
   };
 
-  if (isLoading || isCurrentUserLoading) {
+  if (
+    isLoading ||
+    isCurrentUserLoading ||
+    isConnectionsLoading ||
+    isSentRequestsLoading ||
+    isReceivedRequestsLoading
+  ) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -309,7 +358,7 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
                 if (!otherUserId) return null;
 
                 const requestState = requestStates[otherUserId] || "idle";
-                const connectionStatus = getConnectionStatus(otherUserId);
+                const statusInfo = getConnectionStatus(otherUserId);
 
                 return (
                   <ConnectionCard
@@ -317,7 +366,8 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
                     userId={otherUserId}
                     connectionDate={connection.createdAt || ""}
                     requestState={requestState}
-                    connectionStatus={connectionStatus}
+                    connectionStatus={statusInfo.status}
+                    connectionId={statusInfo.connectionId}
                     onSendRequest={handleSendRequest}
                   />
                 );

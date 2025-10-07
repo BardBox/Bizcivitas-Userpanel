@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
-import { User, UserPlus, Check } from "lucide-react";
+import { User, UserPlus, UserMinus, Check } from "lucide-react";
 import {
   getAvatarUrl,
   getMembershipStyling,
@@ -13,14 +13,21 @@ import LoadingSkeleton from "./LoadingSkeleton";
 import { useGetConnectionProfileQuery } from "../../../../store/api/userApi";
 import {
   ConnectionRequestState,
-  ConnectionCardStatus,
+  ConnectionStatus,
 } from "../../../../types/connection.types";
+import {
+  useDeleteConnectionMutation,
+  useAcceptConnectionRequestMutation,
+} from "../../../../store/api/userApi";
+import { useAppDispatch } from "../../../../store/hooks";
+import { addToast } from "../../../../store/toastSlice";
 
 interface ConnectionCardProps {
   userId: string;
   connectionDate: string;
   requestState: ConnectionRequestState;
-  connectionStatus?: ConnectionCardStatus;
+  connectionStatus?: ConnectionStatus;
+  connectionId?: string;
   onSendRequest: (userId: string, userName: string) => void;
 }
 
@@ -28,15 +35,22 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
   userId,
   connectionDate,
   requestState,
-  connectionStatus = "not_connected",
+  connectionStatus = "none",
+  connectionId,
   onSendRequest,
 }) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const {
     data: userProfile,
     isLoading,
     error,
   } = useGetConnectionProfileQuery(userId);
+
+  const [deleteConnection, { isLoading: isDeleting }] =
+    useDeleteConnectionMutation();
+  const [acceptRequest, { isLoading: isAccepting }] =
+    useAcceptConnectionRequestMutation();
 
   const handleCardClick = () => {
     router.push(`/feeds/connections/${userId}`);
@@ -46,6 +60,54 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleCardClick();
+    }
+  };
+
+  const handleWithdrawRequest = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!connectionId) return;
+
+    try {
+      await deleteConnection({ connectionId }).unwrap();
+      dispatch(
+        addToast({
+          type: "success",
+          message: "Connection request withdrawn",
+          duration: 3000,
+        })
+      );
+    } catch (error) {
+      dispatch(
+        addToast({
+          type: "error",
+          message: "Failed to withdraw request",
+          duration: 3000,
+        })
+      );
+    }
+  };
+
+  const handleAcceptRequest = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!connectionId) return;
+
+    try {
+      await acceptRequest({ connectionId }).unwrap();
+      dispatch(
+        addToast({
+          type: "success",
+          message: "Connection request accepted",
+          duration: 3000,
+        })
+      );
+    } catch (error) {
+      dispatch(
+        addToast({
+          type: "error",
+          message: "Failed to accept request",
+          duration: 3000,
+        })
+      );
     }
   };
 
@@ -164,7 +226,43 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
           <Check className="h-4 w-4 mr-2" />
           Already Connected
         </div>
-      ) : (
+      ) : connectionStatus === "pending_sent" ? (
+        <button
+          onClick={handleWithdrawRequest}
+          disabled={isDeleting}
+          className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100"
+        >
+          {isDeleting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-700 mr-2"></div>
+              Withdrawing...
+            </>
+          ) : (
+            <>
+              <UserMinus className="h-4 w-4 mr-2" />
+              Withdraw Request
+            </>
+          )}
+        </button>
+      ) : connectionStatus === "pending_received" ? (
+        <button
+          onClick={handleAcceptRequest}
+          disabled={isAccepting}
+          className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5"
+        >
+          {isAccepting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Accepting...
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              Accept Request
+            </>
+          )}
+        </button>
+      ) : connectionStatus === "none" || !connectionStatus ? (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -196,7 +294,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
             </>
           )}
         </button>
-      )}
+      ) : null}
     </div>
   );
 };

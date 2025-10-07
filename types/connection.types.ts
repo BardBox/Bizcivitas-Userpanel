@@ -10,7 +10,8 @@ export type ConnectionStatus =
   | "none"
   | "pending_sent"
   | "pending_received"
-  | "connected";
+  | "connected"
+  | "self"; // When viewing your own profile
 
 /**
  * Connection user information (minimal)

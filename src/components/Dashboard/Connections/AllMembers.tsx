@@ -44,7 +44,7 @@ const AllMembers: React.FC<AllMembersProps> = ({
   referrerTab = "connect-members",
   onPaginationChange,
 }) => {
-  const { data: suggestions, isLoading, error } = useGetSuggestionsAllQuery("");
+  const { data: suggestions, isLoading, error } = useGetSuggestionsAllQuery();
 
   const getAvatarUrl = (avatarPath?: string) => {
     if (!avatarPath) return undefined;

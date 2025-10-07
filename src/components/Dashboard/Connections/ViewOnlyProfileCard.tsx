@@ -7,6 +7,7 @@ import {
   Mail,
   Globe,
   MapPin,
+  Calendar,
 } from "lucide-react";
 import ProfilePreview from "@/components/Dashboard/MyProfile/ProfilePhoto/ProfilePreview";
 import ImageModal from "@/components/ui/ImageModal";
@@ -54,6 +55,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
   userId,
 }) => {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
+  const [logoLoadError, setLogoLoadError] = useState(false);
 
   // Handle null/undefined profile
   if (!profile) {
@@ -166,26 +168,18 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
         <div className="text-center mb-4 sm:mb-6">
           <div
             className="relative w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 overflow-hidden cursor-pointer"
-            onClick={() => profile.business?.logo && setIsLogoModalOpen(true)}
+            onClick={() =>
+              profile.business?.logo &&
+              !logoLoadError &&
+              setIsLogoModalOpen(true)
+            }
           >
-            {profile.business?.logo ? (
+            {profile.business?.logo && !logoLoadError ? (
               <img
                 src={profile.business.logo}
                 alt={`${profile.business.name} logo`}
                 className="w-full h-full object-cover rounded-full"
-                onError={(e) => {
-                  // Fallback to placeholder if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                      <div class="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-full"></div>
-                    </div>
-                  `;
-                  }
-                }}
+                onError={() => setLogoLoadError(true)}
               />
             ) : (
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -270,7 +264,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
           {profile.joiningDate && (
             <div className="mt-4 pt-3 border-t border-gray-100">
               <div className="text-gray-500 text-xs flex items-center justify-center gap-2">
-                <span>�</span>
+                <Calendar className="h-4 w-4 text-gray-400" />
                 <span>Member since {formatDate(profile.joiningDate)}</span>
               </div>
             </div>

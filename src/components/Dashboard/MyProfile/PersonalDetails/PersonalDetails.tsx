@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Heart, Target, Award, Plus, Trash2 } from "lucide-react";
-import { useUpdateMyBioMutation } from "../../../../../store/api/userApi";
+import {
+  useUpdateMyBioMutation,
+  useUpdateMySkillsMutation,
+} from "../../../../../store/api/userApi";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
 
@@ -46,7 +49,11 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     formState: { errors },
   } = useForm({ defaultValues });
 
-  const [updateMyBio, { isLoading }] = useUpdateMyBioMutation();
+  const [updateMyBio, { isLoading: isSavingBio }] = useUpdateMyBioMutation();
+  const [updateMySkills, { isLoading: isSavingSkills }] =
+    useUpdateMySkillsMutation();
+
+  const isLoading = isSavingBio || isSavingSkills;
 
   // Sync localSkills when mySkillItems prop changes (only when not editing)
   React.useEffect(() => {
@@ -74,20 +81,84 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
-    try {
-      const bioData = {
-        myBio: {
-          hobbiesAndInterests: data.hobbiesAndInterests || "",
-          myBurningDesireIsTo: data.myBurningDesireIsTo || "",
-        },
-      };
+    // Find which skills were deleted (in original but not in localSkills)
+    const deletedSkillIds = mySkillItems
+      .filter(
+        (originalSkill) =>
+          !localSkills.some(
+            (localSkill) => localSkill._id === originalSkill._id
+          )
+      )
+      .map((skill) => skill._id);
 
-      await updateMyBio(bioData).unwrap();
-      // TODO: Save skills to backend
-      console.log("Saving skills:", localSkills);
+    // Build the skills array to send to backend:
+    // 1. Existing skills that remain (with _id and name)
+    // 2. New skills (only name)
+    // 3. Deleted skills (only _id, without name - triggers backend deletion)
+    const skillsToSend = [
+      // Keep/update existing skills
+      ...localSkills.map((skill) => {
+        if (!skill._id.startsWith("temp-")) {
+          return {
+            _id: skill._id,
+            name: skill.name,
+          };
+        }
+        // New skills (backend will create ID)
+        return {
+          name: skill.name,
+        };
+      }),
+      // Add deleted skills with _id only (no name = deletion signal)
+      ...deletedSkillIds.map((id) => ({
+        _id: id,
+      })),
+    ];
+
+    const bioAndSkillsData = {
+      myBio: {
+        hobbiesAndInterests: data.hobbiesAndInterests || "",
+        myBurningDesireIsTo: data.myBurningDesireIsTo || "",
+      },
+      mySkillItems: skillsToSend,
+    };
+
+    console.log("Original skills:", mySkillItems);
+    console.log("Local skills after edits:", localSkills);
+    console.log("Deleted skill IDs:", deletedSkillIds);
+    console.log("Combined data being sent to API:", bioAndSkillsData);
+
+    // Track success state
+    let updateSucceeded = false;
+    const errors: string[] = [];
+
+    // Save bio and skills together in one API call
+    try {
+      await updateMyBio(bioAndSkillsData).unwrap();
+      updateSucceeded = true;
+    } catch (err: any) {
+      console.error("Failed to update personal details and skills:", err);
+      errors.push("personal details and skills");
+    }
+
+    // Provide feedback based on success/failure
+    if (updateSucceeded) {
+      dispatch(
+        addToast({
+          type: "success",
+          message: "Personal details and skills updated successfully!",
+          duration: 3000,
+        })
+      );
       onEditStateChange?.(false);
-    } catch (err) {
-      console.error("Failed to update personal details:", err);
+    } else if (errors.length > 0) {
+      dispatch(
+        addToast({
+          type: "error",
+          message: `Failed to update ${errors[0]}`,
+          duration: 4000,
+        })
+      );
     }
   };
 

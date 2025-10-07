@@ -81,8 +81,8 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
     } else {
       dispatch(
         addToast({
-          type: "success",
-          message: "Connection request sent",
+          type: "info",
+          message: "Connection feature coming soon",
           duration: 3000,
         })
       );
@@ -176,7 +176,10 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           onClick={handleConnect}
           onMouseEnter={() => setHoveredButton("connect")}
           onMouseLeave={() => setHoveredButton(null)}
-          className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
+          disabled={isOwnProfile}
+          className={`transition-transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full ${
+            isOwnProfile ? "opacity-50 cursor-not-allowed" : "hover:scale-110"
+          }`}
           aria-label="Connect"
         >
           <Image
@@ -189,7 +192,11 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
         </button>
         {hoveredButton === "connect" && (
           <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-            Connection
+            {isOwnProfile
+              ? "Cannot connect to yourself"
+              : customConnect
+              ? "Connection"
+              : "Coming soon"}
           </div>
         )}
       </div>

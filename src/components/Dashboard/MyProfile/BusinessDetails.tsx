@@ -80,9 +80,13 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
     formState: { errors },
   } = useForm({ defaultValues });
 
-  const [updateProfessionDetails, { isLoading, error }] =
+  const [updateProfessionDetails, { isLoading, error: professionError }] =
     useUpdateProfessionDetailsMutation();
-  const [updateAddressDetails] = useUpdateAddressDetailsMutation();
+  const [updateAddressDetails, { error: addressError }] =
+    useUpdateAddressDetailsMutation();
+
+  // Local state to track save errors
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Location dropdown states (using ISO codes)
   const [selectedCountry, setSelectedCountry] = useState<string>("");
@@ -125,6 +129,9 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
+    // Clear previous save error
+    setSaveError(null);
+
     try {
       // Remove old location fields from form data
       const { businessCity, businessState, businessCountry, ...formData } =
@@ -164,12 +171,21 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
       onEditStateChange?.(false);
     } catch (err) {
-      // Failed to update business details
+      console.error("Failed to update business details:", err);
+      // Capture and display the error
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "data" in err
+          ? JSON.stringify((err as any).data?.message || err)
+          : "Failed to update business details. Please try again.";
+      setSaveError(errorMessage);
     }
   };
 
   const handleCancel = () => {
     reset(defaultValues);
+    setSaveError(null); // Clear error on cancel
     onEditStateChange?.(false);
   };
 
@@ -538,10 +554,38 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             </>
           )}
 
-          {error && isEditing && (
+          {/* Display errors from either mutation or save operation */}
+          {isEditing && (professionError || addressError || saveError) && (
             <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
               <div></div>
-              <div className="text-red-500 text-sm">{String(error)}</div>
+              <div className="text-red-500 text-sm space-y-1">
+                {professionError && (
+                  <div>
+                    Professional details error:{" "}
+                    {typeof professionError === "object" &&
+                    professionError !== null &&
+                    "data" in professionError
+                      ? JSON.stringify(
+                          (professionError as any).data?.message ||
+                            professionError
+                        )
+                      : String(professionError)}
+                  </div>
+                )}
+                {addressError && (
+                  <div>
+                    Address details error:{" "}
+                    {typeof addressError === "object" &&
+                    addressError !== null &&
+                    "data" in addressError
+                      ? JSON.stringify(
+                          (addressError as any).data?.message || addressError
+                        )
+                      : String(addressError)}
+                  </div>
+                )}
+                {saveError && <div>{saveError}</div>}
+              </div>
             </div>
           )}
         </div>
@@ -557,7 +601,7 @@ export const useBusinessDetailsWithAccordion = (
   const [isEditing, setIsEditing] = useState(false);
   const formRef = React.useRef<HTMLFormElement>(null);
 
-  const [updateProfessionDetails, { isLoading, error }] =
+  const [updateProfessionDetails, { isLoading, error: professionError }] =
     useUpdateProfessionDetailsMutation();
 
   const handleCancel = () => {

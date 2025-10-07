@@ -9,6 +9,110 @@ import {
 // Re-export types for backward compatibility
 export type { User, FullProfile, ApiResponse };
 
+// Mutation response types for improved type safety
+interface ProfileUpdateResponse {
+  success: boolean;
+  message: string;
+  companyLogo?: string; // Company logo URL returned after upload
+  data?: {
+    profile?: FullProfile;
+  };
+}
+
+interface BioDetailsResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    myBio?: {
+      hobbiesAndInterests?: string;
+      myBurningDesireIsTo?: string;
+    };
+    mySkillItems?: Array<{ _id: string; name: string; score: number }>;
+  };
+}
+
+interface SkillsUpdateResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    mySkillItems?: Array<{ _id: string; name: string; score: number }>;
+  };
+}
+
+interface TravelDiaryResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    travelDiary?: Array<{
+      _id: string;
+      destination: string;
+      date: string;
+      notes?: string;
+    }>;
+  };
+}
+
+interface ContactDetailsResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    contact?: {
+      personal?: string;
+      professional?: string;
+      email?: string;
+      website?: string;
+    };
+  };
+}
+
+interface AddressDetailsResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    addresses?: Array<{
+      _id: string;
+      type: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      postalCode?: string;
+    }>;
+  };
+}
+
+interface PersonalDetailsResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    fname?: string;
+    lname?: string;
+    dateOfBirth?: string;
+    gender?: string;
+  };
+}
+
+interface EndorseSkillResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    skill?: {
+      _id: string;
+      name: string;
+      score: number;
+    };
+  };
+}
+
+interface ConnectionActionResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    connectionId?: string;
+    status?: string;
+  };
+}
+
 // Inject user endpoints into baseApi
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -31,7 +135,10 @@ export const userApi = baseApi.injectEndpoints({
       invalidatesTags: ["User", "Profile"],
       transformResponse: (response: ApiResponse<User>) => response.data,
     }),
-    updateProfessionDetails: builder.mutation<any, FormData | object>({
+    updateProfessionDetails: builder.mutation<
+      ProfileUpdateResponse,
+      FormData | object
+    >({
       query: (data) => ({
         url: "/profiles/professionalDetails",
         method: "PATCH",
@@ -39,7 +146,7 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Profile"],
     }),
-    updateMyBio: builder.mutation<any, object>({
+    updateMyBio: builder.mutation<BioDetailsResponse, object>({
       query: (data) => ({
         url: "/profiles/bioDetails",
         method: "PATCH",
@@ -47,7 +154,23 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Profile"],
     }),
-    updateTravelDiary: builder.mutation<any, object>({
+    updateMySkills: builder.mutation<
+      SkillsUpdateResponse,
+      {
+        mySkillItems: Array<{
+          _id?: string;
+          name?: string;
+        }>;
+      }
+    >({
+      query: (data) => ({
+        url: "/profiles/bioDetails",
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["Profile"],
+    }),
+    updateTravelDiary: builder.mutation<TravelDiaryResponse, object>({
       query: (data) => ({
         url: "/profiles/travelDiary",
         method: "PATCH",
@@ -55,7 +178,7 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Profile"],
     }),
-    updateContactDetails: builder.mutation<any, object>({
+    updateContactDetails: builder.mutation<ContactDetailsResponse, object>({
       query: (data) => ({
         url: "/profiles/contactDetails",
         method: "PATCH",
@@ -63,7 +186,7 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Profile"],
     }),
-    updateAddressDetails: builder.mutation<any, object>({
+    updateAddressDetails: builder.mutation<AddressDetailsResponse, object>({
       query: (data) => ({
         url: "/profiles/addressesDetails",
         method: "PATCH",
@@ -71,7 +194,7 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Profile"],
     }),
-    updatePersonalDetails: builder.mutation<any, object>({
+    updatePersonalDetails: builder.mutation<PersonalDetailsResponse, object>({
       query: (data) => ({
         url: "/profiles/personalDetails",
         method: "PATCH",
@@ -80,7 +203,7 @@ export const userApi = baseApi.injectEndpoints({
       invalidatesTags: ["Profile", "User"],
     }),
     endorseSkill: builder.mutation<
-      any,
+      EndorseSkillResponse,
       { skillId: string; targetUserId: string }
     >({
       query: ({ skillId, targetUserId }) => ({
@@ -128,7 +251,10 @@ export const userApi = baseApi.injectEndpoints({
         }
       },
     }),
-    deleteConnection: builder.mutation<any, ConnectionActionPayload>({
+    deleteConnection: builder.mutation<
+      ConnectionActionResponse,
+      ConnectionActionPayload
+    >({
       query: (data) => ({
         url: "/connections/delete-connection",
         method: "DELETE",
@@ -137,7 +263,10 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Connections", "Profile"],
     }),
-    sendConnectionRequest: builder.mutation<any, ConnectionRequest>({
+    sendConnectionRequest: builder.mutation<
+      ConnectionActionResponse,
+      ConnectionRequest
+    >({
       query: (data) => ({
         url: "/connections/send-request",
         method: "POST",
@@ -146,7 +275,10 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Connections", "Profile"],
     }),
-    acceptConnectionRequest: builder.mutation<any, ConnectionActionPayload>({
+    acceptConnectionRequest: builder.mutation<
+      ConnectionActionResponse,
+      ConnectionActionPayload
+    >({
       query: (data) => ({
         url: "/connections/accept-request",
         method: "POST",
@@ -165,7 +297,7 @@ export const userApi = baseApi.injectEndpoints({
       transformResponse: (response: ApiResponse<{ message: string }>) =>
         response.data,
     }),
-    getSuggestionsAll: builder.query<any, string>({
+    getSuggestionsAll: builder.query<any, void>({
       query: () => "/connections/getSuggestionsAll",
       providesTags: ["Connections"],
       transformResponse: (response: any) => {
@@ -195,6 +327,7 @@ export const {
   useLogoutMutation,
   useUpdateProfessionDetailsMutation,
   useUpdateMyBioMutation,
+  useUpdateMySkillsMutation,
   useUpdateTravelDiaryMutation,
   useUpdateContactDetailsMutation,
   useUpdateAddressDetailsMutation,

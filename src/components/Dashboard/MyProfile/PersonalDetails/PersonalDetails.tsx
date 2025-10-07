@@ -51,7 +51,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     formState: { errors },
   } = useForm({ defaultValues });
 
-  const [updateMyBio] = useUpdateMyBioMutation();
+  const [updateMyBio, { isLoading }] = useUpdateMyBioMutation();
 
   // Sync localSkills when mySkillItems prop changes (only when not editing)
   React.useEffect(() => {
@@ -78,6 +78,9 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   };
 
   const handleSave = async (data: PersonalDetailsFormData) => {
+    // Prevent duplicate submissions while request is pending
+    if (isLoading) return;
+
     // Find which skills were deleted (in original but not in localSkills)
     const deletedSkillIds = mySkillItems
       .filter(
@@ -164,7 +167,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   return (
     <div className="bg-white rounded-lg p-2 mb-6">
       <form ref={formRef} onSubmit={handleSubmit(handleSave)}>
-        <div className="space-y-3">
+        <fieldset disabled={isLoading} className="space-y-3">
           {/* About Me */}
           <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
             <div>
@@ -312,7 +315,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </fieldset>
       </form>
     </div>
   );

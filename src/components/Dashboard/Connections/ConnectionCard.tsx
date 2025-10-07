@@ -229,8 +229,13 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
       ) : connectionStatus === "pending_sent" ? (
         <button
           onClick={handleWithdrawRequest}
-          disabled={isDeleting}
-          className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100"
+          disabled={isDeleting || !connectionId}
+          className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={
+            !connectionId
+              ? "Cannot withdraw - connection ID missing"
+              : "Withdraw connection request"
+          }
         >
           {isDeleting ? (
             <>
@@ -240,15 +245,20 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
           ) : (
             <>
               <UserMinus className="h-4 w-4 mr-2" />
-              Withdraw Request
+              {!connectionId ? "Unavailable" : "Withdraw Request"}
             </>
           )}
         </button>
       ) : connectionStatus === "pending_received" ? (
         <button
           onClick={handleAcceptRequest}
-          disabled={isAccepting}
-          className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5"
+          disabled={isAccepting || !connectionId}
+          className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0"
+          aria-label={
+            !connectionId
+              ? "Cannot accept - connection ID missing"
+              : "Accept connection request"
+          }
         >
           {isAccepting ? (
             <>
@@ -258,7 +268,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
           ) : (
             <>
               <Check className="h-4 w-4 mr-2" />
-              Accept Request
+              {!connectionId ? "Unavailable" : "Accept Request"}
             </>
           )}
         </button>

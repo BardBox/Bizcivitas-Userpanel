@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Heart, Target, Award, Plus, Trash2 } from "lucide-react";
-import {
-  useUpdateMyBioMutation,
-  useUpdateMySkillsMutation,
-} from "../../../../../store/api/userApi";
+import { useUpdateMyBioMutation } from "../../../../../store/api/userApi";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
 
@@ -12,6 +9,11 @@ interface SkillItem {
   _id: string;
   name: string;
   score: number;
+}
+
+interface PersonalDetailsFormData {
+  hobbiesAndInterests: string;
+  myBurningDesireIsTo: string;
 }
 
 interface PersonalDetailsProps {
@@ -49,11 +51,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     formState: { errors },
   } = useForm({ defaultValues });
 
-  const [updateMyBio, { isLoading: isSavingBio }] = useUpdateMyBioMutation();
-  const [updateMySkills, { isLoading: isSavingSkills }] =
-    useUpdateMySkillsMutation();
-
-  const isLoading = isSavingBio || isSavingSkills;
+  const [updateMyBio] = useUpdateMyBioMutation();
 
   // Sync localSkills when mySkillItems prop changes (only when not editing)
   React.useEffect(() => {
@@ -79,8 +77,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     setLocalSkills(localSkills.filter((skill) => skill._id !== skillId));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: PersonalDetailsFormData) => {
     // Find which skills were deleted (in original but not in localSkills)
     const deletedSkillIds = mySkillItems
       .filter(
@@ -122,11 +119,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       },
       mySkillItems: skillsToSend,
     };
-
-    console.log("Original skills:", mySkillItems);
-    console.log("Local skills after edits:", localSkills);
-    console.log("Deleted skill IDs:", deletedSkillIds);
-    console.log("Combined data being sent to API:", bioAndSkillsData);
 
     // Track success state
     let updateSucceeded = false;

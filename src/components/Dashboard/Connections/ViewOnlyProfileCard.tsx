@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   UserPlus,
@@ -56,6 +56,11 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
 }) => {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [logoLoadError, setLogoLoadError] = useState(false);
+
+  // Reset logo error when the logo URL changes to allow retrying new images
+  useEffect(() => {
+    setLogoLoadError(false);
+  }, [profile.business?.logo]);
 
   // Handle null/undefined profile
   if (!profile) {

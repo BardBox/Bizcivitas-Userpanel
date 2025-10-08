@@ -53,7 +53,12 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
     useAcceptConnectionRequestMutation();
 
   const handleCardClick = () => {
-    router.push(`/feeds/connections/${userId}`);
+    // If this is the current user's own card, redirect to their profile
+    if (connectionStatus === "self") {
+      router.push(`/feeds/myprofile`);
+    } else {
+      router.push(`/feeds/connections/${userId}`);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

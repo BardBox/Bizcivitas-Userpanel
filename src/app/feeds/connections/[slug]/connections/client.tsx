@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Users, Search } from "lucide-react";
 import ConnectionCard from "@/components/Dashboard/Connections/ConnectionCard";
@@ -156,11 +156,30 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
   };
 
   // Helper functions for stats calculations
-  const getRequestsSentCount = () =>
-    Object.values(requestStates).filter((state) => state === "sent").length;
+  const getRequestsSentCount = () => {
+    // Count actual pending sent requests from the API
+    return acceptedConnections.filter((connection) => {
+      const otherUserId =
+        connection.sender === connectionProfile?._id
+          ? connection.receiver
+          : connection.sender;
+      return otherUserId && sentRequestMap.has(otherUserId);
+    }).length;
+  };
 
-  const getAvailableToConnectCount = () =>
-    acceptedConnections.length - getRequestsSentCount();
+  const getMutualConnectionsCount = () => {
+    // Count connections that are also connected to the current user
+    return acceptedConnections.filter((connection) => {
+      const otherUserId =
+        connection.sender === connectionProfile?._id
+          ? connection.receiver
+          : connection.sender;
+      if (!otherUserId) return false;
+
+      // Check if this person is also in current user's connections
+      return currentUserConnectionIds.has(otherUserId);
+    }).length;
+  };
 
   const handleSendRequest = async (userId: string, userName: string) => {
     setRequestStates((prev) => ({ ...prev, [userId]: "sending" }));
@@ -180,6 +199,18 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
       alert("Failed to send connection request. Please try again.");
     }
   };
+
+  // Redirect to my profile if viewing own connections
+  useEffect(() => {
+    if (
+      !isLoading &&
+      !isCurrentUserLoading &&
+      currentUserProfile?._id &&
+      slug === currentUserProfile._id
+    ) {
+      router.push("/feeds/myprofile");
+    }
+  }, [isLoading, isCurrentUserLoading, currentUserProfile, slug, router]);
 
   if (
     isLoading ||
@@ -340,8 +371,8 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
                   color="green"
                 />
                 <StatsCard
-                  value={getAvailableToConnectCount()}
-                  label="Available to Connect"
+                  value={getMutualConnectionsCount()}
+                  label="Mutual Connections"
                   color="purple"
                 />
               </div>

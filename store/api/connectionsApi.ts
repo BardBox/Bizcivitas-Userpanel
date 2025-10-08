@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import { User } from "../../types/user.types";
+import { User, ApiResponse } from "../../types/user.types";
 import {
   ConnectionActionPayload,
   ConnectionRequest,
@@ -14,6 +14,16 @@ interface ConnectionActionResponse {
     connectionId?: string;
     status?: string;
   };
+}
+
+// API Response wrapper for connection profile
+interface ConnectionProfileApiResponse {
+  statusCode: number;
+  data: {
+    userDetails: User;
+  };
+  message: string;
+  success: boolean;
 }
 
 // Inject connection endpoints into baseApi
@@ -41,17 +51,23 @@ export const connectionsApi = baseApi.injectEndpoints({
         }
       },
     }),
-    getConnectionProfile: builder.query<any, string>({
+    getConnectionProfile: builder.query<User | null, string>({
       query: (userId) => `/connections/user/${userId}`,
-      providesTags: (_, __, userId) => [{ type: "Profile", id: userId }],
-      transformResponse: (response: any) => {
+      providesTags: (result, error, userId) => [
+        { type: "Profile", id: userId },
+      ],
+      transformResponse: (
+        response: ConnectionProfileApiResponse
+      ): User | null => {
         // Handle the specific response structure: { data: { userDetails: {...} } }
         if (response?.data?.userDetails) {
           return response.data.userDetails;
         } else if (response?.data) {
-          return response.data;
+          // Fallback for unexpected response format
+          return response.data as any;
         } else if (response) {
-          return response;
+          // Fallback for direct user object
+          return response as any;
         } else {
           return null;
         }
@@ -64,10 +80,10 @@ export const connectionsApi = baseApi.injectEndpoints({
       query: (type) => `/connections/${type}/connection-requests`,
       providesTags: ["Connections"],
     }),
-    getSuggestionsAll: builder.query<any, void>({
+    getSuggestionsAll: builder.query<User[], void>({
       query: () => "/connections/getSuggestionsAll",
       providesTags: ["Connections"],
-      transformResponse: (response: any) => {
+      transformResponse: (response: any): User[] => {
         return response?.data?.suggestions || [];
       },
     }),

@@ -4,20 +4,7 @@ import { useGetSuggestionsAllQuery } from "@/store/api";
 import { Users } from "lucide-react";
 import { usePagination } from "../Pagination/usePagination";
 import Pagination from "../Pagination/Pagination";
-interface SuggestionMember {
-  _id: string;
-  id: string;
-  fname?: string;
-  lname?: string;
-  avatar?: string;
-  classification?: string;
-  companyName?: string;
-  profile?: {
-    professionalDetails?: {
-      companyName?: string;
-    };
-  };
-}
+import type { User } from "../../../../types/user.types";
 
 interface CardMember {
   id: string;
@@ -57,7 +44,7 @@ const AllMembers: React.FC<AllMembersProps> = ({
   const membersData: CardMember[] = useMemo(() => {
     if (!suggestions) return [];
 
-    return suggestions.map((user: SuggestionMember) => {
+    return suggestions.map((user: User) => {
       const fullName = `${user.fname || ""} ${user.lname || ""}`.trim();
 
       // Get title/classification

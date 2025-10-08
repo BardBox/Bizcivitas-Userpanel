@@ -260,6 +260,6 @@ export const {
 } = profileApi;
 
 // Utility function
-export const getUserFullName = (user: any): string => {
+export const getUserFullName = (user?: User): string => {
   return `${user?.fname || ""} ${user?.lname || ""}`.trim();
 };

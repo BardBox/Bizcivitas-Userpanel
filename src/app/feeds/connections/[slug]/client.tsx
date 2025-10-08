@@ -79,9 +79,15 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
 
     // Find connection between current user and viewed profile
     const connection = connections.find((conn: any) => {
-      const sender = conn.sender?._id || conn.sender;
-      const receiver = conn.receiver?._id || conn.receiver;
-      return sender === currentUserId || receiver === currentUserId;
+      const senderId =
+        typeof conn.sender === "string"
+          ? conn.sender
+          : (conn.sender as any)?._id || conn.sender;
+      const receiverId =
+        typeof conn.receiver === "string"
+          ? conn.receiver
+          : (conn.receiver as any)?._id || conn.receiver;
+      return senderId === currentUserId || receiverId === currentUserId;
     });
 
     if (!connection) {
@@ -93,8 +99,11 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     }
 
     // Check if current user is sender or receiver
-    const sender = connection.sender?._id || connection.sender;
-    if (sender === currentUserId) {
+    const senderId =
+      typeof connection.sender === "string"
+        ? connection.sender
+        : (connection.sender as any)?._id || connection.sender;
+    if (senderId === currentUserId) {
       return { status: "pending_sent", connectionId: connection._id };
     } else {
       return { status: "pending_received", connectionId: connection._id };
@@ -106,8 +115,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     if (!connectionProfile) return null;
 
     // connectionProfile is already the userDetails from the API response
-    const user = connectionProfile;
-    const profile = user?.profile || {};
+    const user = connectionProfile as any; // Extended User type from API
+    const profile = (user?.profile || {}) as any; // Extended profile with FullProfile fields
 
     const businessData = {
       ...profile?.professionalDetails,
@@ -163,8 +172,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     if (!connectionProfile) return null;
 
     // connectionProfile is already the userDetails from the API response
-    const user = connectionProfile;
-    const profile = user?.profile || {};
+    const user = connectionProfile as any; // Extended User type from API
+    const profile = (user?.profile || {}) as any; // Extended profile with FullProfile fields
 
     // Get avatar URL
     const getAvatarUrl = (avatarPath?: string) => {

@@ -11,6 +11,7 @@ interface ConfirmDialogProps {
   cancelText?: string;
   isDestructive?: boolean;
   isLoading?: boolean;
+  warningText?: string | null;
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -23,16 +24,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelText = "Cancel",
   isDestructive = false,
   isLoading = false,
+  warningText = "This action cannot be undone.",
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0  bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 " onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 z-10">
@@ -67,9 +66,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <p className="text-sm text-gray-600 text-center mb-2">{message}</p>
 
         {/* Warning text */}
-        <p className="text-xs text-gray-500 text-center mb-6 italic">
-          This action cannot be undone.
-        </p>
+        {warningText && (
+          <p className="text-xs text-gray-500 text-center mb-6 italic">
+            {warningText}
+          </p>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3">

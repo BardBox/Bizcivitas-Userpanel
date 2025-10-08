@@ -37,9 +37,10 @@ const handleSendRequest = async (userId: string, userName: string) => {
 
 ## ✅ Solution Applied
 
-### 1. Imported RTK Query Mutation Hook
+### 1. Imported Required Dependencies
 
 ```typescript
+import { toast } from "react-hot-toast"; // ✅ Added for toast notifications
 import {
   useGetConnectionProfileQuery,
   useGetCurrentUserQuery,
@@ -60,32 +61,31 @@ const [sendConnectionRequest, { isLoading: isSendingRequest }] =
 ### 3. Updated handleSendRequest Function
 
 ```typescript
-// ✅ NEW CODE (Real API Call)
+// ✅ NEW CODE (Real API Call with Toast Notifications)
 const handleSendRequest = async (userId: string, userName: string) => {
   setRequestStates((prev) => ({ ...prev, [userId]: "sending" }));
 
   try {
-    // Call the real API endpoint
+    // Call the real API endpoint and await the response
     const result = await sendConnectionRequest({
       receiverId: userId,
     }).unwrap();
 
     setRequestStates((prev) => ({ ...prev, [userId]: "sent" }));
 
-    // Show success message
-    setTimeout(() => {
-      alert(`Connection request sent to ${userName}!`);
-    }, 100);
+    // Show non-blocking success toast after request completes
+    toast.success(`Connection request sent to ${userName}!`);
 
     console.log("✅ Connection request sent successfully:", result);
   } catch (error: any) {
     setRequestStates((prev) => ({ ...prev, [userId]: "idle" }));
 
+    // Show contextual error message in toast
     const errorMessage =
       error?.data?.message ||
       error?.message ||
       "Failed to send connection request";
-    alert(`Error: ${errorMessage}`);
+    toast.error(errorMessage);
 
     console.error("❌ Failed to send connection request:", error);
   }
@@ -186,7 +186,7 @@ requestStates: {
 3. **Click "Connect" button:**
 
    - Button should show loading state
-   - Alert should appear: "Connection request sent to [Name]!"
+   - Toast notification should appear: "Connection request sent to [Name]!"
    - Button should be disabled after success
 
 4. **Check backend:**
@@ -302,7 +302,8 @@ Authorization: Bearer ...
 ✅ **Error handling** - User-friendly error messages  
 ✅ **Loading states** - Visual feedback during API calls  
 ✅ **Type safety** - Full TypeScript support  
-✅ **Console logging** - Easy debugging
+✅ **Console logging** - Easy debugging  
+✅ **Toast notifications** - Non-blocking, modern UX with react-hot-toast
 
 ---
 
@@ -317,7 +318,7 @@ Authorization: Bearer ...
 
 ### Future Improvements:
 
-1. **Replace alert() with toast notifications** - Better UX
+1. ✅ **Toast notifications** - Non-blocking UX with react-hot-toast
 2. **Add optimistic updates** - Show sent state before API response
 3. **Implement retry logic** - Handle network failures
 4. **Add request throttling** - Prevent spam clicking

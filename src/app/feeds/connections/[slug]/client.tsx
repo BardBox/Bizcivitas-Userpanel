@@ -417,6 +417,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
                 mySkillItems={normalizedData.skills}
                 isEditing={false} // Always read-only
                 onEditStateChange={() => {}} // No-op
+                targetUserId={connectionProfile._id}
+                isOwnProfile={false}
                 formRef={React.createRef<HTMLFormElement>()}
               />
             </AccordionItem>

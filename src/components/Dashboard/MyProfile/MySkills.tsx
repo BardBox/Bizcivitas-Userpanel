@@ -1,25 +1,33 @@
 "use client";
 
 import React, { useState } from "react";
-import { Pencil, Save, X, Plus, Trash2, Award } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Award, ThumbsUp } from "lucide-react";
+import { useEndorseSkillMutation } from "@/store/api";
+import toast from "react-hot-toast";
 
 interface SkillItem {
   _id: string;
   name: string;
   score: number;
+  endorsedByMe?: boolean;
 }
 
 interface MySkillsProps {
   mySkillItems?: SkillItem[];
   isEditing?: boolean;
   onEditStateChange?: (editing: boolean) => void;
+  targetUserId?: string; //whose skills are these?
+  isOwnProfile?: boolean; //can't endorse your own skills
 }
 
 const MySkills: React.FC<MySkillsProps> = ({
   mySkillItems = [],
   isEditing: externalIsEditing = false,
   onEditStateChange,
+  targetUserId,
+  isOwnProfile = false,
 }) => {
+  const [endorseSkill, { isLoading: isEndorsing }] = useEndorseSkillMutation();
   const [localSkills, setLocalSkills] = useState<SkillItem[]>(
     mySkillItems.length > 0 ? mySkillItems : []
   );
@@ -59,6 +67,25 @@ const MySkills: React.FC<MySkillsProps> = ({
     }
   };
 
+  const handleEndorseSkill = async (
+    skillId: string,
+    endorsedByMe?: boolean
+  ) => {
+    if (isOwnProfile) {
+      toast.error("You cannot endorse your own skills!");
+      return;
+    }
+    try {
+      await endorseSkill({
+        skillId: skillId,
+        targetUserId: targetUserId!,
+      }).unwrap();
+
+      toast.success(endorsedByMe ? "Endorsement removed" : "Skill endorsed!");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to endorse skill");
+    }
+  };
   // Sync with external prop changes
   React.useEffect(() => {
     if (!externalIsEditing) {
@@ -91,7 +118,27 @@ const MySkills: React.FC<MySkillsProps> = ({
                       {skill.name}
                     </h4>
                     <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow-sm flex-shrink-0">
-                      <Award className="h-3 w-3 text-yellow-500" />
+                      <button
+                        onClick={() =>
+                          handleEndorseSkill(skill._id, skill.endorsedByMe)
+                        }
+                        disabled={isEndorsing || isOwnProfile}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all ${
+                          skill.endorsedByMe
+                            ? "bg-blue-600 text-white" // When endorsed
+                            : "bg-white text-gray-600" // When not endorsed
+                        } ${
+                          isOwnProfile
+                            ? "cursor-not-allowed opacity-50"
+                            : "hover:scale-105"
+                        }`}
+                      >
+                        <ThumbsUp
+                          className="h-3 w-3"
+                          fill={skill.endorsedByMe ? "currentColor" : "none"} // Filled or outline
+                        />
+                        <span className="text-xs font-bold">{skill.score}</span>
+                      </button>{" "}
                       <span className="text-xs font-bold text-gray-700">
                         {skill.score}
                       </span>

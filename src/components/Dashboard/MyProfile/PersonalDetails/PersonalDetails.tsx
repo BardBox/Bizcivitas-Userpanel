@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Heart, Target, Award, Plus, Trash2 } from "lucide-react";
-import { useUpdateMyBioMutation } from "@/store/api";
+import { Heart, Target, Award, Plus, Trash2, ThumbsUp } from "lucide-react";
+import { useUpdateMyBioMutation, useEndorseSkillMutation } from "@/store/api";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
+import { toast } from "react-hot-toast";
 
 interface SkillItem {
   _id: string;
   name: string;
   score: number;
+  endorsedByMe?: boolean;
 }
 
 interface PersonalDetailsFormData {
@@ -25,6 +27,8 @@ interface PersonalDetailsProps {
   isEditing?: boolean; // Controlled by parent (accordion)
   onEditStateChange?: (isEditing: boolean) => void;
   formRef?: React.RefObject<HTMLFormElement | null>;
+  targetUserId?: string; // For skill endorsement
+  isOwnProfile?: boolean; // To disable endorsement on own profile
 }
 
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({
@@ -33,10 +37,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   isEditing = false,
   onEditStateChange,
   formRef,
+  targetUserId,
+  isOwnProfile,
 }) => {
   const dispatch = useAppDispatch();
   const [localSkills, setLocalSkills] = useState<SkillItem[]>(mySkillItems);
   const [newSkillName, setNewSkillName] = useState("");
+  const [endorseSkill, { isLoading: isEndorsing }] = useEndorseSkillMutation();
 
   const defaultValues = {
     hobbiesAndInterests: personalDetails?.hobbiesAndInterests || "",
@@ -75,6 +82,32 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
   const handleRemoveSkill = (skillId: string) => {
     setLocalSkills(localSkills.filter((skill) => skill._id !== skillId));
+  };
+
+  const handleEndorseSkill = async (
+    skillId: string,
+    endorsedByMe?: boolean
+  ) => {
+    if (isOwnProfile) {
+      toast.error("You cannot endorse your own skills!");
+      return;
+    }
+
+    try {
+      await endorseSkill({
+        skillId: skillId,
+        targetUserId: targetUserId!,
+      }).unwrap();
+
+      toast.success(endorsedByMe ? "Endorsement removed" : "Skill endorsed!");
+    } catch (error: any) {
+      // Handle specific 409 error (trying to remove endorsement when score is 0)
+      if (error?.status === 409) {
+        toast.error("Cannot remove endorsement: skill score is already at 0");
+      } else {
+        toast.error(error?.data?.message || "Failed to endorse skill");
+      }
+    }
   };
 
   const handleSave = async (data: PersonalDetailsFormData) => {
@@ -241,12 +274,36 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                         <span className="text-sm font-medium text-gray-900">
                           {skill.name}
                         </span>
-                        <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full">
-                          <Award className="h-3 w-3 text-yellow-500" />
-                          <span className="text-xs font-bold text-gray-700">
+                        <button
+                          onClick={() =>
+                            handleEndorseSkill(skill._id, skill.endorsedByMe)
+                          }
+                          disabled={isEndorsing || isOwnProfile}
+                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full transition-all ${
+                            skill.endorsedByMe
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-gray-600 hover:bg-gray-100"
+                          } ${
+                            isOwnProfile
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:scale-105"
+                          }`}
+                          title={
+                            isOwnProfile
+                              ? "Can't endorse own skills"
+                              : skill.endorsedByMe
+                              ? "Remove endorsement"
+                              : "Endorse skill"
+                          }
+                        >
+                          <ThumbsUp
+                            className="h-3 w-3"
+                            fill={skill.endorsedByMe ? "currentColor" : "none"}
+                          />
+                          <span className="text-xs font-bold">
                             {skill.score}
                           </span>
-                        </div>
+                        </button>
                       </div>
                     ))}
                   </div>

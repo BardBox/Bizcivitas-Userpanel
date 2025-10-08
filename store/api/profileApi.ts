@@ -90,12 +90,11 @@ interface PersonalDetailsResponse {
 interface EndorseSkillResponse {
   success: boolean;
   message: string;
+  statusCode: number;
   data?: {
-    skill?: {
-      _id: string;
-      name: string;
-      score: number;
-    };
+    _id: string;
+    name: string;
+    score: number;
   };
 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Presentation, Calendar, FileText } from "lucide-react";
-import { useUpdateProfileMutation } from "../../../../store/api/userApi";
+import { useUpdateProfileMutation } from "@/store/api";
 
 interface WeeklyPresentationProps {
   weeklyPresentation?: {
@@ -42,7 +42,12 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
 
   const [updateProfile, { isLoading, error }] = useUpdateProfileMutation();
 
-  const handleSave = async (data: { title?: string; description?: string; weeklyPresentationLink?: string; presentationDate?: string }) => {
+  const handleSave = async (data: {
+    title?: string;
+    description?: string;
+    weeklyPresentationLink?: string;
+    presentationDate?: string;
+  }) => {
     console.log("Attempting to save weekly presentation:", data);
     try {
       // Clean the data - remove empty strings and undefined values
@@ -60,7 +65,7 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
       };
 
       const cleanedData = {
-        weeklyPresentation: presentationData
+        weeklyPresentation: presentationData,
       };
 
       console.log("Cleaned data to send:", cleanedData);

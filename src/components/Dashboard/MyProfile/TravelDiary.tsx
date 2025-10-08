@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { MapPin, Plane, Target, Car, Plus, Trash2 } from "lucide-react";
-import { useUpdateTravelDiaryMutation } from "../../../../store/api/userApi";
+import { useUpdateTravelDiaryMutation } from "@/store/api";
 
 interface TravelDiaryProps {
   travelDiary?: {
@@ -69,21 +69,35 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
   const [updateTravelDiary, { isLoading, error }] =
     useUpdateTravelDiaryMutation();
 
-  const handleSave = async (data: { dreamDestination?: string; myFootprints?: { value: string }[]; businessBucketList?: { value: string }[]; dealsOnWheels?: { value: string }[] }) => {
+  const handleSave = async (data: {
+    dreamDestination?: string;
+    myFootprints?: { value: string }[];
+    businessBucketList?: { value: string }[];
+    dealsOnWheels?: { value: string }[];
+  }) => {
     console.log("Attempting to save travel diary:", data);
     try {
       // Transform array fields back to string arrays
-      const myFootprints = data.myFootprints
-        ?.filter((item: { value: string }) => item.value && item.value.trim() !== "")
-        .map((item: { value: string }) => item.value.trim()) || [];
+      const myFootprints =
+        data.myFootprints
+          ?.filter(
+            (item: { value: string }) => item.value && item.value.trim() !== ""
+          )
+          .map((item: { value: string }) => item.value.trim()) || [];
 
-      const businessBucketList = data.businessBucketList
-        ?.filter((item: { value: string }) => item.value && item.value.trim() !== "")
-        .map((item: { value: string }) => item.value.trim()) || [];
+      const businessBucketList =
+        data.businessBucketList
+          ?.filter(
+            (item: { value: string }) => item.value && item.value.trim() !== ""
+          )
+          .map((item: { value: string }) => item.value.trim()) || [];
 
-      const dealsOnWheels = data.dealsOnWheels
-        ?.filter((item: { value: string }) => item.value && item.value.trim() !== "")
-        .map((item: { value: string }) => item.value.trim()) || [];
+      const dealsOnWheels =
+        data.dealsOnWheels
+          ?.filter(
+            (item: { value: string }) => item.value && item.value.trim() !== ""
+          )
+          .map((item: { value: string }) => item.value.trim()) || [];
 
       // Clean the data
       const cleanedData = {
@@ -176,7 +190,9 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-gray-600 text-sm">No places visited yet</span>
+                  <span className="text-gray-600 text-sm">
+                    No places visited yet
+                  </span>
                 )
               ) : (
                 <div className="space-y-2">
@@ -292,7 +308,9 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-gray-600 text-sm">No travel deals listed</span>
+                  <span className="text-gray-600 text-sm">
+                    No travel deals listed
+                  </span>
                 )
               ) : (
                 <div className="space-y-2">

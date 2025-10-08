@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
-import { useLogoutMutation } from "../../../store/api/userApi";
+import { useLogoutMutation } from "@/store/api";
 
 export default function DashboardHeader() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,7 +31,7 @@ export default function DashboardHeader() {
       }
 
       router.push("/login");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       // Show more detailed error message
       let errorMessage = "Unknown error";

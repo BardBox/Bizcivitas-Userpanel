@@ -1,5 +1,5 @@
 import React from "react";
-import { User, FullProfile } from "@/store/api/userApi";
+import { User, FullProfile } from "@/store/api";
 
 interface ProfileProgressProps {
   user: User | undefined;

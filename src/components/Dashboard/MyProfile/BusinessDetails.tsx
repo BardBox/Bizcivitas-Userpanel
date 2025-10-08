@@ -16,7 +16,7 @@ import { businessCategories } from "../data/businessCategories";
 import {
   useUpdateProfessionDetailsMutation,
   useUpdateAddressDetailsMutation,
-} from "../../../../store/api/userApi";
+} from "@/store/api";
 import LocationDropdowns, {
   getCountryISOCode,
   getStateISOCode,

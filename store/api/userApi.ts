@@ -1,3 +1,30 @@
+/**
+ * @deprecated This file is deprecated and will be removed in a future version.
+ *
+ * ⚠️ DO NOT USE THIS FILE FOR NEW CODE ⚠️
+ *
+ * This file has been split into domain-specific API files for better organization:
+ *
+ * - Profile Operations: Use `@/store/api/profileApi` or `@/store/api`
+ *   (getCurrentUser, getFullProfile, updateProfile, updatePersonalDetails,
+ *    updateProfessionDetails, updateMyBio, updateMySkills, updateTravelDiary,
+ *    updateContactDetails, updateAddressDetails, endorseSkill, logout)
+ *
+ * - Connection Operations: Use `@/store/api/connectionsApi` or `@/store/api`
+ *   (getConnections, getConnectionProfile, getConnectionRequests, getSuggestionsAll,
+ *    sendConnectionRequest, acceptConnectionRequest, deleteConnection)
+ *
+ * Migration Example:
+ *
+ * Before:
+ * import { useGetCurrentUserQuery, useGetConnectionsQuery } from '@/store/api/userApi'
+ *
+ * After:
+ * import { useGetCurrentUserQuery, useGetConnectionsQuery } from '@/store/api'
+ *
+ * All exports are re-exported from the central index file for convenience.
+ */
+
 import { baseApi } from "./baseApi";
 import { User, FullProfile, ApiResponse } from "../../types/user.types";
 import {

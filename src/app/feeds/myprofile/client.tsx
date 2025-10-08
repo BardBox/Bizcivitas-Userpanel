@@ -20,10 +20,7 @@ import BizNeeds, {
 import WeeklyPresentation, {
   useWeeklyPresentationWithAccordion,
 } from "@/components/Dashboard/MyProfile/WeeklyPresentation";
-import {
-  useGetCurrentUserQuery,
-  useGetFullProfileQuery,
-} from "../../../../store/api/userApi";
+import { useGetCurrentUserQuery, useGetFullProfileQuery } from "@/store/api";
 import { useAccordion } from "@/hooks/useAccordion";
 
 const MyProfileClient: React.FC = () => {

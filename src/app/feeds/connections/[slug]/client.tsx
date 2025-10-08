@@ -11,16 +11,16 @@ import Bizleads from "@/components/Dashboard/MyProfile/Bizleads/Bizleads";
 import BizNeeds from "@/components/Dashboard/MyProfile/BizNeeds/BizNeeds";
 import WeeklyPresentation from "@/components/Dashboard/MyProfile/WeeklyPresentation";
 import ViewOnlyConnections from "@/components/Dashboard/Connections/ViewOnlyConnections";
+import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
 import { ArrowLeft } from "lucide-react";
-import { useAppDispatch } from "../../../../../store/hooks";
-import { addToast } from "../../../../../store/toastSlice";
+import { toast } from "react-hot-toast";
 import {
   useGetConnectionProfileQuery,
   useGetCurrentUserQuery,
   useDeleteConnectionMutation,
   useSendConnectionRequestMutation,
   useAcceptConnectionRequestMutation,
-} from "../../../../../store/api/userApi";
+} from "@/store/api";
 
 interface ConnectionDetailsClientProps {
   slug: string;
@@ -36,7 +36,6 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dispatch = useAppDispatch();
 
   // Get referrer tab from URL params
   const referrerTab = searchParams.get("from");
@@ -54,9 +53,13 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   });
 
   // Mutations for connection actions
-  const [deleteConnection] = useDeleteConnectionMutation();
+  const [deleteConnection, { isLoading: isDeleting }] =
+    useDeleteConnectionMutation();
   const [sendConnectionRequest] = useSendConnectionRequestMutation();
   const [acceptConnectionRequest] = useAcceptConnectionRequestMutation();
+
+  // Confirm dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Handle client-side mounting
   useEffect(() => {
@@ -209,36 +212,25 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
         await acceptConnectionRequest({
           connectionId: connectionStatus.connectionId,
         }).unwrap();
-        dispatch(
-          addToast({
-            type: "success",
-            message: `Connection request accepted!`,
-            duration: 3000,
-          })
-        );
+        toast.success("Connection request accepted!");
       } else {
         // Send new connection request
         await sendConnectionRequest({ receiverId: slug }).unwrap();
-        dispatch(
-          addToast({
-            type: "success",
-            message: `Connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}`,
-            duration: 3000,
-          })
+        toast.success(
+          `Connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}`
         );
       }
     } catch (error: any) {
-      dispatch(
-        addToast({
-          type: "error",
-          message: error?.data?.message || "Failed to send connection request",
-          duration: 3000,
-        })
-      );
+      toast.error(error?.data?.message || "Failed to send connection request");
     }
   };
 
   const handleRemoveConnection = async () => {
+    if (!connectionStatus.connectionId) return;
+    setShowConfirmDialog(true);
+  };
+
+  const confirmRemoveConnection = async () => {
     if (!connectionStatus.connectionId) return;
 
     try {
@@ -251,32 +243,16 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           ? "Connection removed successfully"
           : "Connection request cancelled";
 
-      dispatch(
-        addToast({
-          type: "success",
-          message: actionText,
-          duration: 3000,
-        })
-      );
+      toast.success(actionText);
+      setShowConfirmDialog(false);
     } catch (error: any) {
-      dispatch(
-        addToast({
-          type: "error",
-          message: error?.data?.message || "Failed to remove connection",
-          duration: 3000,
-        })
-      );
+      toast.error(error?.data?.message || "Failed to remove connection");
+      setShowConfirmDialog(false);
     }
   };
 
   const handleMessage = () => {
-    dispatch(
-      addToast({
-        type: "info",
-        message: "Message feature coming soon",
-        duration: 3000,
-      })
-    );
+    toast("Message feature coming soon", { icon: "💬" });
   };
 
   // Show loading state during SSR or while data is being fetched
@@ -500,6 +476,29 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={confirmRemoveConnection}
+        title={
+          connectionStatus.status === "connected"
+            ? "Remove Connection"
+            : "Cancel Connection Request"
+        }
+        message={
+          connectionStatus.status === "connected"
+            ? `Are you sure you want to remove ${personalCardData?.fname} ${personalCardData?.lname} from your connections?`
+            : `Are you sure you want to cancel the connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}?`
+        }
+        confirmText={
+          connectionStatus.status === "connected" ? "Remove" : "Cancel Request"
+        }
+        cancelText="Go Back"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

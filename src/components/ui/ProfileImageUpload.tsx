@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Avatar from "@/components/ui/Avatar";
-import { useGetCurrentUserQuery } from "@/store/api/userApi";
+import { useGetCurrentUserQuery } from "@/store/api";
 
 interface ProfileImageUploadProps {
   onImageUpload?: (file: File) => Promise<void>;

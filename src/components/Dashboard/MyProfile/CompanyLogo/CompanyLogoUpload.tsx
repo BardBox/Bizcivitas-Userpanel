@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 import {
   useGetFullProfileQuery,
   useUpdateProfessionDetailsMutation,
-} from "../../../../../store/api/userApi";
+} from "@/store/api";
 
 // Image compression function using browser-image-compression
 const compressImage = async (

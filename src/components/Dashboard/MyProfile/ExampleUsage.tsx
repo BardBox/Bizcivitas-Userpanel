@@ -3,7 +3,7 @@
 import React from "react";
 import ProfilePreview from "@/components/Dashboard/MyProfile/ProfilePhoto/ProfilePreview";
 import Avatar from "@/components/ui/Avatar";
-import { useGetCurrentUserQuery } from "../../../../store/api/userApi";
+import { useGetCurrentUserQuery } from "@/store/api";
 
 export default function MyProfilePage() {
   const { data: user } = useGetCurrentUserQuery();

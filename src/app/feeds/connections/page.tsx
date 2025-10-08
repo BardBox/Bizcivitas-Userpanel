@@ -15,7 +15,7 @@ import AllMembers from "../../../components/Dashboard/Connections/AllMembers";
 import {
   useGetConnectionsQuery,
   useGetConnectionRequestsQuery,
-} from "../../../../store/api/userApi";
+} from "@/store/api";
 import { useGridLayout } from "@/hooks/useGridLayout";
 
 export default function ConnectionsPage() {

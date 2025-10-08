@@ -10,15 +10,15 @@ import {
   FALLBACK_AVATAR_URL,
 } from "@/utils/Feeds/connections/userHelpers";
 import LoadingSkeleton from "./LoadingSkeleton";
-import { useGetConnectionProfileQuery } from "../../../../store/api/userApi";
+import {
+  useGetConnectionProfileQuery,
+  useDeleteConnectionMutation,
+  useAcceptConnectionRequestMutation,
+} from "@/store/api";
 import {
   ConnectionRequestState,
   ConnectionStatus,
 } from "../../../../types/connection.types";
-import {
-  useDeleteConnectionMutation,
-  useAcceptConnectionRequestMutation,
-} from "../../../../store/api/userApi";
 import { useAppDispatch } from "../../../../store/hooks";
 import { addToast } from "../../../../store/toastSlice";
 

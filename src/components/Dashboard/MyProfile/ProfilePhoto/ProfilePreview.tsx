@@ -5,7 +5,7 @@ import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import Image from "next/image";
 import ProfilePhotoUpload from "./ProfilePhotoUpload";
 import ImageModal from "@/components/ui/ImageModal";
-import { useGetCurrentUserQuery } from "../../../../../store/api/userApi";
+import { useGetCurrentUserQuery } from "@/store/api";
 
 interface ProfilePreviewProps {
   size?: "small" | "medium" | "large";

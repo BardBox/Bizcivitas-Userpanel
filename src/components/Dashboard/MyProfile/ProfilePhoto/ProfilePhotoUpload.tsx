@@ -8,10 +8,7 @@ import ImageModal from "@/components/ui/ImageModal";
 import ImageCropModal from "@/components/ui/ImageCropModal";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { toast } from "react-hot-toast";
-import {
-  useGetCurrentUserQuery,
-  useUpdateProfileMutation,
-} from "../../../../../store/api/userApi";
+import { useGetCurrentUserQuery, useUpdateProfileMutation } from "@/store/api";
 
 // Image compression function using browser-image-compression
 const compressImage = async (

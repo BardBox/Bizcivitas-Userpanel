@@ -34,6 +34,7 @@ import { Connection, ConnectionStatus } from "@/types/connection.types";
 ### User Types (`user.types.ts`)
 
 #### Main Interfaces:
+
 - `User` - Main user object with basic info
 - `FullProfile` - Detailed user profile
 - `ProfessionalDetails` - Business/professional information
@@ -45,6 +46,7 @@ import { Connection, ConnectionStatus } from "@/types/connection.types";
 - `UserSkillItem` - User skills with endorsements
 
 #### Response Types:
+
 - `ApiResponse<T>` - Generic API response wrapper
 - `UserApiResponse` - User API response
 - `FullProfileApiResponse` - Full profile API response
@@ -53,17 +55,20 @@ import { Connection, ConnectionStatus } from "@/types/connection.types";
 ### Connection Types (`connection.types.ts`)
 
 #### Main Interfaces:
+
 - `Connection` - Basic connection between users
 - `PopulatedConnection` - Connection with populated user details
 - `ConnectionWithUser` - Connection with minimal user info
 - `ConnectionStatusInfo` - Connection status information
 
 #### Enums/Types:
+
 - `ConnectionStatus` - `"none" | "pending_sent" | "pending_received" | "connected"`
 - `ConnectionRequestState` - `"idle" | "sending" | "sent"`
 - `ConnectionCardStatus` - `"self" | "connected" | "not_connected"`
 
 #### Request/Response Types:
+
 - `ConnectionRequest` - Send connection request payload
 - `ConnectionActionPayload` - Accept/Delete connection payload
 - `ConnectionApiResponse` - Single connection response
@@ -91,18 +96,14 @@ const MyComponent = () => {
 ### Using Connection Types
 
 ```typescript
-import {
-  Connection,
-  ConnectionStatus,
-  ConnectionStatusInfo
-} from "@/types";
+import { Connection, ConnectionStatus, ConnectionStatusInfo } from "@/types";
 
 const ConnectionCard = ({ userId }: { userId: string }) => {
   const [status, setStatus] = useState<ConnectionStatus>("none");
 
   const connectionInfo: ConnectionStatusInfo = {
     status: "connected",
-    connectionId: "123"
+    connectionId: "123",
   };
 
   return <div>Status: {status}</div>;
@@ -115,8 +116,8 @@ const ConnectionCard = ({ userId }: { userId: string }) => {
 import { User, ConnectionRequest } from "@/types";
 import {
   useGetCurrentUserQuery,
-  useSendConnectionRequestMutation
-} from "@/store/api/userApi";
+  useSendConnectionRequestMutation,
+} from "@/store/api";
 
 const MyComponent = () => {
   const { data: currentUser } = useGetCurrentUserQuery();
@@ -130,9 +131,7 @@ const MyComponent = () => {
   return (
     <div>
       <p>{currentUser?.fname}</p>
-      <button onClick={() => handleConnect("userId123")}>
-        Connect
-      </button>
+      <button onClick={() => handleConnect("userId123")}>Connect</button>
     </div>
   );
 };
@@ -150,6 +149,7 @@ const MyComponent = () => {
 ## Migration Guide
 
 ### Old Way (Before):
+
 ```typescript
 // Types defined inline
 interface MyUser {
@@ -161,6 +161,7 @@ interface MyUser {
 ```
 
 ### New Way (After):
+
 ```typescript
 // Import from centralized types
 import { User } from "@/types";
@@ -177,6 +178,7 @@ const user: User = { ... };
 4. Update this README with the new type
 
 Example:
+
 ```typescript
 // In user.types.ts
 export interface NewUserType {
@@ -184,5 +186,5 @@ export interface NewUserType {
 }
 
 // In index.ts
-export * from "./user.types";  // Already there, no change needed
+export * from "./user.types"; // Already there, no change needed
 ```

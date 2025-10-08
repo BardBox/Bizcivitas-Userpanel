@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useAppDispatch } from "../../../../store/hooks";
 import { addToast } from "../../../../store/toastSlice";
-import { useGetCurrentUserQuery } from "../../../../store/api/userApi";
+import { useGetCurrentUserQuery } from "@/store/api";
 
 interface ConnectionsAndShareProps {
   totalConnections?: number;

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import UserCard from "../UserCard";
-import { useGetSuggestionsAllQuery } from "@/store/api/userApi";
+import { useGetSuggestionsAllQuery } from "@/store/api";
 import { Users } from "lucide-react";
 import { usePagination } from "../Pagination/usePagination";
 import Pagination from "../Pagination/Pagination";

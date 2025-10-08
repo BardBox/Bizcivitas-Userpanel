@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Users, Search } from "lucide-react";
+import { toast } from "react-hot-toast";
 import ConnectionCard from "@/components/Dashboard/Connections/ConnectionCard";
 import {
   usePagination,
@@ -17,7 +18,8 @@ import {
   useGetCurrentUserQuery,
   useGetConnectionsQuery,
   useGetConnectionRequestsQuery,
-} from "../../../../../../store/api/userApi";
+  useSendConnectionRequestMutation,
+} from "@/store/api";
 
 interface ConnectionsViewPageProps {
   slug: string;
@@ -44,6 +46,11 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
     Record<string, "idle" | "sending" | "sent">
   >({});
 
+  // RTK Query mutation for sending connection requests
+  const [sendConnectionRequest, { isLoading: isSendingRequest }] =
+    useSendConnectionRequestMutation();
+
+  // Get the profile you're viewing
   const {
     data: connectionProfile,
     isLoading,
@@ -155,48 +162,63 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
     pagination.actions.goToFirstPage();
   };
 
-  // Helper functions for stats calculations
-  const getRequestsSentCount = () => {
-    // Count actual pending sent requests from the API
-    return acceptedConnections.filter((connection) => {
-      const otherUserId =
-        connection.sender === connectionProfile?._id
-          ? connection.receiver
-          : connection.sender;
-      return otherUserId && sentRequestMap.has(otherUserId);
-    }).length;
-  };
+  // Calculate connection stats in a single pass (optimized with reduce)
+  const connectionStats = useMemo(() => {
+    return acceptedConnections.reduce(
+      (stats, connection) => {
+        const otherUserId =
+          connection.sender === connectionProfile?._id
+            ? connection.receiver
+            : connection.sender;
 
-  const getMutualConnectionsCount = () => {
-    // Count connections that are also connected to the current user
-    return acceptedConnections.filter((connection) => {
-      const otherUserId =
-        connection.sender === connectionProfile?._id
-          ? connection.receiver
-          : connection.sender;
-      if (!otherUserId) return false;
+        if (!otherUserId) return stats;
 
-      // Check if this person is also in current user's connections
-      return currentUserConnectionIds.has(otherUserId);
-    }).length;
-  };
+        // Count pending sent requests
+        if (sentRequestMap.has(otherUserId)) {
+          stats.requestsSent++;
+        }
+
+        // Count mutual connections
+        if (currentUserConnectionIds.has(otherUserId)) {
+          stats.mutualConnections++;
+        }
+
+        return stats;
+      },
+      { requestsSent: 0, mutualConnections: 0 }
+    );
+  }, [
+    acceptedConnections,
+    connectionProfile?._id,
+    sentRequestMap,
+    currentUserConnectionIds,
+  ]);
 
   const handleSendRequest = async (userId: string, userName: string) => {
     setRequestStates((prev) => ({ ...prev, [userId]: "sending" }));
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Mock delay
+      // Call the real API endpoint
+      const result = await sendConnectionRequest({
+        receiverId: userId,
+      }).unwrap();
 
       setRequestStates((prev) => ({ ...prev, [userId]: "sent" }));
 
-      // Show success message
-      setTimeout(() => {
-        alert(`Connection request sent to ${userName}!`);
-      }, 100);
-    } catch (error) {
+      // Show success toast
+      toast.success(`Connection request sent to ${userName}!`);
+
+      console.log("✅ Connection request sent successfully:", result);
+    } catch (error: any) {
       setRequestStates((prev) => ({ ...prev, [userId]: "idle" }));
-      alert("Failed to send connection request. Please try again.");
+
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        "Failed to send connection request";
+      toast.error(errorMessage);
+
+      console.error("❌ Failed to send connection request:", error);
     }
   };
 
@@ -366,12 +388,12 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
                   color="blue"
                 />
                 <StatsCard
-                  value={getRequestsSentCount()}
+                  value={connectionStats.requestsSent}
                   label="Requests Sent"
                   color="green"
                 />
                 <StatsCard
-                  value={getMutualConnectionsCount()}
+                  value={connectionStats.mutualConnections}
                   label="Mutual Connections"
                   color="purple"
                 />

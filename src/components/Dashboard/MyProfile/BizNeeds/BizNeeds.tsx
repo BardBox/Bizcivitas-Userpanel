@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
-import { Target, Building2, User, Briefcase, Plus, Trash2, X } from "lucide-react";
-import { useUpdateMyBioMutation } from "../../../../../store/api/userApi";
+import {
+  Target,
+  Building2,
+  User,
+  Briefcase,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useUpdateMyBioMutation } from "@/store/api";
 
 interface BizNeedsProps {
   myAsk?: string[];
@@ -168,7 +176,10 @@ const BizNeeds: React.FC<BizNeedsProps> = ({
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {fields.map((field, index) => (
-                      <tr key={field.id} className="group hover:bg-gray-50 relative">
+                      <tr
+                        key={field.id}
+                        className="group hover:bg-gray-50 relative"
+                      >
                         <td className="px-3 py-2 text-sm">
                           {isEditing ? (
                             <input
@@ -224,9 +235,7 @@ const BizNeeds: React.FC<BizNeedsProps> = ({
                 </table>
               </div>
             ) : (
-              <span className="text-gray-600">
-                No specific contacts needed
-              </span>
+              <span className="text-gray-600">No specific contacts needed</span>
             )}
 
             {isEditing && (

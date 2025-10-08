@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Heart, Target, Award, Plus, Trash2 } from "lucide-react";
-import { useUpdateMyBioMutation } from "../../../../../store/api/userApi";
+import { useUpdateMyBioMutation } from "@/store/api";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
 

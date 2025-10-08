@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetCurrentUserQuery } from "../../../../store/api/userApi";
+import { useGetCurrentUserQuery } from "@/store/api";
 
 export default function DebugPage() {
   const { data, isLoading, error } = useGetCurrentUserQuery();

@@ -7,7 +7,7 @@ import {
   useGetConnectionRequestsQuery,
   useAcceptConnectionRequestMutation,
   useDeleteConnectionMutation,
-} from "../../../../../store/api/userApi";
+} from "@/store/api";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
 import ConnectionRequestCard from "@/components/Dashboard/Connections/SendAcceptRequest/ConnectionRequestCard";
@@ -202,7 +202,9 @@ export default function ConnectionRequestsPage() {
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600"></div>
               <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-t-blue-400 animate-ping opacity-20"></div>
             </div>
-            <p className="text-gray-600 mt-6 text-lg font-medium">Loading {activeTab} requests...</p>
+            <p className="text-gray-600 mt-6 text-lg font-medium">
+              Loading {activeTab} requests...
+            </p>
           </div>
         )}
 
@@ -239,7 +241,7 @@ export default function ConnectionRequestsPage() {
                   No Received Requests
                 </h3>
                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  You don't have any pending connection requests at the moment. 
+                  You don't have any pending connection requests at the moment.
                   Check back later or start exploring members!
                 </p>
               </>
@@ -252,8 +254,8 @@ export default function ConnectionRequestsPage() {
                   No Sent Requests
                 </h3>
                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  You haven't sent any connection requests yet. 
-                  Start building your network today!
+                  You haven't sent any connection requests yet. Start building
+                  your network today!
                 </p>
               </>
             )}
@@ -271,7 +273,8 @@ export default function ConnectionRequestsPage() {
           <div className="space-y-3">
             <div className="mb-4">
               <p className="text-sm text-gray-600">
-                {requests.length} {requests.length === 1 ? "request" : "requests"} found
+                {requests.length}{" "}
+                {requests.length === 1 ? "request" : "requests"} found
               </p>
             </div>
             {requests.map((request) => (

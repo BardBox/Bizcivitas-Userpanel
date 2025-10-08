@@ -10,7 +10,7 @@ import {
   Briefcase,
   X,
 } from "lucide-react";
-import { useUpdateMyBioMutation } from "../../../../../store/api/userApi";
+import { useUpdateMyBioMutation } from "@/store/api";
 
 interface BizleadsProps {
   leads?: {
@@ -180,7 +180,10 @@ const Bizleads: React.FC<BizleadsProps> = ({
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {fields.map((field, index) => (
-                        <tr key={field.id} className="group hover:bg-gray-50 relative">
+                        <tr
+                          key={field.id}
+                          className="group hover:bg-gray-50 relative"
+                        >
                           <td className="px-3 py-2 text-sm">
                             {isEditing ? (
                               <input

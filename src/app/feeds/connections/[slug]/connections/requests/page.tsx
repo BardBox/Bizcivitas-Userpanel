@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetConnectionRequestsQuery } from "@/store/api/userApi";
+import { useGetConnectionRequestsQuery } from "@/store/api";
 import React, { useState } from "react";
 
 export default function ConnectionRequestsPage() {

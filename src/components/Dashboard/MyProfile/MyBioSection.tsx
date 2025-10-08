@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { User, FileText, Target, Heart, Plus, Trash2 } from "lucide-react";
-import { useUpdateMyBioMutation } from "@/store/api/userApi";
+import { useUpdateMyBioMutation } from "@/store/api";
 
 interface MyBioSectionProps {
   myBio?: {

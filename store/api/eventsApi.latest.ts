@@ -9,6 +9,7 @@ import {
 import { baseApi } from "./baseApi";
 
 export const eventsApiLatest = baseApi.injectEndpoints({
+  overrideExisting: true, // Allow overriding duplicate endpoints
   endpoints: (builder) => ({
     // Get all events with optional filters (UPDATED for latest backend)
     getAllEvents: builder.query<FrontendEvent[], EventFilters | void>({

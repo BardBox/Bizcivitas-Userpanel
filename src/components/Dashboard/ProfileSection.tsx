@@ -4,10 +4,7 @@ import { UserIcon } from "./DashboardIcons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/ui/Avatar";
-import {
-  getUserFullName,
-  useGetCurrentUserQuery,
-} from "../../../store/api/userApi";
+import { getUserFullName, useGetCurrentUserQuery } from "@/store/api";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 
 interface ProfileSectionProps {
@@ -15,7 +12,10 @@ interface ProfileSectionProps {
   onNavigate?: () => void;
 }
 
-export default function ProfileSection({ isCollapsed, onNavigate }: ProfileSectionProps) {
+export default function ProfileSection({
+  isCollapsed,
+  onNavigate,
+}: ProfileSectionProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { data: user, isLoading, error } = useGetCurrentUserQuery();
   const router = useRouter();

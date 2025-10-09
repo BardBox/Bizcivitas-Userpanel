@@ -4,6 +4,7 @@ import { useState } from "react";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import { X } from "lucide-react";
+// import PerformanceMonitor from "@/components/PerformanceMonitor"; // Disabled for testing
 
 export default function FeedsLayoutClient({
   children,
@@ -78,6 +79,9 @@ export default function FeedsLayoutClient({
           </svg>
         </button>
       )}
+
+      {/* Performance Monitor - Disabled (was causing extra renders) */}
+      {/* {process.env.NODE_ENV === "development" && <PerformanceMonitor />} */}
     </div>
   );
 }

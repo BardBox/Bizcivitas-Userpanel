@@ -27,6 +27,9 @@ export const baseApi = createApi({
       return headers;
     },
   }),
+  // ⚡ CRITICAL: Performance fix - Don't refetch on window focus (this was causing 366 renders!)
+  refetchOnFocus: false,
+  // NOTE: Tag invalidation from mutations (like endorseSkill) will automatically refetch affected data
   tagTypes: [
     "User",
     "Profile",

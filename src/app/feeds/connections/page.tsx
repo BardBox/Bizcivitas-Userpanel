@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import dynamic from "next/dynamic";
 import {
   Search,
   Users,
@@ -10,8 +11,13 @@ import {
   Inbox,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import UserCard from "../../../components/Dashboard/UserCard";
-import AllMembers from "../../../components/Dashboard/Connections/AllMembers";
+
+const UserCard = dynamic(
+  () => import("../../../components/Dashboard/UserCard")
+);
+const AllMembers = dynamic(
+  () => import("../../../components/Dashboard/Connections/AllMembers")
+);
 import {
   useGetConnectionsQuery,
   useGetConnectionRequestsQuery,

@@ -242,6 +242,8 @@ const MyProfileClient: React.FC = () => {
                 isEditing={isEditingPersonal}
                 onEditStateChange={setIsEditingPersonal}
                 formRef={personalFormRef}
+                isOwnProfile={true}
+                targetUserId={user._id || user.id}
               />
             </AccordionItem>
 

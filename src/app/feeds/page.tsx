@@ -2,10 +2,17 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import InfiniteScroll from "react-infinite-scroll-component";
-import FloatingDrawer from "@/components/Dashboard/FloatingDrawer";
-import PostCard from "@/components/Dashboard/PostCard";
-import WebinarSection from "@/components/Dashboard/WebinarSection";
+
+const FloatingDrawer = dynamic(
+  () => import("@/components/Dashboard/FloatingDrawer"),
+  { ssr: false }
+);
+const PostCard = dynamic(() => import("@/components/Dashboard/PostCard"));
+const WebinarSection = dynamic(
+  () => import("@/components/Dashboard/WebinarSection")
+);
 
 // --- Utilities ---
 const authors = [
@@ -57,17 +64,13 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Client-side auth check (backup for when cookies don't work)
   useEffect(() => {
-    const checkAuth = () => {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        router.push("/login");
-        return;
-      }
-      setIsLoading(false);
-    };
-    checkAuth();
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      router.replace("/login");
+      return;
+    }
+    setIsLoading(false);
   }, [router]);
   useEffect(() => {
     const updateDrawer = () => setIsDrawerOpen(window.innerWidth >= 768);

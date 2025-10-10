@@ -154,7 +154,7 @@ export default function ProfileSection({
             <p className="text-xs text-gray-500 truncate">{getUserTitle()}</p>
             {/* View Profile hint on hover */}
             <p className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
-              View Profile →
+              View Profile
             </p>
           </div>
         </div>

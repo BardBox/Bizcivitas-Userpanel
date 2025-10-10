@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAppDispatch } from "../../../../store/hooks";
 import { addToast } from "../../../../store/toastSlice";
 import { useGetCurrentUserQuery } from "@/store/api";
+import CallOptionsModal from "./CallOptionsModal";
 
 interface ConnectionsAndShareProps {
   totalConnections?: number;
@@ -34,8 +36,10 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   userId,
 }) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { data: currentUser } = useGetCurrentUserQuery();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
 
   // Generate profile URL
   const getProfileUrl = () => {
@@ -48,9 +52,9 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   };
 
   const handleCall = () => {
-    if (userProfile.contact?.personal) {
-      window.location.href = `tel:${userProfile.contact.personal}`;
-    } else {
+    const phoneNumber = userProfile.contact?.personal;
+
+    if (!phoneNumber) {
       dispatch(
         addToast({
           type: "error",
@@ -58,7 +62,12 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           duration: 3000,
         })
       );
+      return;
     }
+
+    // Always show modal - it works on both mobile and desktop
+    // Modal provides options: Direct Call, WhatsApp, Copy Number
+    setIsCallModalOpen(true);
   };
 
   const handleMessage = () => {
@@ -78,6 +87,9 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   const handleConnect = () => {
     if (customConnect) {
       customConnect();
+    } else if (isOwnProfile) {
+      // For own profile, navigate to connections page
+      router.push("/feeds/connections");
     } else {
       dispatch(
         addToast({
@@ -93,18 +105,29 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
     try {
       const profileUrl = getProfileUrl();
 
+      // Build detailed contact information like in the APK
+      const firstName = userProfile.fname || "";
+      const lastName = userProfile.lname || "";
+      const company = userProfile.business?.name || "";
+      const email = userProfile.contact?.email || "";
+      const mobile = userProfile.contact?.personal || "";
+      const website = userProfile.contact?.website || "";
+
+      // Create detailed share message matching APK format
+      const shareMessage = `Contact Information:\n\nName: ${firstName} ${lastName}\nCompany: ${company}\n\nEmail: ${email}\nMobile: ${mobile}\nWebsite: ${website}\n\nProfile: ${profileUrl}\n\nShared via BizCivitas`;
+
       if (navigator.share) {
         await navigator.share({
-          title: `${userProfile.fname} ${userProfile.lname} - BizCivitas`,
-          text: `Connect with ${userProfile.fname} at ${userProfile.business?.name}`,
-          url: profileUrl,
+          title: `---- ${firstName} ${lastName}'s Contact Information ----`,
+          text: shareMessage,
         });
       } else {
-        await navigator.clipboard.writeText(profileUrl);
+        // Copy detailed contact info to clipboard instead of just URL
+        await navigator.clipboard.writeText(shareMessage);
         dispatch(
           addToast({
             type: "success",
-            message: "Profile link copied to clipboard",
+            message: "Contact information copied to clipboard",
             duration: 3000,
           })
         );
@@ -134,9 +157,9 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           <Image
             src="/myprofile/call.svg"
             alt="Call"
-            width={40}
-            height={40}
-            className="w-10 h-10"
+            width={0}
+            height={0}
+            className="w-auto h-auto"
           />
         </button>
         {hoveredButton === "call" && (
@@ -158,9 +181,9 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           <Image
             src="/myprofile/msg.svg"
             alt="Message"
-            width={40}
-            height={40}
-            className="w-10 h-10"
+            width={0}
+            height={0}
+            className="w-auto h-auto"
           />
         </button>
         {hoveredButton === "message" && (
@@ -176,24 +199,21 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           onClick={handleConnect}
           onMouseEnter={() => setHoveredButton("connect")}
           onMouseLeave={() => setHoveredButton(null)}
-          disabled={isOwnProfile}
-          className={`transition-transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full ${
-            isOwnProfile ? "opacity-50 cursor-not-allowed" : "hover:scale-110"
-          }`}
+          className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
           aria-label="Connect"
         >
           <Image
             src="/myprofile/connection.svg"
             alt="Connect"
-            width={40}
-            height={40}
-            className="w-10 h-10"
+            width={0}
+            height={0}
+            className="w-auto h-auto"
           />
         </button>
         {hoveredButton === "connect" && (
           <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
             {isOwnProfile
-              ? "Cannot connect to yourself"
+              ? "View Connections"
               : customConnect
               ? "Connection"
               : "Coming soon"}
@@ -213,9 +233,9 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           <Image
             src="/myprofile/share.svg"
             alt="Share"
-            width={40}
-            height={40}
-            className="w-10 h-10"
+            width={0}
+            height={0}
+            className="w-auto h-auto"
           />
         </button>
         {hoveredButton === "share" && (
@@ -224,6 +244,25 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           </div>
         )}
       </div>
+
+      {/* Call Options Modal */}
+      <CallOptionsModal
+        isOpen={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
+        phoneNumber={userProfile.contact?.personal || ""}
+        userName={`${userProfile.fname || ""} ${
+          userProfile.lname || ""
+        }`.trim()}
+        onCopySuccess={() => {
+          dispatch(
+            addToast({
+              type: "success",
+              message: "Phone number copied to clipboard",
+              duration: 3000,
+            })
+          );
+        }}
+      />
     </div>
   );
 };

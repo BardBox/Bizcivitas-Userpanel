@@ -61,17 +61,7 @@ export default function DashboardPage() {
   );
   const [hasMore, setHasMore] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
-  useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      router.replace("/login");
-      return;
-    }
-    setIsLoading(false);
-  }, [router]);
   useEffect(() => {
     const updateDrawer = () => setIsDrawerOpen(window.innerWidth >= 768);
     updateDrawer();
@@ -88,18 +78,6 @@ export default function DashboardPage() {
       if (posts.length >= 50) setHasMore(false);
     }, 1000);
   }, [posts.length]);
-
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-dashboard-primary">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading feeds...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen ">

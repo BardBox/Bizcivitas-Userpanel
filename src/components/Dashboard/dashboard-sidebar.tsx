@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import ProfileSection from "./ProfileSection";
 import Image from "next/image";
 
-// Component to load and display inline SVG
-function InlineSvgIcon({
+// SVG Cache to prevent re-fetching
+const svgCache = new Map<string, string>();
+
+// Component to load and display inline SVG with caching - Memoized for performance
+const InlineSvgIcon = memo(function InlineSvgIcon({
   src,
   className = "w-4 h-4",
   color,
@@ -16,30 +19,45 @@ function InlineSvgIcon({
   className?: string;
   color?: string;
 }) {
-  const [svgContent, setSvgContent] = useState<string>("");
+  const [svgContent, setSvgContent] = useState<string>(() => {
+    // Check cache first
+    const cached = svgCache.get(`${src}-${color}`);
+    return cached || "";
+  });
+
   useEffect(() => {
+    // If already in cache, don't fetch
+    const cacheKey = `${src}-${color}`;
+    if (svgCache.has(cacheKey)) {
+      setSvgContent(svgCache.get(cacheKey)!);
+      return;
+    }
+
+    // Fetch only if not cached - runs in background
     fetch(src)
       .then((response) => response.text())
       .then((svg) => {
+        let processedSvg = svg;
         // If color is provided, modify the SVG to use that color
         if (color) {
           // Replace stroke and fill attributes with the desired color
-          const modifiedSvg = svg
+          processedSvg = svg
             .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
             .replace(/fill="[^"]*"/g, (match) => {
               // Only replace fill if it's not "none"
               return match.includes('fill="none"') ? match : `fill="${color}"`;
             });
-          setSvgContent(modifiedSvg);
-        } else {
-          setSvgContent(svg);
         }
+        // Cache the result
+        svgCache.set(cacheKey, processedSvg);
+        setSvgContent(processedSvg);
       })
       .catch((error) => console.error("Error loading SVG:", error));
   }, [src, color]);
 
   if (!svgContent) {
-    return <div className={`${className} bg-gray-200 animate-pulse rounded`} />;
+    // Show minimal loading state - empty space to prevent layout shift
+    return <div className={className} />;
   }
 
   return (
@@ -48,7 +66,7 @@ function InlineSvgIcon({
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );
-}
+});
 
 // Arrow Icons for sidebar toggle
 const ArrowLeftIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -157,24 +175,30 @@ export default function DashboardSidebar({
           <div className="flex items-center space-x-2">
             {!isCollapsed && (
               <>
-                <Link href="/feeds" className="flex items-center">
+                <Link
+                  href="/feeds"
+                  prefetch={true}
+                  className="flex items-center"
+                >
                   <Image
                     src="/bizcivitas.svg"
                     width={150} // Adjust based on your logo's dimensions
                     height={40} // Adjust based on your logo's dimensions
                     alt="BizCivitas Logo"
                     className="object-contain"
+                    priority
                   />
                 </Link>
               </>
             )}
             {isCollapsed && (
-              <Link href="/" className="flex items-center">
+              <Link href="/feeds" prefetch={true} className="flex items-center">
                 <Image
                   src="/favicon.ico"
                   width={150} // Adjust based on your logo's dimensions
                   height={40} // Adjust based on your logo's dimensions
                   alt="BizCivitas Logo"
+                  priority
                 />
               </Link>
             )}
@@ -239,7 +263,8 @@ interface SidebarLinkProps {
   onClick?: () => void;
 }
 
-function SidebarLink({
+// Memoize SidebarLink to prevent unnecessary re-renders
+const SidebarLink = memo(function SidebarLink({
   href,
   text,
   iconPath,
@@ -273,4 +298,4 @@ function SidebarLink({
       </Link>
     </li>
   );
-}
+});

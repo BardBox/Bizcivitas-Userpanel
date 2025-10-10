@@ -17,7 +17,16 @@ export default function ProfileSection({
   onNavigate,
 }: ProfileSectionProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const { data: user, isLoading, error } = useGetCurrentUserQuery();
+  // Don't block rendering - fetch in background
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useGetCurrentUserQuery(undefined, {
+    // These settings prevent blocking and improve performance
+    refetchOnMountOrArgChange: false,
+    skip: false,
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -53,65 +62,7 @@ export default function ProfileSection({
     );
   };
 
-  // Show loading state
-  if (!isMounted || isLoading) {
-    return (
-      <div className="mb-8">
-        {!isCollapsed ? (
-          <div
-            onClick={handleProfileClick}
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            <div className="h-12 w-12 rounded-full bg-gray-200 animate-pulse flex-shrink-0"></div>
-            <div className="flex-1 min-w-0">
-              <div className="h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
-              <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4"></div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div
-              onClick={handleProfileClick}
-              className="h-10 w-10 rounded-full bg-gray-200 animate-pulse cursor-pointer"
-            ></div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="mb-8">
-        {!isCollapsed ? (
-          <div
-            onClick={handleProfileClick}
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-              <UserIcon className="w-7 h-7 text-red-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-gray-900 text-sm">
-                Guest User
-              </h2>
-              <p className="text-xs text-red-500">Failed to load profile</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div
-              onClick={handleProfileClick}
-              className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center cursor-pointer"
-            >
-              <UserIcon className="w-6 h-6 text-red-500" />
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Don't block UI with loading/error states - show default and update when ready
 
   return (
     <div className="mb-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -11,39 +11,26 @@ export default function ProtectedRoute({
 }) {
   const router = useRouter();
 
-  // Perform synchronous auth check on initialization
-  // This prevents flash of protected content before redirect
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(() => {
+  useEffect(() => {
+    // Check authentication on client-side only
+    // This avoids hydration mismatch between server and client
     try {
-      return isAuthenticated();
+      const authenticated = isAuthenticated();
+
+      if (!authenticated) {
+        // Invalid or expired token - redirect to login
+        router.replace("/login");
+      }
     } catch (error) {
       console.error("Auth check error:", error);
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    // If not authorized, redirect to login
-    if (isAuthorized === false) {
+      // On error, redirect to login for safety
       router.replace("/login");
     }
-  }, [isAuthorized, router]);
+  }, [router]);
 
-  // Show loading state while authorization is being determined
-  // or when unauthorized (before redirect completes)
-  if (isAuthorized === null || isAuthorized === false) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Only render protected content when authorized
-  // Note: For full server-side protection, consider using Next.js middleware
-  // to check authentication before the page even loads on the client
+  // Render children immediately to match server-rendered HTML
+  // Redirect happens in useEffect on client-side if unauthorized
+  // Note: For full server-side protection, use Next.js middleware
+  // to check authentication before the page even loads
   return <>{children}</>;
 }

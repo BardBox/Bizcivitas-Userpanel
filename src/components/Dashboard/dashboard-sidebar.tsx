@@ -6,8 +6,65 @@ import { useState, useEffect, memo } from "react";
 import ProfileSection from "./ProfileSection";
 import Image from "next/image";
 
+/**
+ * Simple Bounded LRU Cache implementation
+ * Automatically evicts oldest entries when max size is exceeded
+ * @param maxSize - Maximum number of entries (default: 100)
+ */
+class BoundedLRUCache<K, V> {
+  private cache: Map<K, V>;
+  private maxSize: number;
+
+  constructor(maxSize: number = 100) {
+    this.cache = new Map<K, V>();
+    this.maxSize = maxSize;
+  }
+
+  get(key: K): V | undefined {
+    if (!this.cache.has(key)) {
+      return undefined;
+    }
+    // Move to end (most recently used)
+    const value = this.cache.get(key)!;
+    this.cache.delete(key);
+    this.cache.set(key, value);
+    return value;
+  }
+
+  set(key: K, value: V): void {
+    // If key exists, delete it first to move it to the end
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+
+    // Add new entry
+    this.cache.set(key, value);
+
+    // Evict oldest entry if size exceeded
+    if (this.cache.size > this.maxSize) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
+  }
+
+  has(key: K): boolean {
+    return this.cache.has(key);
+  }
+
+  size(): number {
+    return this.cache.size;
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
 // SVG Cache to prevent re-fetching
-const svgCache = new Map<string, string>();
+// Bounded to 100 entries to prevent memory leaks from unbounded growth
+const svgCache = new BoundedLRUCache<string, string>(100);
 
 // Component to load and display inline SVG with caching - Memoized for performance
 const InlineSvgIcon = memo(function InlineSvgIcon({

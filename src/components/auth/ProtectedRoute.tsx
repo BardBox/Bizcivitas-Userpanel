@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -11,23 +11,39 @@ export default function ProtectedRoute({
 }) {
   const router = useRouter();
 
-  useEffect(() => {
-    // Check authentication - but don't block rendering
+  // Perform synchronous auth check on initialization
+  // This prevents flash of protected content before redirect
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(() => {
     try {
-      const authenticated = isAuthenticated();
-
-      if (!authenticated) {
-        // Invalid or expired token - redirect immediately
-        router.replace("/login");
-      }
+      return isAuthenticated();
     } catch (error) {
       console.error("Auth check error:", error);
-      // On error, redirect to login for safety
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    // If not authorized, redirect to login
+    if (isAuthorized === false) {
       router.replace("/login");
     }
-  }, [router]);
+  }, [isAuthorized, router]);
 
-  // Render content immediately - redirect happens in background if needed
-  // This prevents the 7-second delay while maintaining security
+  // Show loading state while authorization is being determined
+  // or when unauthorized (before redirect completes)
+  if (isAuthorized === null || isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render protected content when authorized
+  // Note: For full server-side protection, consider using Next.js middleware
+  // to check authentication before the page even loads on the client
   return <>{children}</>;
 }

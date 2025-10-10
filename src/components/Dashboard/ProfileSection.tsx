@@ -33,6 +33,16 @@ export default function ProfileSection({
     setIsMounted(true);
   }, []);
 
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      // Log error for debugging/telemetry
+      console.error("Failed to load user profile:", error);
+      // You can also send to telemetry service here:
+      // telemetryService.logError('ProfileSection', error);
+    }
+  }, [error]);
+
   const handleProfileClick = () => {
     if (onNavigate) {
       onNavigate();
@@ -62,7 +72,61 @@ export default function ProfileSection({
     );
   };
 
-  // Don't block UI with loading/error states - show default and update when ready
+  // Show loading state while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="mb-8">
+        {!isCollapsed ? (
+          <div className="flex items-center space-x-3 p-3 rounded-lg">
+            <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+            <div className="flex-1 min-w-0">
+              <div className="h-4 bg-gray-200 rounded animate-pulse mb-2 w-24"></div>
+              <div className="h-3 bg-gray-200 rounded animate-pulse w-32"></div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Show error state if profile failed to load
+  if (error) {
+    return (
+      <div className="mb-8">
+        {!isCollapsed ? (
+          <div className="flex items-center space-x-3 p-3 rounded-lg bg-red-50 border border-red-200">
+            <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
+              <UserIcon className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-red-900">
+                Failed to load profile
+              </p>
+              <p className="text-xs text-red-600">Please try refreshing</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div
+              className="w-10 h-10 bg-red-200 rounded-full flex items-center justify-center"
+              title="Failed to load profile"
+            >
+              <UserIcon className="w-5 h-5 text-red-600" />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Don't render partial data - ensure we have user data before rendering
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="mb-8">

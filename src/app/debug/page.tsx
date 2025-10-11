@@ -167,14 +167,73 @@ export default function DebugPage() {
 
         {/* Login Test */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Login Test</h2>
+          <h2 className="text-xl font-semibold mb-4">🔐 Login Test</h2>
           <p className="text-gray-600 mb-4">
-            Open browser console and try logging in to see debug information
+            Test direct login to backend with test credentials
           </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-            <p className="text-sm text-yellow-800">
-              💡 <strong>Tip:</strong> Open Developer Tools (F12) and check the
-              Console tab to see all debug information
+          <button
+            onClick={async () => {
+              try {
+                const backendUrl =
+                  process.env.NEXT_PUBLIC_BACKEND_URL ||
+                  "https://backend.bizcivitas.com/api/v1";
+                const loginUrl = `${backendUrl}/users/login`;
+
+                console.log("🔐 Testing login to:", loginUrl);
+
+                const response = await fetch(loginUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({
+                    email: "devenoza9@gmail.com",
+                    password: "Password@123",
+                  }),
+                });
+
+                console.log("✅ Response Status:", response.status);
+                console.log(
+                  "✅ Response Headers:",
+                  Object.fromEntries(response.headers.entries())
+                );
+
+                if (response.ok) {
+                  const data = await response.json();
+                  console.log("✅ Login Success:", data);
+                  alert("✅ Login successful! Check console for details.");
+
+                  // Store token if present
+                  const token =
+                    data?.data?.accessToken || data?.accessToken || data?.token;
+                  if (token) {
+                    localStorage.setItem("accessToken", token);
+                    console.log("✅ Token stored in localStorage");
+                  }
+                } else {
+                  const errorText = await response.text();
+                  console.error("❌ Login Failed:", errorText);
+                  alert(`❌ Login failed: ${response.status} - ${errorText}`);
+                }
+              } catch (error) {
+                console.error("❌ Login Error:", error);
+                alert(
+                  `❌ Error: ${
+                    error instanceof Error ? error.message : String(error)
+                  }`
+                );
+              }
+            }}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold"
+          >
+            🚀 Test Login (devenoza9@gmail.com)
+          </button>
+          <div className="bg-blue-50 border border-blue-200 rounded p-4 mt-4">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Credentials:</strong> devenoza9@gmail.com /
+              Password@123
+            </p>
+            <p className="text-sm text-blue-800 mt-2">
+              Check browser console (F12) for detailed request/response logs
             </p>
           </div>
         </div>

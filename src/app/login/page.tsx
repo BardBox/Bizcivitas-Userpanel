@@ -25,8 +25,10 @@ function LoginPageContent() {
     setError("");
 
     try {
-      // Always use internal proxy to bypass browser CORS
-      const loginUrl = "/api/proxy/users/login";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        "https://backend.bizcivitas.com/api/v1";
+      const loginUrl = `${backendUrl}/users/login`;
 
       // 🔍 Debug login attempt
       debugLogin(formData, loginUrl);

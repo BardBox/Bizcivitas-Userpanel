@@ -22,10 +22,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        "https://dev-backend.bizcivitas.com/api/v1";
-      const response = await fetch(`${backendUrl}/users/login`, {
+      // Always use internal proxy to bypass browser CORS
+      const loginUrl = "/api/proxy/users/login";
+
+      const response = await fetch(loginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // for HttpOnly cookies

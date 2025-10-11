@@ -149,6 +149,69 @@ export const runFullDebug = async () => {
   console.log("✅ Debug suite completed");
 };
 
+// CORS Workaround for development/testing
+export const createCorsProxyUrl = (originalUrl: string) => {
+  // Use a public CORS proxy for testing
+  return `https://cors-anywhere.herokuapp.com/${originalUrl}`;
+};
+
+// Alternative CORS-free login function for testing
+export const testLoginWithProxy = async (credentials: any) => {
+  console.group("🔧 Testing Login with CORS Proxy");
+
+  try {
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://backend.bizcivitas.com/api/v1";
+    const originalUrl = `${backendUrl}/users/login`;
+    const proxyUrl = createCorsProxyUrl(originalUrl);
+
+    console.log("Original URL:", originalUrl);
+    console.log("Proxy URL:", proxyUrl);
+
+    const response = await fetch(proxyUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    console.log("Proxy Response Status:", response.status);
+    const result = await response.json();
+    console.log("Proxy Response Data:", result);
+
+    return result;
+  } catch (error) {
+    console.error("Proxy login failed:", error);
+    throw error;
+  } finally {
+    console.groupEnd();
+  }
+};
+
+// Check if CORS proxy is needed
+export const shouldUseCorsProxy = () => {
+  if (typeof window === "undefined") return false;
+
+  const isProduction =
+    window.location.hostname === "bizcivitas-user-panel.vercel.app";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  console.log("🔍 CORS Proxy Check:", {
+    isProduction,
+    hostname: window.location.hostname,
+    backendUrl,
+    recommendation:
+      isProduction && backendUrl?.includes("backend.bizcivitas.com")
+        ? "USE PROXY - Production CORS issue detected"
+        : "DIRECT - Should work normally",
+  });
+
+  return isProduction && backendUrl?.includes("backend.bizcivitas.com");
+};
+
 // Quick debug function for development
 export const quickDebug = () => {
   console.log("🔧 Quick Debug Info:");
@@ -158,4 +221,7 @@ export const quickDebug = () => {
     "Origin:",
     typeof window !== "undefined" ? window.location.origin : "Server-side"
   );
+  if (typeof window !== "undefined") {
+    console.log("Should Use CORS Proxy:", shouldUseCorsProxy());
+  }
 };

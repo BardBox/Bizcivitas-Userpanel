@@ -7,6 +7,9 @@ import {
   debugNetwork,
   runFullDebug,
   quickDebug,
+  createCorsProxyUrl,
+  testLoginWithProxy,
+  shouldUseCorsProxy
 } from "@/utils/debug";
 
 export default function DebugPage() {
@@ -100,13 +103,41 @@ export default function DebugPage() {
           <p className="text-gray-600 mb-4">
             Test if the backend allows requests from this origin
           </p>
-          <button
-            onClick={handleCorsTest}
-            disabled={loading}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50"
-          >
-            {loading ? "Testing..." : "Test CORS"}
-          </button>
+            <div className="space-x-4 mb-4">
+              <button
+                onClick={handleCorsTest}
+                disabled={loading}
+                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50"
+              >
+                {loading ? "Testing..." : "Test CORS"}
+              </button>
+              <button
+                onClick={() => {
+                  console.log("CORS Proxy Check:", shouldUseCorsProxy());
+                  const exampleUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/users/login";
+                  console.log("Original URL:", exampleUrl);
+                  console.log("Proxy URL:", createCorsProxyUrl(exampleUrl));
+                }}
+                className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+              >
+                Check Proxy Need
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await testLoginWithProxy({
+                      email: "test@example.com",
+                      password: "testpassword"
+                    });
+                  } catch (error) {
+                    console.error("Proxy test failed:", error);
+                  }
+                }}
+                className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+              >
+                Test Login via Proxy
+              </button>
+            </div>
           {corsResult && (
             <div className="mt-4 p-3 bg-gray-100 rounded">
               <code>{corsResult}</code>

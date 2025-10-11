@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PublicRoute from "@/components/auth/PublicRoute";
 import { setAccessToken } from "@/lib/auth";
+import { debugLogin, debugApiCall, quickDebug } from "@/utils/debug";
 
 function LoginPageContent() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -27,11 +28,29 @@ function LoginPageContent() {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_URL ||
         "https://dev-backend.bizcivitas.com/api/v1";
-      const response = await fetch(`${backendUrl}/users/login`, {
+
+      const loginUrl = `${backendUrl}/users/login`;
+
+      // 🔍 Debug login attempt
+      debugLogin(formData, loginUrl);
+
+      const requestOptions = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // for HttpOnly cookies
+        credentials: "include" as RequestCredentials, // for HttpOnly cookies
         body: JSON.stringify(formData),
+      };
+
+      // 🔍 Debug API call
+      debugApiCall(loginUrl, requestOptions, "Login Request");
+
+      const response = await fetch(loginUrl, requestOptions);
+
+      console.log("🔍 Login Response:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url,
       });
 
       if (!response.ok) {
@@ -52,7 +71,7 @@ function LoginPageContent() {
         } else if (data?.token) {
           token = data.token;
         }
-        
+
         if (token) {
           // Store in both memory and localStorage for speed
           setAccessToken(token);
@@ -71,7 +90,10 @@ function LoginPageContent() {
         setError("Invalid email or password.");
       } else if (error.message.includes("403")) {
         setError("Account not activated. Please check your email.");
-      } else if (error.name === "TypeError" && error.message.includes("fetch")) {
+      } else if (
+        error.name === "TypeError" &&
+        error.message.includes("fetch")
+      ) {
         setError(
           "Network error: Cannot connect to server. Please check your connection."
         );
@@ -156,6 +178,19 @@ function LoginPageContent() {
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
+
+          {/* Debug Button - Only in development */}
+          {process.env.NODE_ENV !== "production" && (
+            <button
+              type="button"
+              onClick={quickDebug}
+              className="w-full flex justify-center py-1 px-2 border border-gray-300 
+                         rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200 
+                         text-xs"
+            >
+              🔍 Debug Info (Check Console)
+            </button>
+          )}
 
           <div className="flex items-center justify-between text-sm">
             <Link

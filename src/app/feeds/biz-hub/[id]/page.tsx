@@ -80,7 +80,7 @@ const dummyPosts = [
 
 export default function BizHubPostDetail() {
   const params = useParams();
-  const post = dummyPosts.find((p) => p.id === params.id);
+  const post = dummyPosts.find((p) => p.id === params?.id);
   const [imageError, setImageError] = useState(false);
 
   if (!post) {

@@ -27,8 +27,12 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  // ⚡ CRITICAL: Performance fix - Don't refetch on window focus (this was causing 366 renders!)
-  refetchOnFocus: false,
+  // ⚡ CRITICAL: Performance fixes
+  refetchOnFocus: false, // Don't refetch on window focus (was causing 366 renders!)
+  refetchOnReconnect: false, // Don't refetch on network reconnect
+  refetchOnMountOrArgChange: false, // Don't refetch on component mount
+  // Cache data for 5 minutes by default
+  keepUnusedDataFor: 300,
   // NOTE: Tag invalidation from mutations (like endorseSkill) will automatically refetch affected data
   tagTypes: [
     "User",

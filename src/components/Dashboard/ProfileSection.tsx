@@ -1,7 +1,7 @@
 "use client";
 
 import { UserIcon } from "./DashboardIcons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/ui/Avatar";
 import { getUserFullName, useGetCurrentUserQuery } from "@/store/api";
@@ -12,7 +12,7 @@ interface ProfileSectionProps {
   onNavigate?: () => void;
 }
 
-export default function ProfileSection({
+const ProfileSection = memo(function ProfileSection({
   isCollapsed,
   onNavigate,
 }: ProfileSectionProps) {
@@ -177,4 +177,6 @@ export default function ProfileSection({
       )}
     </div>
   );
-}
+});
+
+export default ProfileSection;

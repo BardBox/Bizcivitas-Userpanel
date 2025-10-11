@@ -3,8 +3,10 @@
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import BizPulseCard from "@/components/Dashboard/BizPulseCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { memo } from "react";
 
-export default function PostsGrid() {
+const PostsGrid = memo(function PostsGrid() {
   const { filteredPosts, loading } = useSelector(
     (state: RootState) => state.posts
   );
@@ -12,7 +14,7 @@ export default function PostsGrid() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" text="Loading posts..." />
       </div>
     );
   }
@@ -47,4 +49,6 @@ export default function PostsGrid() {
       ))}
     </div>
   );
-}
+});
+
+export default PostsGrid;

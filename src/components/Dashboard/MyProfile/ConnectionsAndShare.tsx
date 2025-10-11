@@ -85,12 +85,26 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   };
 
   const handleConnect = () => {
-    if (customConnect) {
-      customConnect();
-    } else if (isOwnProfile) {
+    console.log("Connection icon clicked!", {
+      isOwnProfile,
+      userId,
+      customConnect: !!customConnect,
+    });
+
+    if (isOwnProfile) {
       // For own profile, navigate to connections page
+      console.log("Navigating to own connections:", "/feeds/connections");
       router.push("/feeds/connections");
+    } else if (userId) {
+      // For other users, navigate to their connections page (prioritize navigation over connection actions)
+      const targetUrl = `/feeds/connections/${userId}/connections`;
+      console.log("Navigating to user connections:", targetUrl);
+      router.push(targetUrl);
+    } else if (customConnect) {
+      // Fall back to custom connect handler if no userId
+      customConnect();
     } else {
+      console.log("No userId provided, showing toast");
       dispatch(
         addToast({
           type: "info",
@@ -122,15 +136,71 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
           text: shareMessage,
         });
       } else {
-        // Copy detailed contact info to clipboard instead of just URL
-        await navigator.clipboard.writeText(shareMessage);
-        dispatch(
-          addToast({
-            type: "success",
-            message: "Contact information copied to clipboard",
-            duration: 3000,
-          })
-        );
+        // Fallback: Copy detailed contact info to clipboard
+        // Check if modern Clipboard API is available
+        if (
+          typeof navigator !== "undefined" &&
+          navigator.clipboard &&
+          typeof navigator.clipboard.writeText === "function"
+        ) {
+          // Use modern Clipboard API
+          await navigator.clipboard.writeText(shareMessage);
+          dispatch(
+            addToast({
+              type: "success",
+              message: "Contact information copied to clipboard",
+              duration: 3000,
+            })
+          );
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement("textarea");
+          textArea.value = shareMessage;
+
+          // Make the textarea invisible and non-interactive
+          textArea.style.position = "fixed";
+          textArea.style.top = "0";
+          textArea.style.left = "0";
+          textArea.style.width = "2em";
+          textArea.style.height = "2em";
+          textArea.style.padding = "0";
+          textArea.style.border = "none";
+          textArea.style.outline = "none";
+          textArea.style.boxShadow = "none";
+          textArea.style.background = "transparent";
+          textArea.style.opacity = "0";
+
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          try {
+            // Try to copy using the deprecated execCommand
+            const successful = document.execCommand("copy");
+            document.body.removeChild(textArea);
+
+            if (successful) {
+              dispatch(
+                addToast({
+                  type: "success",
+                  message: "Contact information copied to clipboard",
+                  duration: 3000,
+                })
+              );
+            } else {
+              throw new Error("execCommand('copy') failed");
+            }
+          } catch (fallbackError) {
+            // Clean up textarea
+            document.body.removeChild(textArea);
+            console.error("Fallback copy failed:", fallbackError);
+            // Show the content to user so they can copy manually
+            alert(
+              "Unable to copy automatically. Here's the contact information:\n\n" +
+                shareMessage
+            );
+          }
+        }
       }
     } catch (error) {
       dispatch(
@@ -216,6 +286,8 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
               ? "View Connections"
               : customConnect
               ? "Connection"
+              : userId
+              ? "View Connections"
               : "Coming soon"}
           </div>
         )}

@@ -1,47 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { isAuthenticated, clearAccessToken } from "@/lib/auth";
+import { usePublicAuth } from "@/hooks/useFastAuth";
 
 export default function PublicRoute({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
+  const { isReady, isRedirecting } = usePublicAuth();
 
-  useEffect(() => {
-    // Check if user is already logged in with valid token
-    try {
-      const authenticated = isAuthenticated();
-
-      if (authenticated) {
-        // User has valid token - redirect to feeds
-        router.replace("/feeds");
-      } else {
-        // Clear any stale/invalid tokens
-        clearAccessToken();
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("role");
-
-        // Show public page
-        setIsReady(true);
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      // On error, clear tokens and show login
-      clearAccessToken();
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("role");
-      setIsReady(true);
-    }
-  }, [router]);
-
-  // Don't render until auth check is complete
-  if (!isReady) {
-    return null;
+  // Show minimal loading state while checking or redirecting
+  if (!isReady || isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dashboard-primary">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+          <p className="text-gray-600 text-sm">
+            {isRedirecting ? "Redirecting..." : "Loading..."}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

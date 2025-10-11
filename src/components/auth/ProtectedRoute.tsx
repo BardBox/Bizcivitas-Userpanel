@@ -1,36 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
+import { useFastAuth } from "@/hooks/useFastAuth";
 
 export default function ProtectedRoute({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
+  const { isAuthenticated, isLoading } = useFastAuth();
 
-  useEffect(() => {
-    // Check authentication on client-side only
-    // This avoids hydration mismatch between server and client
-    try {
-      const authenticated = isAuthenticated();
+  // Show minimal loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dashboard-primary">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+          <p className="text-gray-600 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-      if (!authenticated) {
-        // Invalid or expired token - redirect to login
-        router.replace("/login");
-      }
-    } catch (error) {
-      console.error("Auth check error:", error);
-      // On error, redirect to login for safety
-      router.replace("/login");
-    }
-  }, [router]);
+  // Only render children if authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
-  // Render children immediately to match server-rendered HTML
-  // Redirect happens in useEffect on client-side if unauthorized
-  // Note: For full server-side protection, use Next.js middleware
-  // to check authentication before the page even loads
   return <>{children}</>;
 }

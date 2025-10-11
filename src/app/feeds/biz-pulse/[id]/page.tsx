@@ -9,7 +9,7 @@ import type { RootState } from '../../../../../store/store';
 export default function BizPulseDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const postId = params.id as string;
+  const postId = params?.id as string;
   
   const post = useSelector((state: RootState) => 
     state.posts.posts.find(p => p.id === postId)

@@ -126,14 +126,14 @@ function ConnectionsPageContent() {
 
   // Get initial tab from URL params, default to "my-network"
   const initialTab =
-    searchParams.get("tab") === "connect-members"
+    searchParams?.get("tab") === "connect-members"
       ? "connect-members"
       : "my-network";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Update tab state when URL params change
   useEffect(() => {
-    const tabParam = searchParams.get("tab");
+    const tabParam = searchParams?.get("tab");
     if (tabParam === "connect-members" || tabParam === "my-network") {
       setActiveTab(tabParam);
     }
@@ -143,7 +143,7 @@ function ConnectionsPageContent() {
   const handleTabChange = (tab: "my-network" | "connect-members") => {
     setActiveTab(tab);
     // Update URL without full page reload
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() || "");
     params.set("tab", tab);
     router.push(`/feeds/connections?${params.toString()}`, { scroll: false });
   };

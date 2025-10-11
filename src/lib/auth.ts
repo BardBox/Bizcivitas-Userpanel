@@ -55,42 +55,42 @@ export function clearAccessToken(): void {
 
 /**
  * Check if user is authenticated with valid token
+ * Optimized for speed - minimal operations
  */
 export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
 
-  // Check in-memory token first
+  // Check in-memory token first (fastest)
   if (accessTokenStore) {
     try {
       return !isTokenExpired(accessTokenStore);
     } catch (error) {
-      console.error('Token validation error:', error);
       clearAccessToken();
       return false;
     }
   }
 
-  // Fallback: check localStorage (for backward compatibility during migration)
+  // Quick localStorage check (single operation)
   const legacyToken = localStorage.getItem("accessToken");
-  if (legacyToken) {
-    try {
-      if (!isTokenExpired(legacyToken)) {
-        // Move to memory store
-        setAccessToken(legacyToken);
-        return true;
-      } else {
-        // Clear expired token
-        localStorage.removeItem("accessToken");
-        return false;
-      }
-    } catch (error) {
-      console.error('Legacy token validation error:', error);
+  if (!legacyToken) return false;
+
+  try {
+    if (!isTokenExpired(legacyToken)) {
+      // Move to memory store for faster future access
+      setAccessToken(legacyToken);
+      return true;
+    } else {
+      // Clear expired token immediately
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("role");
       return false;
     }
+  } catch (error) {
+    // Clear invalid token immediately
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("role");
+    return false;
   }
-
-  return false;
 }
 
 /**

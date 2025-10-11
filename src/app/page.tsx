@@ -58,8 +58,8 @@ export default function LoginPage() {
         }
       }
 
-      // Use hard redirect for reliability
-      window.location.href = "/feeds";
+      // Use client-side navigation for speed
+      router.push("/feeds");
     } catch (err) {
       const error = err as Error;
       if (error.message.includes("401")) {

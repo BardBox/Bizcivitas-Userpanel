@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PublicRoute from "@/components/auth/PublicRoute";
+import { setAccessToken } from "@/lib/auth";
 
 function LoginPageContent() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -42,7 +43,7 @@ function LoginPageContent() {
 
       if (data?.data?.user) {
         const user = data.data.user;
-        // Store accessToken and role in localStorage only
+        // Store accessToken and role efficiently
         let token = null;
         if (data?.data?.accessToken) {
           token = data.data.accessToken;
@@ -51,7 +52,10 @@ function LoginPageContent() {
         } else if (data?.token) {
           token = data.token;
         }
+        
         if (token) {
+          // Store in both memory and localStorage for speed
+          setAccessToken(token);
           localStorage.setItem("accessToken", token);
         }
         if (user.role) {
@@ -59,8 +63,8 @@ function LoginPageContent() {
         }
       }
 
-      // Use hard redirect for reliability
-      window.location.href = "/feeds";
+      // Use immediate client-side navigation
+      router.replace("/feeds");
     } catch (err) {
       const error = err as Error;
       if (error.message.includes("401")) {

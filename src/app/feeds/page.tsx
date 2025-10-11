@@ -1,17 +1,27 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import InfiniteScroll from "react-infinite-scroll-component";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const FloatingDrawer = dynamic(
   () => import("@/components/Dashboard/FloatingDrawer"),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <LoadingSpinner size="sm" text="Loading..." />
+  }
 );
-const PostCard = dynamic(() => import("@/components/Dashboard/PostCard"));
+const PostCard = dynamic(() => import("@/components/Dashboard/PostCard"), {
+  loading: () => <LoadingSpinner size="sm" />
+});
 const WebinarSection = dynamic(
-  () => import("@/components/Dashboard/WebinarSection")
+  () => import("@/components/Dashboard/WebinarSection"),
+  { 
+    ssr: false,
+    loading: () => <LoadingSpinner size="sm" text="Loading webinar..." />
+  }
 );
 
 // --- Utilities ---

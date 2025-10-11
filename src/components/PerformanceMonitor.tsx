@@ -1,17 +1,7 @@
-/**
- * Performance Monitor Component
- * Add this to any page to see what's causing lag
- *
- * Usage:
- * import PerformanceMonitor from '@/components/PerformanceMonitor';
- *
- * Add anywhere in your component:
- * <PerformanceMonitor />
- */
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
+import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
 
 interface PerformanceStats {
   renderCount: number;
@@ -21,15 +11,16 @@ interface PerformanceStats {
   memoryUsage?: number;
 }
 
-const PerformanceMonitor: React.FC = () => {
+const PerformanceMonitor = memo(function PerformanceMonitor() {
   const [stats, setStats] = useState<PerformanceStats>({
     renderCount: 0,
     lastRenderTime: 0,
     apiCalls: 0,
     slowApiCalls: 0,
   });
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [networkLogs, setNetworkLogs] = useState<string[]>([]);
+  const { getPerformanceStats } = usePerformanceOptimization();
 
   // Track renders using ref (no state updates to avoid infinite loop)
   const renderCountRef = React.useRef(0);
@@ -88,14 +79,13 @@ const PerformanceMonitor: React.FC = () => {
 
     // Monitor memory (if available)
     const memoryInterval = setInterval(() => {
-      if ("memory" in performance) {
-        const memory = (performance as any).memory;
+      if ((performance as any).memory) {
         setStats((prev) => ({
           ...prev,
-          memoryUsage: Math.round(memory.usedJSHeapSize / 1048576), // MB
+          memoryUsage: Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024),
         }));
       }
-    }, 2000);
+    }, 5000);
 
     return () => {
       window.fetch = originalFetch;
@@ -103,44 +93,34 @@ const PerformanceMonitor: React.FC = () => {
     };
   }, []);
 
-  if (!isVisible) {
-    return (
-      <button
-        onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 z-50"
-        title="Show Performance Monitor"
-      >
-        📊
-      </button>
-    );
+  // Only show in development
+  if (process.env.NODE_ENV !== "development") {
+    return null;
   }
 
-  const isLagging = stats.renderCount > 10 || stats.slowApiCalls > 0;
-
   return (
-    <div className="fixed bottom-4 right-4 bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4 w-96 max-h-[600px] overflow-auto z-50 text-xs font-mono">
+    <div
+      className={`fixed bottom-4 right-4 z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm ${
+        isVisible ? "block" : "hidden"
+      }`}
+    >
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsVisible(!isVisible)}
+        className="absolute -top-10 right-0 bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
+      >
+        {isVisible ? "Hide" : "Show"} Perf
+      </button>
+
       {/* Header */}
-      <div className="flex justify-between items-center mb-3 pb-2 border-b">
-        <h3 className="font-bold text-sm">🔍 Performance Monitor</h3>
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-bold text-gray-800">Performance Monitor</h3>
         <button
           onClick={() => setIsVisible(false)}
-          className="text-gray-500 hover:text-gray-700 font-bold"
+          className="text-gray-500 hover:text-gray-700"
         >
-          ✕
+          ×
         </button>
-      </div>
-
-      {/* Status Indicator */}
-      <div
-        className={`mb-3 p-2 rounded ${
-          renderCountRef.current > 10 || stats.slowApiCalls > 0
-            ? "bg-red-100 text-red-800"
-            : "bg-green-100 text-green-800"
-        }`}
-      >
-        {renderCountRef.current > 10 || stats.slowApiCalls > 0
-          ? "⚠️ Performance Issues Detected"
-          : "✅ Performance OK"}
       </div>
 
       {/* Stats */}
@@ -242,6 +222,6 @@ const PerformanceMonitor: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default PerformanceMonitor;

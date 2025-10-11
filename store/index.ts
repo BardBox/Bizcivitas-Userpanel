@@ -15,18 +15,13 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        // Ignore RTK Query action types for non-serializable data
-        ignoredActions: [
-          "persist/PERSIST",
-          "persist/REHYDRATE",
-          // Ignore RTK Query action types
-          "api/executeQuery/pending",
-          "api/executeQuery/fulfilled",
-          "api/executeQuery/rejected",
-        ],
-      },
+      // Disable immutability check for better performance
+      immutableCheck: false,
+      // Disable serializability check for better performance
+      serializableCheck: false,
     }).concat(baseApi.middleware), // RTK Query middleware
+  // Enable devtools only in development
+  devTools: process.env.NODE_ENV !== "production",
 });
 
 export type RootState = ReturnType<typeof store.getState>;

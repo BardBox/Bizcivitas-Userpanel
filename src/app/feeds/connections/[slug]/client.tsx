@@ -38,7 +38,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   const searchParams = useSearchParams();
 
   // Get referrer tab from URL params
-  const referrerTab = searchParams.get("from");
+  const referrerTab = searchParams?.get("from");
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();

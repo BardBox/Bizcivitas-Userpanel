@@ -123,6 +123,13 @@ const InlineSvgIcon = memo(function InlineSvgIcon({
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for better memoization
+  return (
+    prevProps.src === nextProps.src &&
+    prevProps.className === nextProps.className &&
+    prevProps.color === nextProps.color
+  );
 });
 
 // Arrow Icons for sidebar toggle

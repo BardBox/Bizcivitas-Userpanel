@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense } from "react";
-import dynamic from "next/dynamic";
+import React, { useState, useMemo, useEffect, Suspense, useCallback } from "react";
 import {
   Search,
   Users,
@@ -11,13 +10,8 @@ import {
   Inbox,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-
-const UserCard = dynamic(
-  () => import("../../../components/Dashboard/UserCard")
-);
-const AllMembers = dynamic(
-  () => import("../../../components/Dashboard/Connections/AllMembers")
-);
+import UserCard from "../../../components/Dashboard/UserCard";
+import AllMembers from "../../../components/Dashboard/Connections/AllMembers";
 import {
   useGetConnectionsQuery,
   useGetConnectionRequestsQuery,
@@ -57,8 +51,8 @@ function ConnectionsPageContent() {
   // Ensure connections is an array before mapping
   const connectionsArray = Array.isArray(connections) ? connections : [];
 
-  // Helper function to get full avatar URL
-  const getAvatarUrl = (avatarPath?: string) => {
+  // Helper function to get full avatar URL - memoized to prevent recreation
+  const getAvatarUrl = useCallback((avatarPath?: string) => {
     if (!avatarPath) return undefined;
 
     // If it's already a full URL (starts with http), return as is
@@ -69,42 +63,44 @@ function ConnectionsPageContent() {
     // Otherwise, construct full URL with backend base URL
     const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     return `${baseUrl}/image/${avatarPath}`;
-  };
+  }, []);
 
-  // Transform API connections data to match UserCard props
-  const connectionData = connectionsArray.map((connection) => {
-    // Get proper name with fallback
-    const fullName = `${connection.fname || ""} ${
-      connection.lname || ""
-    }`.trim();
+  // Transform API connections data to match UserCard props - memoized properly
+  const connectionData = useMemo(() => {
+    return connectionsArray.map((connection) => {
+      // Get proper name with fallback
+      const fullName = `${connection.fname || ""} ${
+        connection.lname || ""
+      }`.trim();
 
-    // Get title with proper fallbacks - avoid long classifications and emails
-    let title = "";
-    if (
-      connection.classification &&
-      connection.classification.length <= 50 &&
-      !connection.classification.includes("@") && // Exclude email addresses
-      !connection.classification.includes(".com") && // Exclude URLs/domains
-      !connection.classification.includes(".in") && // Exclude Indian domains
-      !connection.classification.includes(".org") // Exclude org domains
-    ) {
-      title = connection.classification;
-    } else {
-      title = "Business Professional";
-    }
+      // Get title with proper fallbacks - avoid long classifications and emails
+      let title = "";
+      if (
+        connection.classification &&
+        connection.classification.length <= 50 &&
+        !connection.classification.includes("@") && // Exclude email addresses
+        !connection.classification.includes(".com") && // Exclude URLs/domains
+        !connection.classification.includes(".in") && // Exclude Indian domains
+        !connection.classification.includes(".org") // Exclude org domains
+      ) {
+        title = connection.classification;
+      } else {
+        title = "Business Professional";
+      }
 
-    // Get company with fallback
-    const company = connection.companyName || "BizCivitas Member";
+      // Get company with fallback
+      const company = connection.companyName || "BizCivitas Member";
 
-    return {
-      id: connection.id, // API returns 'id' not '_id'
-      name: fullName || "-",
-      title: title || "-",
-      company: company || "-",
-      avatar: getAvatarUrl(connection.avatar), // Add avatar URL
-      isOnline: Math.random() > 0.5, // This would come from real-time status in production
-    };
-  });
+      return {
+        id: connection.id, // API returns 'id' not '_id'
+        name: fullName || "-",
+        title: title || "-",
+        company: company || "-",
+        avatar: getAvatarUrl(connection.avatar), // Add avatar URL
+        isOnline: Math.random() > 0.5, // This would come from real-time status in production
+      };
+    });
+  }, [connectionsArray, getAvatarUrl]);
 
   // Filter users based on search query
   const filteredUsers = useMemo(() => {

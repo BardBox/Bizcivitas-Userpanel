@@ -75,9 +75,9 @@ const ProfileSection = memo(function ProfileSection({
   // Show loading state while data is being fetched
   if (isLoading) {
     return (
-      <div className="mb-8">
+      <div className="mb-3">
         {!isCollapsed ? (
-          <div className="flex items-center space-x-3 p-3 rounded-lg">
+          <div className="flex items-center space-x-3 p-2.5 rounded-lg">
             <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
             <div className="flex-1 min-w-0">
               <div className="h-4 bg-gray-200 rounded animate-pulse mb-2 w-24"></div>
@@ -96,9 +96,9 @@ const ProfileSection = memo(function ProfileSection({
   // Show error state if profile failed to load
   if (error) {
     return (
-      <div className="mb-8">
+      <div className="mb-3">
         {!isCollapsed ? (
-          <div className="flex items-center space-x-3 p-3 rounded-lg bg-red-50 border border-red-200">
+          <div className="flex items-center space-x-3 p-2.5 rounded-lg bg-red-50 border border-red-200">
             <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
               <UserIcon className="w-6 h-6 text-red-600" />
             </div>
@@ -129,11 +129,11 @@ const ProfileSection = memo(function ProfileSection({
   }
 
   return (
-    <div className="mb-8">
+    <div className="mb-3">
       {!isCollapsed ? (
         <div
           onClick={handleProfileClick}
-          className="group flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="group flex items-center space-x-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
         >
           <div className="">
             <Avatar
@@ -170,7 +170,7 @@ const ProfileSection = memo(function ProfileSection({
               membershipType={user?.membershipType}
               showCrown={true}
               onClick={handleProfileClick}
-              className="hover:scale-105 transition-transform"
+              className="hover:scale-105 transition-transform cursor-pointer"
             />
           </div>
         </div>

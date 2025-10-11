@@ -1,17 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AccordionItem } from "@/components/Dashboard/MyProfile/Accordion";
-import ViewOnlyProfileCard from "@/components/Dashboard/Connections/ViewOnlyProfileCard";
-import PersonalDetails from "@/components/Dashboard/MyProfile/PersonalDetails/PersonalDetails";
-import BusinessDetails from "@/components/Dashboard/MyProfile/BusinessDetails";
-import TravelDiary from "@/components/Dashboard/MyProfile/TravelDiary";
-import Bizleads from "@/components/Dashboard/MyProfile/Bizleads/Bizleads";
-import BizNeeds from "@/components/Dashboard/MyProfile/BizNeeds/BizNeeds";
-import WeeklyPresentation from "@/components/Dashboard/MyProfile/WeeklyPresentation";
-import ViewOnlyConnections from "@/components/Dashboard/Connections/ViewOnlyConnections";
-import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
@@ -21,6 +11,19 @@ import {
   useSendConnectionRequestMutation,
   useAcceptConnectionRequestMutation,
 } from "@/store/api";
+import LoadingSkeleton from "@/components/Dashboard/Connections/LoadingSkeleton";
+
+// ⚡ PERFORMANCE: Dynamic imports - Load components only when needed
+const AccordionItem = lazy(() => import("@/components/Dashboard/MyProfile/Accordion").then(m => ({ default: m.AccordionItem })));
+const ViewOnlyProfileCard = lazy(() => import("@/components/Dashboard/Connections/ViewOnlyProfileCard"));
+const PersonalDetails = lazy(() => import("@/components/Dashboard/MyProfile/PersonalDetails/PersonalDetails"));
+const BusinessDetails = lazy(() => import("@/components/Dashboard/MyProfile/BusinessDetails"));
+const TravelDiary = lazy(() => import("@/components/Dashboard/MyProfile/TravelDiary"));
+const Bizleads = lazy(() => import("@/components/Dashboard/MyProfile/Bizleads/Bizleads"));
+const BizNeeds = lazy(() => import("@/components/Dashboard/MyProfile/BizNeeds/BizNeeds"));
+const WeeklyPresentation = lazy(() => import("@/components/Dashboard/MyProfile/WeeklyPresentation"));
+const ViewOnlyConnections = lazy(() => import("@/components/Dashboard/Connections/ViewOnlyConnections"));
+const ConfirmDialog = lazy(() => import("@/components/Dashboard/Connections/ConfirmDialog"));
 
 interface ConnectionDetailsClientProps {
   slug: string;
@@ -264,13 +267,31 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     toast("Message feature coming soon", { icon: "💬" });
   };
 
-  // Show loading state during SSR or while data is being fetched
+  // ⚡ PERFORMANCE: Show skeleton instead of blank screen
   if (!isMounted || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading connection details...</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Skeleton */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center py-4">
+              <div className="h-5 w-40 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {/* Left Column - Profile Card Skeleton */}
+            <div className="lg:col-span-1">
+              <LoadingSkeleton type="userProfile" count={1} />
+            </div>
+
+            {/* Right Column - Content Skeletons */}
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+              <LoadingSkeleton type="connectionCard" count={3} />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -391,14 +412,16 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24">
               {personalCardData && (
-                <ViewOnlyProfileCard
-                  profile={personalCardData}
-                  connectionStatus={connectionStatus}
-                  onConnect={handleConnect}
-                  onRemoveConnection={handleRemoveConnection}
-                  onMessage={handleMessage}
-                  userId={slug}
-                />
+                <Suspense fallback={<LoadingSkeleton type="userProfile" count={1} />}>
+                  <ViewOnlyProfileCard
+                    profile={personalCardData}
+                    connectionStatus={connectionStatus}
+                    onConnect={handleConnect}
+                    onRemoveConnection={handleRemoveConnection}
+                    onMessage={handleMessage}
+                    userId={slug}
+                  />
+                </Suspense>
               )}
             </div>
           </div>
@@ -406,22 +429,24 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           {/* Right Column - Accordion Sections */}
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {/* Personal Details Section */}
-            <AccordionItem
-              key="personal"
-              title="Personal Details"
-              defaultOpen={true}
-              editable={false} // No edit functionality for connections
-            >
-              <PersonalDetails
-                personalDetails={normalizedData.personal}
-                mySkillItems={normalizedData.skills}
-                isEditing={false} // Always read-only
-                onEditStateChange={() => {}} // No-op
-                targetUserId={connectionProfile._id}
-                isOwnProfile={false}
-                formRef={React.createRef<HTMLFormElement>()}
-              />
-            </AccordionItem>
+            <Suspense fallback={<LoadingSkeleton type="connectionCard" count={1} />}>
+              <AccordionItem
+                key="personal"
+                title="Personal Details"
+                defaultOpen={true}
+                editable={false} // No edit functionality for connections
+              >
+                <PersonalDetails
+                  personalDetails={normalizedData.personal}
+                  mySkillItems={normalizedData.skills}
+                  isEditing={false} // Always read-only
+                  onEditStateChange={() => {}} // No-op
+                  targetUserId={connectionProfile._id}
+                  isOwnProfile={false}
+                  formRef={React.createRef<HTMLFormElement>()}
+                />
+              </AccordionItem>
+            </Suspense>
 
             {/* Dynamic sections with data */}
             {sectionsWithData.map((section) => {
@@ -435,44 +460,45 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
               };
 
               return (
-                <AccordionItem
-                  key={section.key}
-                  title={section.title}
-                  defaultOpen={false}
-                  editable={false} // No edit functionality for connections
-                >
-                  {/* Render each component with appropriate props */}
-                  {section.key === "business" && (
-                    <BusinessDetails
-                      professionalDetails={section.props.professionalDetails}
-                      {...commonProps}
-                    />
-                  )}
-                  {section.key === "bizleads" && (
-                    <Bizleads leads={section.props.leads} {...commonProps} />
-                  )}
-                  {section.key === "bizneeds" && (
-                    <BizNeeds myAsk={section.props.myAsk} {...commonProps} />
-                  )}
-                  {section.key === "travel" && (
-                    <TravelDiary
-                      travelDiary={section.props.travelDiary}
-                      {...commonProps}
-                    />
-                  )}
-                  {section.key === "presentation" && (
-                    <WeeklyPresentation
-                      weeklyPresentation={section.props.weeklyPresentation}
-                      {...commonProps}
-                    />
-                  )}
-                  {section.key === "connections" && (
-                    <ViewOnlyConnections
-                      connections={section.props.connections}
-                      currentUserId={connectionProfile?._id || ""}
-                    />
-                  )}
-                </AccordionItem>
+                <Suspense key={section.key} fallback={<LoadingSkeleton type="connectionCard" count={1} />}>
+                  <AccordionItem
+                    title={section.title}
+                    defaultOpen={false}
+                    editable={false} // No edit functionality for connections
+                  >
+                    {/* Render each component with appropriate props */}
+                    {section.key === "business" && (
+                      <BusinessDetails
+                        professionalDetails={section.props.professionalDetails}
+                        {...commonProps}
+                      />
+                    )}
+                    {section.key === "bizleads" && (
+                      <Bizleads leads={section.props.leads} {...commonProps} />
+                    )}
+                    {section.key === "bizneeds" && (
+                      <BizNeeds myAsk={section.props.myAsk} {...commonProps} />
+                    )}
+                    {section.key === "travel" && (
+                      <TravelDiary
+                        travelDiary={section.props.travelDiary}
+                        {...commonProps}
+                      />
+                    )}
+                    {section.key === "presentation" && (
+                      <WeeklyPresentation
+                        weeklyPresentation={section.props.weeklyPresentation}
+                        {...commonProps}
+                      />
+                    )}
+                    {section.key === "connections" && (
+                      <ViewOnlyConnections
+                        connections={section.props.connections}
+                        currentUserId={connectionProfile?._id || ""}
+                      />
+                    )}
+                  </AccordionItem>
+                </Suspense>
               );
             })}
 
@@ -489,27 +515,31 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        onConfirm={confirmRemoveConnection}
-        title={
-          connectionStatus.status === "connected"
-            ? "Remove Connection"
-            : "Cancel Connection Request"
-        }
-        message={
-          connectionStatus.status === "connected"
-            ? `Are you sure you want to remove ${personalCardData?.fname} ${personalCardData?.lname} from your connections?`
-            : `Are you sure you want to cancel the connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}?`
-        }
-        confirmText={
-          connectionStatus.status === "connected" ? "Remove" : "Cancel Request"
-        }
-        cancelText="Go Back"
-        isDestructive={true}
-        isLoading={isDeleting}
-      />
+      {showConfirmDialog && (
+        <Suspense fallback={null}>
+          <ConfirmDialog
+            isOpen={showConfirmDialog}
+            onClose={() => setShowConfirmDialog(false)}
+            onConfirm={confirmRemoveConnection}
+            title={
+              connectionStatus.status === "connected"
+                ? "Remove Connection"
+                : "Cancel Connection Request"
+            }
+            message={
+              connectionStatus.status === "connected"
+                ? `Are you sure you want to remove ${personalCardData?.fname} ${personalCardData?.lname} from your connections?`
+                : `Are you sure you want to cancel the connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}?`
+            }
+            confirmText={
+              connectionStatus.status === "connected" ? "Remove" : "Cancel Request"
+            }
+            cancelText="Go Back"
+            isDestructive={true}
+            isLoading={isDeleting}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

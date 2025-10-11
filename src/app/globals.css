@@ -1184,3 +1184,70 @@ button {
     background-position: 0% 50%;
   }
 }
+
+/* Custom Scrollbar Styles for Sidebar with Auto-Hide */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+/* Show scrollbar on hover or when scrolling */
+.scrollbar-thin:hover {
+  scrollbar-color: #d1d5db transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Hide scrollbar thumb by default */
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+}
+
+/* Show scrollbar thumb on hover */
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+/* Show scrollbar when actively scrolling */
+.scrollbar-thin::-webkit-scrollbar-thumb:active {
+  background-color: #6b7280;
+}
+
+/* Show scrollbar when scrolling (class added via JS) */
+.scrollbar-thin.scrolling::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+}
+
+.scrollbar-thin.scrolling {
+  scrollbar-color: #d1d5db transparent;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  transition: background-color 0.3s ease;
+}
+
+.scrollbar-thumb-gray-300:hover::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+}
+
+.scrollbar-thumb-gray-400:hover::-webkit-scrollbar-thumb {
+  background-color: #9ca3af;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}

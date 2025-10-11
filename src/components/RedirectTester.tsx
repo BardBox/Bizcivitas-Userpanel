@@ -24,3 +24,4 @@ export default function RedirectTester() {
 
   return null; // This component doesn't render anything
 }
+

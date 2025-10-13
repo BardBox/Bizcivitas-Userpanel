@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Pencil, Save, X, Plus, Trash2, Award, ThumbsUp } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Award, ArrowBigUpDash } from "lucide-react";
 import { useEndorseSkillMutation } from "@/store/api";
 import toast from "react-hot-toast";
 
@@ -75,13 +75,30 @@ const MySkills: React.FC<MySkillsProps> = ({
       toast.error("You cannot endorse your own skills!");
       return;
     }
+
     try {
-      await endorseSkill({
+      const result = await endorseSkill({
         skillId: skillId,
         targetUserId: targetUserId!,
       }).unwrap();
 
-      toast.success(endorsedByMe ? "Endorsement removed" : "Skill endorsed!");
+      // Update local state only after successful API call
+      // Use the result from API to determine the new state
+      setLocalSkills(prevSkills => 
+        prevSkills.map((skill) => {
+          if (skill._id === skillId) {
+            const newEndorsedState = !endorsedByMe;
+            return {
+              ...skill,
+              endorsedByMe: newEndorsedState,
+              score: newEndorsedState ? skill.score + 1 : Math.max(0, skill.score - 1),
+            };
+          }
+          return skill;
+        })
+      );
+
+      toast.success(endorsedByMe ? "Endorsement removed!" : "Skill endorsed!");
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to endorse skill");
     }
@@ -89,7 +106,12 @@ const MySkills: React.FC<MySkillsProps> = ({
   // Sync with external prop changes
   React.useEffect(() => {
     if (!externalIsEditing) {
-      setLocalSkills(mySkillItems);
+      // Ensure each skill has the endorsedByMe field properly set
+      const skillsWithEndorsementStatus = mySkillItems.map(skill => ({
+        ...skill,
+        endorsedByMe: Boolean(skill.endorsedByMe) // Ensure it's always boolean
+      }));
+      setLocalSkills(skillsWithEndorsementStatus);
     }
   }, [mySkillItems, externalIsEditing]);
 
@@ -111,38 +133,51 @@ const MySkills: React.FC<MySkillsProps> = ({
               {localSkills.map((skill) => (
                 <div
                   key={skill._id}
-                  className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 hover:shadow-md transition-all duration-200"
+                  className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 hover:shadow-md transition-all duration-200 group"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-semibold text-gray-900 text-sm flex-1 break-words pr-2">
                       {skill.name}
                     </h4>
-                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow-sm flex-shrink-0">
-                      <button
-                        onClick={() =>
-                          handleEndorseSkill(skill._id, skill.endorsedByMe)
-                        }
-                        disabled={isEndorsing || isOwnProfile}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all ${
-                          skill.endorsedByMe
-                            ? "bg-blue-600 text-white" // When endorsed
-                            : "bg-white text-gray-600" // When not endorsed
-                        } ${
-                          isOwnProfile
-                            ? "cursor-not-allowed opacity-50"
-                            : "hover:scale-105"
-                        }`}
-                      >
-                        <ThumbsUp
-                          className="h-3 w-3"
-                          fill={skill.endorsedByMe ? "currentColor" : "none"} // Filled or outline
+                    <button
+                      onClick={() =>
+                        handleEndorseSkill(skill._id, skill.endorsedByMe)
+                      }
+                      disabled={isEndorsing || isOwnProfile}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all font-medium flex-shrink-0 ${
+                        skill.endorsedByMe
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "bg-white text-gray-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-300"
+                      } ${
+                        isOwnProfile
+                          ? "cursor-not-allowed opacity-50"
+                          : "hover:scale-110 hover:shadow-lg"
+                      }`}
+                      title={
+                        isOwnProfile
+                          ? "Can't endorse own skills"
+                          : skill.endorsedByMe
+                          ? "Remove endorsement (Click to un-endorse)"
+                          : "Endorse skill (Click to endorse)"
+                      }
+                    >
+                      {skill.endorsedByMe ? (
+                        // Filled arrow (endorsed)
+                        <img
+                          src="/arrowfilled.svg"
+                          alt="Endorsed"
+                          className="h-4 w-4 transition-transform"
                         />
-                        <span className="text-xs font-bold">{skill.score}</span>
-                      </button>{" "}
-                      <span className="text-xs font-bold text-gray-700">
-                        {skill.score}
-                      </span>
-                    </div>
+                      ) : (
+                        // Outlined arrow (not endorsed)
+                        <img
+                          src="/arrow.svg"
+                          alt="Endorse"
+                          className="h-4 w-4 transition-transform group-hover:scale-110"
+                        />
+                      )}
+                      <span className="text-xs font-bold">{skill.score}</span>
+                    </button>
                   </div>
                   <p className="text-xs text-gray-600">
                     {skill.score === 0

@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Heart, Target, Award, Plus, Trash2, ArrowBigUpDash } from "lucide-react";
+import {
+  Heart,
+  Target,
+  Award,
+  Plus,
+  Trash2,
+  ArrowBigUpDash,
+} from "lucide-react";
 import { useUpdateMyBioMutation, useEndorseSkillMutation } from "@/store/api";
 import { useAppDispatch } from "../../../../../store/hooks";
 import { addToast } from "../../../../../store/toastSlice";
@@ -44,11 +51,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [localSkills, setLocalSkills] = useState<SkillItem[]>(mySkillItems);
   const [newSkillName, setNewSkillName] = useState("");
   const [endorseSkill, { isLoading: isEndorsing }] = useEndorseSkillMutation();
-  
+
   // Track endorsement state locally for persistence
-  const [endorsementState, setEndorsementState] = useState<Record<string, boolean>>(() => {
+  const [endorsementState, setEndorsementState] = useState<
+    Record<string, boolean>
+  >(() => {
     // Load from localStorage if available
-    if (typeof window !== 'undefined' && targetUserId) {
+    if (typeof window !== "undefined" && targetUserId) {
       const stored = localStorage.getItem(`endorsements_${targetUserId}`);
       return stored ? JSON.parse(stored) : {};
     }
@@ -74,19 +83,20 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   React.useEffect(() => {
     if (!isEditing) {
       // Merge API data with local endorsement state
-      const skillsWithEndorsementStatus = mySkillItems.map(skill => {
+      const skillsWithEndorsementStatus = mySkillItems.map((skill) => {
         const skillId = skill._id;
         // Use local state if available, otherwise use API data
-        const isEndorsed = endorsementState[skillId] !== undefined 
-          ? endorsementState[skillId] 
-          : Boolean(skill.endorsedByMe);
-          
+        const isEndorsed =
+          endorsementState[skillId] !== undefined
+            ? endorsementState[skillId]
+            : Boolean(skill.endorsedByMe);
+
         return {
           ...skill,
-          endorsedByMe: isEndorsed
+          endorsedByMe: isEndorsed,
         };
       });
-      
+
       setLocalSkills(skillsWithEndorsementStatus);
     }
   }, [isEditing, mySkillItems, endorsementState]);
@@ -124,30 +134,35 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       }).unwrap();
 
       const newEndorsedState = !endorsedByMe;
-      
+
       // Update local endorsement state for persistence
-      setEndorsementState(prev => {
+      setEndorsementState((prev) => {
         const newState = {
           ...prev,
-          [skillId]: newEndorsedState
+          [skillId]: newEndorsedState,
         };
-        
+
         // Save to localStorage
-        if (typeof window !== 'undefined' && targetUserId) {
-          localStorage.setItem(`endorsements_${targetUserId}`, JSON.stringify(newState));
+        if (typeof window !== "undefined" && targetUserId) {
+          localStorage.setItem(
+            `endorsements_${targetUserId}`,
+            JSON.stringify(newState)
+          );
         }
-        
+
         return newState;
       });
 
       // Update local skills state
-      setLocalSkills(prevSkills => 
+      setLocalSkills((prevSkills) =>
         prevSkills.map((skill) => {
           if (skill._id === skillId) {
             return {
               ...skill,
               endorsedByMe: newEndorsedState,
-              score: newEndorsedState ? skill.score + 1 : Math.max(0, skill.score - 1),
+              score: newEndorsedState
+                ? skill.score + 1
+                : Math.max(0, skill.score - 1),
             };
           }
           return skill;
@@ -230,7 +245,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         addToast({
           type: "success",
           message: "Personal details and skills updated successfully!",
-          duration: 3000,
+          duration: 3000, // Reduced from 3000ms to 3000ms (keeping same)
         })
       );
       onEditStateChange?.(false);
@@ -239,7 +254,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         addToast({
           type: "error",
           message: `Failed to update ${errors[0]}`,
-          duration: 4000,
+          duration: 3000, // Reduced from 4000ms to 3000ms
         })
       );
     }

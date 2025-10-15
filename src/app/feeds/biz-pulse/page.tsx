@@ -1,19 +1,72 @@
 "use client";
 
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "../../../../store";
+import { fetchPosts } from "../../../../store/postsSlice";
 import TabNavigation from "@/components/Dashboard/TabNavigation";
 import SearchBar from "@/components/Dashboard/SearchBar";
 import PostsGrid from "@/components/Dashboard/PostsGrid";
-import { filterPosts } from "../../../../store/postsSlice";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function BizPulsePage() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const { activeCategory, searchQuery, loading, error, posts } = useSelector(
+    (state: RootState) => state.posts
+  );
 
   useEffect(() => {
-    // Initialize filtered posts on component mount
-    dispatch(filterPosts());
-  }, [dispatch]);
+    // Fetch posts when component mounts or filters change
+    dispatch(
+      fetchPosts({
+        category: activeCategory,
+        search: searchQuery || undefined,
+      })
+    );
+  }, [dispatch, activeCategory, searchQuery]);
+
+  // Show full page loading only on initial load when no posts exist
+  if (loading && posts.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Biz Pulse</h1>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <LoadingSpinner size="lg" text="Loading posts..." />
+        </div>
+      </div>
+    );
+  }
+
+  if (error && posts.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Biz Pulse</h1>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="text-red-600 text-lg mb-2">Error loading posts</div>
+            <p className="text-gray-600">{error}</p>
+            <button
+              onClick={() =>
+                dispatch(
+                  fetchPosts({
+                    category: activeCategory,
+                    search: searchQuery || undefined,
+                  })
+                )
+              }
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -72,6 +125,27 @@ export default function BizPulsePage() {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <TabNavigation />
         <div className="p-2 md:p-6">
+          {error && posts.length > 0 && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-red-600 text-sm mb-2">
+                Error loading posts
+              </div>
+              <p className="text-red-500 text-xs">{error}</p>
+              <button
+                onClick={() =>
+                  dispatch(
+                    fetchPosts({
+                      category: activeCategory,
+                      search: searchQuery || undefined,
+                    })
+                  )
+                }
+                className="mt-2 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
           <PostsGrid />
         </div>
       </div>

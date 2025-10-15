@@ -5,29 +5,23 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { RootState } from "../../../store";
 import { setActiveCategory } from "../../../store/postsSlice";
-
-const tabs = [
-  { id: "all", label: "All" },
-  { id: "founders-desk", label: "Founder's Desk" },
-  { id: "business-boosters", label: "Business Boosters" },
-  { id: "pulse-polls", label: "Pulse Polls" },
-  { id: "spotlight-stories", label: "Spotlight Stories" },
-  { id: "light-pulse", label: "Light Pulse" },
-  { id: "travel-stories", label: "Travel Stories" },
-];
+import { BIZPULSE_TABS, BizPulseCategory } from "../../../types/bizpulse.types";
 
 export default function TabNavigation() {
   const dispatch = useDispatch();
-  const { activeCategory } = useSelector((state: RootState) => state.posts);
+  const { activeCategory, loading } = useSelector(
+    (state: RootState) => state.posts
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = (tabId: BizPulseCategory) => {
     dispatch(setActiveCategory(tabId));
     setIsDropdownOpen(false); // Close dropdown when selection is made
   };
 
-  const activeTab = tabs.find((tab) => tab.id === activeCategory) || tabs[0];
+  const activeTab =
+    BIZPULSE_TABS.find((tab) => tab.id === activeCategory) || BIZPULSE_TABS[0];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -55,7 +49,12 @@ export default function TabNavigation() {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-left flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <span className="text-gray-900 font-medium">{activeTab.label}</span>
+            <span className="text-gray-900 font-medium flex items-center gap-2">
+              {activeTab.label}
+              {loading && (
+                <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              )}
+            </span>
             <ChevronDown
               className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
                 isDropdownOpen ? "rotate-180" : ""
@@ -65,7 +64,7 @@ export default function TabNavigation() {
 
           {isDropdownOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              {tabs.map((tab) => (
+              {BIZPULSE_TABS.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
@@ -86,7 +85,7 @@ export default function TabNavigation() {
       {/* Desktop Horizontal Tabs (lg and above) */}
       <div className="hidden lg:block">
         <nav className="flex space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
-          {tabs.map((tab) => (
+          {BIZPULSE_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
@@ -94,9 +93,12 @@ export default function TabNavigation() {
                 activeCategory === tab.id
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
             >
               {tab.label}
+              {activeCategory === tab.id && loading && (
+                <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              )}
             </button>
           ))}
         </nav>

@@ -1,155 +1,66 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { BizPulseMockPost, BizPulseCategory } from "../types/bizpulse.types";
+import { bizpulseApi } from "../src/services/bizpulseApi";
+import { transformBizPulsePostsToMock } from "../src/utils/bizpulseTransformers";
 
-export interface Post {
-  id: string;
-  title: string;
-  content: string;
-  author: {
-    name: string;
-    title: string;
-    avatar?: string;
-  };
-  image?: string;
-  stats: {
-    likes: number;
-    comments: number;
-    shares: number;
-  };
-  timeAgo: string;
-  category:
-    | "all"
-    | "founders-desk"
-    | "business-boosters"
-    | "pulse-polls"
-    | "spotlight-stories"
-    | "light-pulse"
-    | "travel-stories";
-  tags?: string[];
-}
-
-interface PostsState {
-  posts: Post[];
-  filteredPosts: Post[];
-  activeCategory: string;
+interface BizPulseState {
+  posts: BizPulseMockPost[];
+  filteredPosts: BizPulseMockPost[];
+  activeCategory: BizPulseCategory;
   searchQuery: string;
   loading: boolean;
   error: string | null;
 }
 
-const initialState: PostsState = {
-  posts: [
-    {
-      id: "1",
-      title: "Business Networking Excellence",
-      content:
-        "Egestas libero nulla facilisis ac diam rhoncus feugiat. Building strong business relationships is the foundation of sustainable growth.",
-      author: {
-        name: "Sarah Wilson",
-        title: "Business Development Expert",
-      },
-      // image: '/contact.jpg', // Removed - image not available
-      stats: {
-        likes: 42,
-        comments: 8,
-        shares: 5,
-      },
-      timeAgo: "2h ago",
-      category: "business-boosters",
-      tags: ["networking", "business", "growth"],
-    },
-    {
-      id: "2",
-      title: "Founder's Vision for 2025",
-      content:
-        "Our journey continues with innovative solutions and strategic partnerships that drive meaningful connections.",
-      author: {
-        name: "John Doe",
-        title: "Founder & CEO",
-      },
-      stats: {
-        likes: 89,
-        comments: 15,
-        shares: 12,
-      },
-      timeAgo: "4h ago",
-      category: "founders-desk",
-      tags: ["vision", "leadership", "strategy"],
-    },
-    {
-      id: "3",
-      title: "Community Poll: Best Networking Events",
-      content:
-        "What type of networking events do you find most valuable for your business growth?",
-      author: {
-        name: "BizCivitas Team",
-        title: "Community Manager",
-      },
-      stats: {
-        likes: 23,
-        comments: 45,
-        shares: 3,
-      },
-      timeAgo: "6h ago",
-      category: "pulse-polls",
-      tags: ["poll", "community", "events"],
-    },
-    {
-      id: "4",
-      title: "Success Story: From Startup to Scale",
-      content:
-        "How one of our members transformed their startup into a thriving enterprise through strategic networking.",
-      author: {
-        name: "Maria Garcia",
-        title: "Success Story Editor",
-      },
-      stats: {
-        likes: 156,
-        comments: 28,
-        shares: 34,
-      },
-      timeAgo: "8h ago",
-      category: "spotlight-stories",
-      tags: ["success", "startup", "growth"],
-    },
-    {
-      id: "5",
-      title: "Quick Tip: Elevator Pitch Mastery",
-      content:
-        "Master your 30-second elevator pitch with these proven techniques.",
-      author: {
-        name: "Alex Chen",
-        title: "Business Coach",
-      },
-      stats: {
-        likes: 67,
-        comments: 12,
-        shares: 8,
-      },
-      timeAgo: "12h ago",
-      category: "light-pulse",
-      tags: ["tips", "pitch", "communication"],
-    },
-    {
-      id: "6",
-      title: "Networking While Traveling: Global Opportunities",
-      content:
-        "Discover how to build meaningful business connections while exploring new destinations.",
-      author: {
-        name: "David Kim",
-        title: "Travel Business Expert",
-      },
-      stats: {
-        likes: 91,
-        comments: 19,
-        shares: 15,
-      },
-      timeAgo: "1d ago",
-      category: "travel-stories",
-      tags: ["travel", "global", "networking"],
-    },
-  ],
+// Async thunks for API calls
+export const fetchPosts = createAsyncThunk(
+  "posts/fetchPosts",
+  async (
+    params: { category?: string; search?: string } | undefined,
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await bizpulseApi.fetchPosts(params);
+      // Wallfeed response structure: { data: { wallFeeds: [...] } }
+      const wallFeeds = response.data?.wallFeeds || [];
+      const transformedPosts = transformBizPulsePostsToMock(wallFeeds);
+      return transformedPosts;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const fetchPostById = createAsyncThunk(
+  "posts/fetchPostById",
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      const response = await bizpulseApi.fetchPostById(postId);
+      const transformedPost = transformBizPulsePostsToMock([response.data])[0];
+      return transformedPost;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const likePostAsync = createAsyncThunk(
+  "posts/likePost",
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      const response = await bizpulseApi.likePost(postId);
+      const transformedPost = transformBizPulsePostsToMock([response.data])[0];
+      return { postId, updatedPost: transformedPost };
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+const initialState: BizPulseState = {
+  posts: [],
   filteredPosts: [],
-  activeCategory: "all",
+  activeCategory: "all" as BizPulseCategory,
   searchQuery: "",
   loading: false,
   error: null,
@@ -159,7 +70,7 @@ const postsSlice = createSlice({
   name: "posts",
   initialState,
   reducers: {
-    setActiveCategory: (state, action: PayloadAction<string>) => {
+    setActiveCategory: (state, action: PayloadAction<BizPulseCategory>) => {
       state.activeCategory = action.payload;
       postsSlice.caseReducers.filterPosts(state);
     },
@@ -215,6 +126,58 @@ const postsSlice = createSlice({
         post.stats.shares += 1;
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchPosts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPosts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.posts = action.payload;
+        // Re-apply filtering after fetching new posts
+        postsSlice.caseReducers.filterPosts(state);
+      })
+      .addCase(fetchPosts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchPostById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPostById.fulfilled, (state, action) => {
+        state.loading = false;
+        // Handle single post fetch if needed
+        const existingIndex = state.posts.findIndex(
+          (p) => p.id === action.payload.id
+        );
+        if (existingIndex >= 0) {
+          state.posts[existingIndex] = action.payload;
+        } else {
+          state.posts.push(action.payload);
+        }
+        postsSlice.caseReducers.filterPosts(state);
+      })
+      .addCase(fetchPostById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(likePostAsync.pending, (state) => {
+        // Optional: could set loading for specific post
+      })
+      .addCase(likePostAsync.fulfilled, (state, action) => {
+        const { postId, updatedPost } = action.payload;
+        const existingIndex = state.posts.findIndex((p) => p.id === postId);
+        if (existingIndex >= 0) {
+          state.posts[existingIndex] = updatedPost;
+          postsSlice.caseReducers.filterPosts(state);
+        }
+      })
+      .addCase(likePostAsync.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
   },
 });
 

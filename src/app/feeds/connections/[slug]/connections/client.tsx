@@ -197,6 +197,8 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
   const handleSendRequest = async (userId: string, userName: string) => {
     setRequestStates((prev) => ({ ...prev, [userId]: "sending" }));
 
+    const loadingToast = toast.loading("Sending request...");
+
     try {
       // Call the real API endpoint
       const result = await sendConnectionRequest({
@@ -206,7 +208,9 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
       setRequestStates((prev) => ({ ...prev, [userId]: "sent" }));
 
       // Show success toast
-      toast.success(`Connection request sent to ${userName}!`);
+      toast.success(`Connection request sent to ${userName}!`, {
+        id: loadingToast,
+      });
 
       console.log("✅ Connection request sent successfully:", result);
     } catch (error: any) {
@@ -216,7 +220,7 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
         error?.data?.message ||
         error?.message ||
         "Failed to send connection request";
-      toast.error(errorMessage);
+      toast.error(errorMessage, { id: loadingToast });
 
       console.error("❌ Failed to send connection request:", error);
     }

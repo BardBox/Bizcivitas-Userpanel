@@ -43,7 +43,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   const referrerTab = searchParams?.get("from");
 
   // Get current user
-  const { data: currentUser } = useGetCurrentUserQuery();
+  const { data: currentUser, isLoading: isCurrentUserLoading } =
+    useGetCurrentUserQuery();
 
   // Use our API endpoint to fetch connection profile by ID
   const {
@@ -54,6 +55,9 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     skip: !slug || !isMounted,
   });
 
+  // Combined loading state
+  const isPageLoading = isLoading || isCurrentUserLoading;
+
   // Mutations for connection actions
   const [deleteConnection, { isLoading: isDeleting }] =
     useDeleteConnectionMutation();
@@ -62,11 +66,27 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
 
   // Confirm dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Handle client-side mounting
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Loading timeout state
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+
+  useEffect(() => {
+    if (isPageLoading) {
+      const timer = setTimeout(() => {
+        setIsLoadingSlow(true);
+      }, 2000); // Show slow loading message after 2 seconds
+
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoadingSlow(false);
+    }
+  }, [isPageLoading]);
 
   // Determine connection status
   const connectionStatus = useMemo((): {
@@ -214,6 +234,9 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   }, [connectionProfile]);
 
   const handleConnect = async () => {
+    setIsConnecting(true);
+    const loadingToast = toast.loading("Sending request...");
+
     try {
       if (
         connectionStatus.status === "pending_received" &&
@@ -223,16 +246,21 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
         await acceptConnectionRequest({
           connectionId: connectionStatus.connectionId,
         }).unwrap();
-        toast.success("Connection request accepted!");
+        toast.success("Connection request accepted!", { id: loadingToast });
       } else {
         // Send new connection request
         await sendConnectionRequest({ receiverId: slug }).unwrap();
         toast.success(
-          `Connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}`
+          `Connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}`,
+          { id: loadingToast }
         );
       }
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to send connection request");
+      toast.error(error?.data?.message || "Failed to send connection request", {
+        id: loadingToast,
+      });
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -272,8 +300,28 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     return null; // Prevent hydration mismatch
   }
 
-  // Handle error state
-  if (apiError || !connectionProfile || !normalizedData || !personalCardData) {
+  // Show loading state while fetching data
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading connection details...</p>
+          {isLoadingSlow && (
+            <p className="mt-2 text-sm text-yellow-600">
+              This is taking longer than expected...
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state - only show error if there's an error AND loading is complete
+  if (
+    !isPageLoading &&
+    (apiError || !connectionProfile || !normalizedData || !personalCardData)
+  ) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -306,8 +354,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       key: "business",
       title: "Business Details",
       component: BusinessDetails,
-      props: { professionalDetails: normalizedData.business },
-      hasData: Object.values(normalizedData.business || {}).some(
+      props: { professionalDetails: normalizedData!.business },
+      hasData: Object.values(normalizedData!.business || {}).some(
         (value) => value
       ),
     },
@@ -315,22 +363,22 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       key: "bizleads",
       title: "Business Leads",
       component: Bizleads,
-      props: { leads: normalizedData.leads },
-      hasData: normalizedData.leads?.given?.length > 0,
+      props: { leads: normalizedData!.leads },
+      hasData: normalizedData!.leads?.given?.length > 0,
     },
     {
       key: "bizneeds",
       title: "Business Needs",
       component: BizNeeds,
-      props: { myAsk: normalizedData.needs },
-      hasData: normalizedData.needs?.length > 0,
+      props: { myAsk: normalizedData!.needs },
+      hasData: normalizedData!.needs?.length > 0,
     },
     {
       key: "travel",
       title: "Travel Diary",
       component: TravelDiary,
-      props: { travelDiary: normalizedData.travel },
-      hasData: Object.values(normalizedData.travel || {}).some((value) =>
+      props: { travelDiary: normalizedData!.travel },
+      hasData: Object.values(normalizedData!.travel || {}).some((value) =>
         Array.isArray(value) ? value.length > 0 : Boolean(value)
       ),
     },
@@ -338,8 +386,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       key: "presentation",
       title: "Weekly Presentation",
       component: WeeklyPresentation,
-      props: { weeklyPresentation: normalizedData.presentation },
-      hasData: Object.values(normalizedData.presentation || {}).some(
+      props: { weeklyPresentation: normalizedData!.presentation },
+      hasData: Object.values(normalizedData!.presentation || {}).some(
         (value) => value
       ),
     },
@@ -347,8 +395,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       key: "connections",
       title: "Connections",
       component: ViewOnlyConnections,
-      props: { connections: normalizedData.connections },
-      hasData: normalizedData.connections?.length > 0,
+      props: { connections: normalizedData!.connections },
+      hasData: normalizedData!.connections?.length > 0,
     },
   ];
 
@@ -387,14 +435,15 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24">
               {personalCardData && (
-                 <ViewOnlyProfileCard
-                   profile={personalCardData}
-                   connectionStatus={connectionStatus}
-                   onConnect={handleConnect}
-                   onRemoveConnection={handleRemoveConnection}
-                   onMessage={handleMessage}
-                   userId={slug}
-                 />
+                <ViewOnlyProfileCard
+                  profile={personalCardData}
+                  connectionStatus={connectionStatus}
+                  onConnect={handleConnect}
+                  onRemoveConnection={handleRemoveConnection}
+                  onMessage={handleMessage}
+                  userId={slug}
+                  isConnecting={isConnecting}
+                />
               )}
             </div>
           </div>
@@ -409,11 +458,11 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
               editable={false} // No edit functionality for connections
             >
               <PersonalDetails
-                personalDetails={normalizedData.personal}
-                mySkillItems={normalizedData.skills}
+                personalDetails={normalizedData!.personal}
+                mySkillItems={normalizedData!.skills}
                 isEditing={false} // Always read-only
                 onEditStateChange={() => {}} // No-op
-                targetUserId={connectionProfile._id}
+                targetUserId={connectionProfile!._id}
                 isOwnProfile={false}
                 formRef={React.createRef<HTMLFormElement>()}
               />
@@ -448,26 +497,26 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
                     <Bizleads leads={section.props.leads} {...commonProps} />
                   )}
                   {section.key === "bizneeds" && (
-                      <BizNeeds myAsk={section.props.myAsk} {...commonProps} />
-                    )}
-                    {section.key === "travel" && (
-                      <TravelDiary
-                        travelDiary={section.props.travelDiary}
-                        {...commonProps}
-                      />
-                    )}
-                    {section.key === "presentation" && (
-                      <WeeklyPresentation
-                        weeklyPresentation={section.props.weeklyPresentation}
-                        {...commonProps}
-                      />
-                    )}
-                    {section.key === "connections" && (
-                      <ViewOnlyConnections
-                        connections={section.props.connections}
-                        currentUserId={connectionProfile?._id || ""}
-                      />
-                    )}
+                    <BizNeeds myAsk={section.props.myAsk} {...commonProps} />
+                  )}
+                  {section.key === "travel" && (
+                    <TravelDiary
+                      travelDiary={section.props.travelDiary}
+                      {...commonProps}
+                    />
+                  )}
+                  {section.key === "presentation" && (
+                    <WeeklyPresentation
+                      weeklyPresentation={section.props.weeklyPresentation}
+                      {...commonProps}
+                    />
+                  )}
+                  {section.key === "connections" && (
+                    <ViewOnlyConnections
+                      connections={section.props.connections}
+                      currentUserId={connectionProfile!._id || ""}
+                    />
+                  )}
                 </AccordionItem>
               );
             })}
@@ -501,7 +550,9 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
               : `Are you sure you want to cancel the connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}?`
           }
           confirmText={
-            connectionStatus.status === "connected" ? "Remove" : "Cancel Request"
+            connectionStatus.status === "connected"
+              ? "Remove"
+              : "Cancel Request"
           }
           cancelText="Go Back"
           isDestructive={true}

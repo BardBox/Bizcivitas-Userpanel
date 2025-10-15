@@ -1,9 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Toast {
   id: string;
   message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+  type: "success" | "error" | "info" | "warning";
   duration?: number;
   action?: {
     label: string;
@@ -20,19 +20,21 @@ const initialState: ToastState = {
 };
 
 const toastSlice = createSlice({
-  name: 'toast',
+  name: "toast",
   initialState,
   reducers: {
-    addToast: (state, action: PayloadAction<Omit<Toast, 'id'>>) => {
+    addToast: (state, action: PayloadAction<Omit<Toast, "id">>) => {
       const toast: Toast = {
         id: Date.now().toString() + Math.random().toString(36),
-        duration: 5000, 
+        duration: 3000, // Reduced from 5000ms to 3000ms
         ...action.payload,
       };
       state.toasts.push(toast);
     },
     removeToast: (state, action: PayloadAction<string>) => {
-      state.toasts = state.toasts.filter(toast => toast.id !== action.payload);
+      state.toasts = state.toasts.filter(
+        (toast) => toast.id !== action.payload
+      );
     },
     clearAllToasts: (state) => {
       state.toasts = [];

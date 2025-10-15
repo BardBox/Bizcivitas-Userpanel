@@ -170,6 +170,7 @@ export interface User {
   business?: string | null;
   businessSubcategory?: string;
   region?: string;
+  joiningDate?: string; // Date when user joined the platform
 
   // Connections data (basic - see connection.types.ts for detailed)
   connections?: Array<{

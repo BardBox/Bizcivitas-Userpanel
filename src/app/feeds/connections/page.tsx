@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  Suspense,
+  useCallback,
+} from "react";
 import {
   Search,
   Users,
@@ -8,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Inbox,
+  Filter,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import UserCard from "../../../components/Dashboard/UserCard";
@@ -25,6 +32,7 @@ function ConnectionsPageContent() {
     data: connections,
     isLoading: connectionsLoading,
     error,
+    refetch: refetchConnections,
   } = useGetConnectionsQuery();
 
   // Fetch received requests for badge count
@@ -34,6 +42,9 @@ function ConnectionsPageContent() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<
+    "default" | "recent" | "name" | "company"
+  >("default");
 
   // Dynamic items per page based on screen resolution
   const dynamicItemsPerPage = useGridLayout();
@@ -97,22 +108,50 @@ function ConnectionsPageContent() {
         title: title || "-",
         company: company || "-",
         avatar: getAvatarUrl(connection.avatar), // Add avatar URL
+        joiningDate: connection.joiningDate, // Add joining date for sorting
         isOnline: Math.random() > 0.5, // This would come from real-time status in production
       };
     });
   }, [connectionsArray, getAvatarUrl]);
 
-  // Filter users based on search query
+  // Filter and sort users based on search query and sort option
   const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return connectionData;
+    let users = connectionData;
 
-    return connectionData.filter(
-      (connection) =>
-        connection.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        connection.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        connection.company.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, connectionData]);
+    // Apply search filter
+    if (searchQuery.trim()) {
+      users = users.filter(
+        (connection) =>
+          connection.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          connection.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          connection.company.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "name":
+        users = [...users].sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "company":
+        users = [...users].sort((a, b) => a.company.localeCompare(b.company));
+        break;
+      case "recent":
+        // Sort by joining date (when user joined the platform)
+        users = [...users].sort((a, b) => {
+          const dateA = a.joiningDate ? new Date(a.joiningDate).getTime() : 0;
+          const dateB = b.joiningDate ? new Date(b.joiningDate).getTime() : 0;
+          return dateB - dateA; // Newer (more recent) first
+        });
+        break;
+      case "default":
+      default:
+        // Keep original order
+        break;
+    }
+
+    return users;
+  }, [searchQuery, connectionData, sortBy]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -134,6 +173,11 @@ function ConnectionsPageContent() {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
+
+  // Refetch connections when component mounts to ensure fresh data
+  useEffect(() => {
+    refetchConnections();
+  }, [refetchConnections]);
 
   // Function to update tab with URL param
   const handleTabChange = (tab: "my-network" | "connect-members") => {
@@ -157,10 +201,10 @@ function ConnectionsPageContent() {
     itemsPerPage: 12,
   });
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search or sort changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, sortBy]);
 
   const clearSearch = () => {
     setSearchQuery("");
@@ -277,25 +321,54 @@ function ConnectionsPageContent() {
 
           {/* Bottom Row - Search and Filters */}
           <div className="flex items-center justify-between py-3">
-            {/* Search Bar */}
-            <div className="flex-1 max-w-md relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+            {/* Search Bar and Filter */}
+            <div className="flex items-center gap-4 flex-1 max-w-2xl">
+              {/* Search Bar */}
+              <div className="flex-1 max-w-md relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search connections..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  </button>
+                )}
               </div>
-              <input
-                type="text"
-                placeholder="Search connections..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              {searchQuery && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                </button>
+
+              {/* Filter Dropdown */}
+              {activeTab === "my-network" && connectionsCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <Filter className="h-5 w-5 text-gray-400" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => {
+                      setSortBy(
+                        e.target.value as
+                          | "default"
+                          | "recent"
+                          | "name"
+                          | "company"
+                      );
+                      setCurrentPage(1); // Reset to first page when sorting changes
+                    }}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  >
+                    <option value="default">Sort by: Default</option>
+                    <option value="recent">Sort by: Recent</option>
+                    <option value="name">Sort by: Name</option>
+                    <option value="company">Sort by: Company</option>
+                  </select>
+                </div>
               )}
             </div>
 
@@ -359,16 +432,31 @@ function ConnectionsPageContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6"></div>
 
-        {/* Search query results indicator */}
-        {activeTab === "my-network" && connectionsCount > 0 && searchQuery && (
-          <div className="mb-6">
-            <p className="text-gray-600">
-              <span className="text-blue-600 font-medium">
-                Search results for &quot;{searchQuery}&quot;
-              </span>
-            </p>
-          </div>
-        )}
+        {/* Search query and sort results indicator */}
+        {activeTab === "my-network" &&
+          connectionsCount > 0 &&
+          (searchQuery || sortBy !== "default") && (
+            <div className="mb-6">
+              <p className="text-gray-600">
+                {searchQuery && (
+                  <span className="text-blue-600 font-medium">
+                    Search results for &quot;{searchQuery}&quot;
+                  </span>
+                )}
+                {searchQuery && sortBy !== "default" && " • "}
+                {sortBy !== "default" && (
+                  <span className="text-green-600 font-medium">
+                    Sorted by:{" "}
+                    {sortBy === "recent"
+                      ? "Recent"
+                      : sortBy === "name"
+                      ? "Name"
+                      : "Company"}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
 
         {/* Content based on active tab */}
         {activeTab === "my-network" && (

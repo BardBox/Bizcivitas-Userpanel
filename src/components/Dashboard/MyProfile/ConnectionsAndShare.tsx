@@ -71,17 +71,7 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   };
 
   const handleMessage = () => {
-    if (customMessage) {
-      customMessage();
-    } else {
-      dispatch(
-        addToast({
-          type: "info",
-          message: "Messaging feature coming soon",
-          duration: 3000,
-        })
-      );
-    }
+    router.push("/feeds/messages");
   };
 
   const handleConnect = () => {
@@ -216,28 +206,30 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   return (
     <div className="flex items-center justify-center gap-3">
       {/* Call Button */}
-      <div className="relative group">
-        <button
-          onClick={handleCall}
-          onMouseEnter={() => setHoveredButton("call")}
-          onMouseLeave={() => setHoveredButton(null)}
-          className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
-          aria-label="Call"
-        >
-          <Image
-            src="/myprofile/call.svg"
-            alt="Call"
-            width={0}
-            height={0}
-            className="w-auto h-auto"
-          />
-        </button>
-        {hoveredButton === "call" && (
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-            Call
-          </div>
-        )}
-      </div>
+      {!isOwnProfile && (
+        <div className="relative group">
+          <button
+            onClick={handleCall}
+            onMouseEnter={() => setHoveredButton("call")}
+            onMouseLeave={() => setHoveredButton(null)}
+            className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
+            aria-label="Call"
+          >
+            <Image
+              src="/myprofile/call.svg"
+              alt="Call"
+              width={0}
+              height={0}
+              className="w-auto h-auto"
+            />
+          </button>
+          {hoveredButton === "call" && (
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+              Call
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Message Button */}
       <div className="relative group">

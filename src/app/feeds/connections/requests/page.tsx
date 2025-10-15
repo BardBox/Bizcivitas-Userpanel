@@ -46,13 +46,18 @@ export default function ConnectionRequestsPage() {
     setProcessingIds((prev) => new Set(prev).add(connectionId));
     try {
       await acceptConnection({ connectionId }).unwrap();
-      dispatch(
-        addToast({
-          type: "success",
-          message: "Connection request accepted!",
-          duration: 3000,
-        })
-      );
+
+      // Small delay to allow cache invalidation to complete
+      setTimeout(() => {
+        dispatch(
+          addToast({
+            type: "success",
+            message: "Connection request accepted! Check your connections.",
+            duration: 3000, // Reduced from 4000ms to 3000ms
+          })
+        );
+      }, 500);
+
       refetch();
     } catch (error: any) {
       dispatch(

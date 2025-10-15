@@ -13,7 +13,7 @@ interface BizPulseCardProps {
   author: {
     name: string;
     title: string;
-    avatar?: string;
+    avatar?: string | null;
   };
   image?: string;
   stats: {
@@ -143,9 +143,10 @@ export default function BizPulseCard({
         </Link>
 
         {/* Content Preview */}
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
-          {content}
-        </p>
+        <div
+          className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
 
         {/* Tags */}
         {tags.length > 0 && (

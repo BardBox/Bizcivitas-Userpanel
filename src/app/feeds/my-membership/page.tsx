@@ -1,6 +1,3 @@
-"use client";
-
-// ✅ PERFORMANCE: No loading states, instant rendering
 export default function MyMembershipPage() {
   return (
     <div className="space-y-6">
@@ -9,7 +6,9 @@ export default function MyMembershipPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">Your Membership page content will go here.</p>
+        <p className="text-gray-600">
+          Your Membership page content will go here.
+        </p>
       </div>
     </div>
   );

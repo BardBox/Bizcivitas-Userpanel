@@ -78,26 +78,41 @@ export default function NotificationDropdown({
   useEffect(() => {
     if (!isFCMSupported || !isMounted) return;
 
-    // Listen for Firebase foreground messages and refetch notification list
-    const handleFirebaseMessage = () => {
-      // Debounce refetch to avoid multiple calls in quick succession
-      const timer = setTimeout(() => {
-        refetch();
-      }, 1000);
+    let timer: NodeJS.Timeout | null = null;
+    let unsubscribe: (() => void) | null = null;
+    let isActive = true;
 
-      return () => clearTimeout(timer);
-    };
+    (async () => {
+      try {
+        const { getMessagingInstance } = await import("@/lib/firebase");
+        if (!isActive) return;
+        const messagingInstance = await getMessagingInstance();
+        if (!isActive || !messagingInstance) return;
+        const { onMessage } = await import("firebase/messaging");
+        if (!isActive) return;
+        unsubscribe = onMessage(messagingInstance, () => {
+          if (!isActive) return;
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (isActive) refetch();
+          }, 500);
+        });
+      } catch (err) {
+        // Fail silently
+      }
+    })();
 
-    // Trigger refetch when Firebase token is initialized (indicates notification capability)
+    // Initial fetch when notifications are enabled
     if (fcmToken && notificationPermission === "granted") {
-      // Initial fetch when notifications are enabled
       refetch();
     }
 
-    // Note: Firebase onMessage is already handled in useFirebaseNotifications hook
-    // The toast notification shown there is for foreground messages
-    // This refetch ensures the dropdown list is updated
-  }, [fcmToken, notificationPermission, isFCMSupported, isMounted, refetch]);
+    return () => {
+      isActive = false;
+      if (timer) clearTimeout(timer);
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isFCMSupported, isMounted, fcmToken, notificationPermission, refetch]);
 
   const notifications = unreadData?.notifications || [];
   const unreadCount = unreadData?.count || 0;

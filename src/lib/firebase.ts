@@ -25,6 +25,7 @@ let firebaseApp: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let messaging: any = null;
 let isInitializing = false;
+let initializationPromise: Promise<any> | null = null;
 
 /**
  * Lazy initialize Firebase App (only when needed)
@@ -34,7 +35,8 @@ const initializeFirebaseApp = async () => {
 
   try {
     const { initializeApp, getApps } = await import("firebase/app");
-    firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    firebaseApp =
+      getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     return firebaseApp;
   } catch (error) {
     console.error("Failed to initialize Firebase app:", error);
@@ -50,45 +52,47 @@ const initializeMessaging = async () => {
   // Return cached instance if already initialized
   if (messaging) return messaging;
 
-  // Prevent multiple simultaneous initializations
-  if (isInitializing) {
-    // Wait for initialization to complete
-    while (isInitializing) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    return messaging;
+  // Prevent multiple simultaneous initializations using a Promise
+  if (initializationPromise) {
+    return initializationPromise;
   }
 
   if (typeof window === "undefined") return null;
 
   isInitializing = true;
+  initializationPromise = (async () => {
+    try {
+      // Dynamically import Firebase messaging module
+      const { getMessaging, isSupported } = await import("firebase/messaging");
 
-  try {
-    // Dynamically import Firebase messaging module
-    const { getMessaging, isSupported } = await import("firebase/messaging");
+      const supported = await isSupported();
+      if (!supported) {
+        isInitializing = false;
+        initializationPromise = null;
+        return null;
+      }
 
-    const supported = await isSupported();
-    if (!supported) {
+      // Initialize Firebase app first
+      const app = await initializeFirebaseApp();
+      if (!app) {
+        isInitializing = false;
+        initializationPromise = null;
+        return null;
+      }
+
+      // Initialize messaging
+      messaging = getMessaging(app);
       isInitializing = false;
-      return null;
-    }
-
-    // Initialize Firebase app first
-    const app = await initializeFirebaseApp();
-    if (!app) {
+      initializationPromise = null;
+      return messaging;
+    } catch (error) {
+      console.error("Failed to initialize Firebase messaging:", error);
       isInitializing = false;
-      return null;
+      initializationPromise = null;
+      throw error;
     }
-
-    // Initialize messaging
-    messaging = getMessaging(app);
-    isInitializing = false;
-    return messaging;
-  } catch (error) {
-    console.error("Failed to initialize Firebase messaging:", error);
-    isInitializing = false;
-    return null;
-  }
+  })();
+  return initializationPromise;
 };
 
 /**

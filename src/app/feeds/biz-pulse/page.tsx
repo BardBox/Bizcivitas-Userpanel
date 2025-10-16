@@ -8,7 +8,7 @@
  * ✅ Extracted conditional renders for better performance
  */
 
-import { useEffect, useCallback, memo } from "react";
+import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../../store";
 import { fetchPosts } from "../../../../store/postsSlice";

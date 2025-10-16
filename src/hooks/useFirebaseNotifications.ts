@@ -30,11 +30,17 @@ export const useFirebaseNotifications = () => {
 
   // ✅ PERFORMANCE FIX: Check FCM support without loading Firebase SDK
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      // Check basic browser support for notifications
-      // Don't load Firebase yet - just check if it's supported
+    if (
+      typeof window !== "undefined" &&
+      "serviceWorker" in navigator &&
+      "Notification" in window &&
+      typeof Notification?.requestPermission === "function"
+    ) {
+      // Only set as supported if both Service Worker and Notification API are present
       setIsFCMSupported(true);
       setNotificationPermission(Notification.permission);
+    } else {
+      setIsFCMSupported(false);
     }
   }, []);
 
@@ -105,35 +111,48 @@ export const useFirebaseNotifications = () => {
         // ✅ Lazy load onMessage from Firebase
         const { onMessage } = await import("firebase/messaging");
 
-        unsubscribe = onMessage(messagingInstance, (payload: {
-          notification?: {
-            title?: string;
-            body?: string;
-            click_action?: string
-          };
-          data?: Record<string, unknown>
-        }) => {
-          const notification = payload.notification;
-          const data = payload.data;
+        unsubscribe = onMessage(
+          messagingInstance,
+          (payload: {
+            notification?: {
+              title?: string;
+              body?: string;
+              click_action?: string;
+            };
+            data?: Record<string, unknown>;
+          }) => {
+            const notification = payload.notification;
+            const data = payload.data;
 
-          // Show toast notification for foreground messages
-          if (notification) {
-            // Simple toast notification without complex JSX
-            toast.success(`${notification.title}\n${notification.body}`, {
-              duration: 5000,
-              position: "top-right",
-              icon: "🔔",
-            });
+            // Show toast notification for foreground messages
+            if (notification) {
+              toast.success(`${notification.title}\n${notification.body}`, {
+                duration: 5000,
+                position: "top-right",
+                icon: "🔔",
+                // Optionally, add onClick handler if you want to handle click navigation in the future
+              });
 
-            // Handle click action if provided
-            if (notification.click_action || data?.click_action) {
+              // Minimal type-safe click_action handler
               const clickAction =
                 notification.click_action || data?.click_action;
-              // You can add navigation logic here based on click_action
-              // ✅ CLEANUP: Removed debug console.log (functionality preserved)
+              if (
+                typeof clickAction === "string" &&
+                clickAction.trim().length > 0
+              ) {
+                // Optionally, validate as URL or path
+                // For now, open in new tab if it looks like a URL or path
+                // You may want to restrict to http(s) or app routes only
+                const isValidUrl =
+                  /^https?:\/\//.test(clickAction) ||
+                  clickAction.startsWith("/");
+                if (isValidUrl) {
+                  window.open(clickAction, "_blank", "noopener,noreferrer");
+                }
+              }
             }
           }
-        });
+        );
       } catch (error) {
         console.error("Error setting up message listener:", error);
       }

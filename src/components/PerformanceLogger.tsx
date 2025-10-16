@@ -29,8 +29,9 @@ export default function PerformanceLogger() {
     return () => clearTimeout(timer);
   }, [pathname]);
 
-  // Log immediately when component mounts (before useEffect)
-  console.log(`🟡 [PERF] PerformanceLogger mounted for: ${pathname}`);
+  useEffect(() => {
+    console.log(`🟡 [PERF] PerformanceLogger mounted for: ${pathname}`);
+  }, [pathname]);
 
   return null;
 }

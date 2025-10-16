@@ -1,6 +1,3 @@
-"use client";
-
-// ✅ PERFORMANCE: No loading states, instant rendering
 export default function AccountSettingsPage() {
   return (
     <div className="space-y-6">
@@ -9,7 +6,9 @@ export default function AccountSettingsPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">Your Account Settings page content will go here.</p>
+        <p className="text-gray-600">
+          Your Account Settings page content will go here.
+        </p>
       </div>
     </div>
   );

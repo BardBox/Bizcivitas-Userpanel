@@ -1,6 +1,3 @@
-"use client";
-
-// ✅ PERFORMANCE: No loading states, instant rendering
 export default function RewardsPage() {
   return (
     <div className="space-y-6">

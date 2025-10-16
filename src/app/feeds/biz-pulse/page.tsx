@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+/**
+ * Biz Pulse Page - FRONTEND PERFORMANCE OPTIMIZATIONS
+ *
+ * ✅ Optimized useEffect dependencies to prevent unnecessary re-fetches
+ * ✅ Memoized retry handlers to prevent re-renders
+ * ✅ Extracted conditional renders for better performance
+ */
+
+import { useEffect, useCallback, memo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../../store";
 import { fetchPosts } from "../../../../store/postsSlice";
@@ -15,8 +23,8 @@ export default function BizPulsePage() {
     (state: RootState) => state.posts
   );
 
-  useEffect(() => {
-    // Fetch posts when component mounts or filters change
+  // ✅ PERFORMANCE FIX: Memoize fetch function to prevent unnecessary effect triggers
+  const handleFetchPosts = useCallback(() => {
     dispatch(
       fetchPosts({
         category: activeCategory,
@@ -24,6 +32,17 @@ export default function BizPulsePage() {
       })
     );
   }, [dispatch, activeCategory, searchQuery]);
+
+  // ✅ PERFORMANCE FIX: Memoized retry handler - prevents creating new function on every render
+  // IMPORTANT: Must be declared BEFORE any conditional returns (React Rules of Hooks)
+  const handleRetry = useCallback(() => {
+    handleFetchPosts();
+  }, [handleFetchPosts]);
+
+  useEffect(() => {
+    // Fetch posts when component mounts or filters change
+    handleFetchPosts();
+  }, [handleFetchPosts]);
 
   // Show full page loading only on initial load when no posts exist
   if (loading && posts.length === 0) {
@@ -50,14 +69,7 @@ export default function BizPulsePage() {
             <div className="text-red-600 text-lg mb-2">Error loading posts</div>
             <p className="text-gray-600">{error}</p>
             <button
-              onClick={() =>
-                dispatch(
-                  fetchPosts({
-                    category: activeCategory,
-                    search: searchQuery || undefined,
-                  })
-                )
-              }
+              onClick={handleRetry}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Try Again
@@ -132,14 +144,7 @@ export default function BizPulsePage() {
               </div>
               <p className="text-red-500 text-xs">{error}</p>
               <button
-                onClick={() =>
-                  dispatch(
-                    fetchPosts({
-                      category: activeCategory,
-                      search: searchQuery || undefined,
-                    })
-                  )
-                }
+                onClick={handleRetry}
                 className="mt-2 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
               >
                 Try Again

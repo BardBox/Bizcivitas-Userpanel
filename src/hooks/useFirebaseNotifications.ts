@@ -1,6 +1,15 @@
+/**
+ * Firebase Notifications Hook
+ *
+ * PERFORMANCE OPTIMIZATION:
+ * - Works with lazy-loaded Firebase SDK
+ * - Only loads Firebase when user actually enables notifications
+ * - Checks FCM support without loading the full SDK
+ */
+
 import { useEffect, useState, useCallback } from "react";
-import { toast } from "react-hot-toast"; // You can replace this with your preferred toast library
-import { requestForToken, messaging } from "@/lib/firebase";
+import { toast } from "react-hot-toast";
+import { requestForToken, getMessagingInstance } from "@/lib/firebase";
 import { useUpdateFcmTokenMutation } from "../../store/api/notificationApi";
 
 export interface FCMNotification {
@@ -19,25 +28,24 @@ export const useFirebaseNotifications = () => {
   const [updateFcmToken, { isLoading: isUpdatingToken }] =
     useUpdateFcmTokenMutation();
 
-  // Check if FCM is supported
+  // ✅ PERFORMANCE FIX: Check FCM support without loading Firebase SDK
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      "serviceWorker" in navigator &&
-      messaging
-    ) {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      // Check basic browser support for notifications
+      // Don't load Firebase yet - just check if it's supported
       setIsFCMSupported(true);
       setNotificationPermission(Notification.permission);
     }
   }, []);
 
-  // Initialize FCM and get token
+  // Initialize FCM and get token (lazy loads Firebase)
   const initializeFCM = useCallback(async () => {
     if (!isFCMSupported) {
       return null;
     }
 
     try {
+      // ✅ This will lazy load Firebase SDK only when called
       const token = await requestForToken();
       if (token) {
         setFcmToken(token);
@@ -58,9 +66,10 @@ export const useFirebaseNotifications = () => {
     }
   }, [isFCMSupported, updateFcmToken]);
 
-  // Request notification permission
+  // Request notification permission (lazy loads Firebase)
   const requestNotificationPermission = useCallback(async () => {
-    if (!isFCMSupported) {
+    // Basic check before loading Firebase
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return false;
     }
 
@@ -69,6 +78,7 @@ export const useFirebaseNotifications = () => {
       setNotificationPermission(permission);
 
       if (permission === "granted") {
+        // ✅ Firebase is loaded here only when user grants permission
         const token = await initializeFCM();
         return !!token;
       } else {
@@ -78,41 +88,52 @@ export const useFirebaseNotifications = () => {
       console.error("Error requesting notification permission:", error);
       return false;
     }
-  }, [isFCMSupported, initializeFCM]);
+  }, [initializeFCM]);
 
-  // Handle foreground messages
+  // Handle foreground messages (lazy loads Firebase messaging listener)
   useEffect(() => {
-    if (!isFCMSupported || !messaging) return;
+    if (!isFCMSupported || notificationPermission !== "granted") return;
 
     let unsubscribe: (() => void) | null = null;
 
     const setupMessageListener = async () => {
       try {
+        // ✅ Lazy load Firebase messaging instance
+        const messagingInstance = await getMessagingInstance();
+        if (!messagingInstance) return;
+
+        // ✅ Lazy load onMessage from Firebase
         const { onMessage } = await import("firebase/messaging");
 
-        if (messaging) {
-          unsubscribe = onMessage(messaging, (payload: { notification?: { title?: string; body?: string; click_action?: string }; data?: Record<string, unknown> }) => {
-            const notification = payload.notification;
-            const data = payload.data;
+        unsubscribe = onMessage(messagingInstance, (payload: {
+          notification?: {
+            title?: string;
+            body?: string;
+            click_action?: string
+          };
+          data?: Record<string, unknown>
+        }) => {
+          const notification = payload.notification;
+          const data = payload.data;
 
-            // Show toast notification for foreground messages
-            if (notification) {
-              // Simple toast notification without complex JSX
-              toast.success(`${notification.title}\n${notification.body}`, {
-                duration: 5000,
-                position: "top-right",
-                icon: "🔔",
-              });
+          // Show toast notification for foreground messages
+          if (notification) {
+            // Simple toast notification without complex JSX
+            toast.success(`${notification.title}\n${notification.body}`, {
+              duration: 5000,
+              position: "top-right",
+              icon: "🔔",
+            });
 
-              // Handle click action if provided
-              if (notification.click_action || data?.click_action) {
-                const clickAction =
-                  notification.click_action || data?.click_action;
-                // You can add navigation logic here based on click_action
-              }
+            // Handle click action if provided
+            if (notification.click_action || data?.click_action) {
+              const clickAction =
+                notification.click_action || data?.click_action;
+              // You can add navigation logic here based on click_action
+              // ✅ CLEANUP: Removed debug console.log (functionality preserved)
             }
-          });
-        }
+          }
+        });
       } catch (error) {
         console.error("Error setting up message listener:", error);
       }
@@ -125,7 +146,7 @@ export const useFirebaseNotifications = () => {
         unsubscribe();
       }
     };
-  }, [isFCMSupported]);
+  }, [isFCMSupported, notificationPermission]);
 
   // Initialize FCM on component mount if permission is already granted
   useEffect(() => {
@@ -137,6 +158,7 @@ export const useFirebaseNotifications = () => {
         // Verify token is still valid by updating it in backend
         updateFcmToken({ fcmToken: storedToken }).catch(console.error);
       } else {
+        // ✅ Firebase will be lazy loaded here only if needed
         initializeFCM();
       }
     }

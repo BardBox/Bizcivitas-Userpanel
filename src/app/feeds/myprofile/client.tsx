@@ -40,41 +40,69 @@ const MyProfileClient: React.FC = () => {
     defaultExpanded: ["personal"],
   });
 
-  // Normalize all profile data once at the top level
-  const normalizedData = useMemo(() => {
-    return {
-      personal: {
-        hobbiesAndInterests: profile?.myBio?.hobbiesAndInterests,
-        myBurningDesireIsTo: profile?.myBio?.myBurningDesireIsTo,
-      },
-      business: {
-        ...profile?.professionalDetails,
-        email: user?.email,
-        mobile: user?.mobile,
-        location: user?.city || profile?.addresses?.address?.city,
-        companyLogo: profile?.professionalDetails?.companyLogo,
-        // Business location data comes from professionalDetails (can be updated by user)
-        // Fallback to addresses.address if not set in professionalDetails
-        businessCity:
-          profile?.professionalDetails?.businessCity ||
-          profile?.addresses?.address?.city,
-        businessState:
-          profile?.professionalDetails?.businessState ||
-          profile?.addresses?.address?.state,
-        businessCountry:
-          profile?.professionalDetails?.businessCountry ||
-          profile?.addresses?.address?.country,
-      },
-      leads: {
-        given: profile?.myBio?.myGives,
-        received: [], // reserved for future
-      },
-      needs: profile?.myBio?.myAsk,
-      travel: profile?.travelDiary,
-      presentation: profile?.weeklyPresentation,
-      skills: profile?.mySkillItems ?? [],
-    };
-  }, [user, profile]);
+  // ✅ PERFORMANCE FIX: Split large useMemo into smaller, granular memos
+  // This prevents unnecessary recalculations when only one section changes
+
+  // Personal data - only recalculates if profile.myBio changes
+  const personalData = useMemo(() => ({
+    hobbiesAndInterests: profile?.myBio?.hobbiesAndInterests,
+    myBurningDesireIsTo: profile?.myBio?.myBurningDesireIsTo,
+  }), [profile?.myBio]);
+
+  // Business data - recalculates only if user or professionalDetails change
+  const businessData = useMemo(() => ({
+    ...profile?.professionalDetails,
+    email: user?.email,
+    mobile: user?.mobile,
+    location: user?.city || profile?.addresses?.address?.city,
+    companyLogo: profile?.professionalDetails?.companyLogo,
+    // Business location data comes from professionalDetails (can be updated by user)
+    // Fallback to addresses.address if not set in professionalDetails
+    businessCity:
+      profile?.professionalDetails?.businessCity ||
+      profile?.addresses?.address?.city,
+    businessState:
+      profile?.professionalDetails?.businessState ||
+      profile?.addresses?.address?.state,
+    businessCountry:
+      profile?.professionalDetails?.businessCountry ||
+      profile?.addresses?.address?.country,
+  }), [
+    user?.email,
+    user?.mobile,
+    user?.city,
+    profile?.professionalDetails,
+    profile?.addresses?.address
+  ]);
+
+  // Leads data - only recalculates if myGives changes
+  const leadsData = useMemo(() => ({
+    given: profile?.myBio?.myGives,
+    received: [], // reserved for future
+  }), [profile?.myBio?.myGives]);
+
+  // Needs data - only recalculates if myAsk changes
+  const needsData = useMemo(() => profile?.myBio?.myAsk, [profile?.myBio?.myAsk]);
+
+  // Travel data - only recalculates if travelDiary changes
+  const travelData = useMemo(() => profile?.travelDiary, [profile?.travelDiary]);
+
+  // Presentation data - only recalculates if weeklyPresentation changes
+  const presentationData = useMemo(() => profile?.weeklyPresentation, [profile?.weeklyPresentation]);
+
+  // Skills data - only recalculates if mySkillItems changes
+  const skillsData = useMemo(() => profile?.mySkillItems ?? [], [profile?.mySkillItems]);
+
+  // Combined normalized data object (lightweight - just references)
+  const normalizedData = useMemo(() => ({
+    personal: personalData,
+    business: businessData,
+    leads: leadsData,
+    needs: needsData,
+    travel: travelData,
+    presentation: presentationData,
+    skills: skillsData,
+  }), [personalData, businessData, leadsData, needsData, travelData, presentationData, skillsData]);
 
   // Edit functionality hooks for each component using normalized data
   const businessDetailsHook = useBusinessDetailsWithAccordion(

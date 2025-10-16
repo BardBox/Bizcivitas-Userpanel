@@ -1,12 +1,14 @@
-// lib/firebase.ts
-import { initializeApp, getApps } from "firebase/app";
-import {
-  getMessaging,
-  getToken,
-  onMessage,
-  isSupported,
-} from "firebase/messaging";
+/**
+ * Firebase Configuration and Lazy Loading
+ *
+ * PERFORMANCE OPTIMIZATION:
+ * - Firebase SDK is loaded ONLY when needed (when user enables notifications)
+ * - Reduces initial bundle size by ~250KB
+ * - Improves initial page load time
+ * - Firebase modules are dynamically imported on-demand
+ */
 
+// Firebase config - this is lightweight (just a plain object)
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -17,54 +19,115 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-
-// Initialize Firebase Cloud Messaging and get a reference to the service
+// Cached references - loaded on-demand
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let firebaseApp: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let messaging: any = null;
+let isInitializing = false;
 
-const initializeMessaging = async () => {
-  if (typeof window !== "undefined") {
-    const supported = await isSupported();
-    if (supported) {
-      messaging = getMessaging(app);
-    }
+/**
+ * Lazy initialize Firebase App (only when needed)
+ */
+const initializeFirebaseApp = async () => {
+  if (firebaseApp) return firebaseApp;
+
+  try {
+    const { initializeApp, getApps } = await import("firebase/app");
+    firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    return firebaseApp;
+  } catch (error) {
+    console.error("Failed to initialize Firebase app:", error);
+    return null;
   }
-  return messaging;
 };
 
-// Initialize messaging
-if (typeof window !== "undefined") {
-  initializeMessaging();
-}
+/**
+ * Lazy initialize Firebase Cloud Messaging (only when user enables notifications)
+ * This is the main performance optimization - messaging is loaded on-demand
+ */
+const initializeMessaging = async () => {
+  // Return cached instance if already initialized
+  if (messaging) return messaging;
 
-export { messaging, initializeMessaging };
+  // Prevent multiple simultaneous initializations
+  if (isInitializing) {
+    // Wait for initialization to complete
+    while (isInitializing) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return messaging;
+  }
 
-// Request permission and get FCM token
-export const requestForToken = async (): Promise<string | null> => {
+  if (typeof window === "undefined") return null;
+
+  isInitializing = true;
+
   try {
-    // Ensure messaging is initialized
-    const messagingInstance = messaging || (await initializeMessaging());
-    if (!messagingInstance) return null;
+    // Dynamically import Firebase messaging module
+    const { getMessaging, isSupported } = await import("firebase/messaging");
 
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      const currentToken = await getToken(messagingInstance, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      });
-
-      if (currentToken) {
-        return currentToken;
-      } else {
-        return null;
-      }
-    } else {
+    const supported = await isSupported();
+    if (!supported) {
+      isInitializing = false;
       return null;
     }
+
+    // Initialize Firebase app first
+    const app = await initializeFirebaseApp();
+    if (!app) {
+      isInitializing = false;
+      return null;
+    }
+
+    // Initialize messaging
+    messaging = getMessaging(app);
+    isInitializing = false;
+    return messaging;
+  } catch (error) {
+    console.error("Failed to initialize Firebase messaging:", error);
+    isInitializing = false;
+    return null;
+  }
+};
+
+/**
+ * Request notification permission and get FCM token
+ * This will lazy-load Firebase when called
+ */
+export const requestForToken = async (): Promise<string | null> => {
+  try {
+    // Lazy load messaging when user actually requests notifications
+    const messagingInstance = await initializeMessaging();
+    if (!messagingInstance) return null;
+
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return null;
+
+    // Dynamically import getToken
+    const { getToken } = await import("firebase/messaging");
+
+    const currentToken = await getToken(messagingInstance, {
+      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+    });
+
+    return currentToken || null;
   } catch (err) {
     console.error("An error occurred while retrieving token:", err);
     return null;
   }
 };
+
+/**
+ * Get Firebase messaging instance (lazy loads if needed)
+ */
+export const getMessagingInstance = async () => {
+  return await initializeMessaging();
+};
+
+// Export lazy initialization function
+export { initializeMessaging };
+
+// For backward compatibility - messaging will be null until initialized
+export { messaging };

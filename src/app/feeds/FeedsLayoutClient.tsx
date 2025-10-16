@@ -3,8 +3,9 @@
 import { useState } from "react";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import PerformanceLogger from "@/components/PerformanceLogger";
+import StrictModeDetector from "@/components/StrictModeDetector";
 import { X } from "lucide-react";
-// import PerformanceMonitor from "@/components/PerformanceMonitor"; // Disabled for testing
 
 export default function FeedsLayoutClient({
   children,
@@ -80,8 +81,11 @@ export default function FeedsLayoutClient({
         </button>
       )}
 
-      {/* Performance Monitor - Disabled (was causing extra renders) */}
-      {/* {process.env.NODE_ENV === "development" && <PerformanceMonitor />} */}
+      {/* Performance Logger - Shows navigation timing in console */}
+      <PerformanceLogger />
+
+      {/* Strict Mode Detector - Check if server restart is needed */}
+      <StrictModeDetector />
     </div>
   );
 }

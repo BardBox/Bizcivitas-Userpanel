@@ -52,7 +52,7 @@ const MySkills: React.FC<MySkillsProps> = ({
 
   const handleSave = async () => {
     // TODO: Call API to save skills
-    console.log("Saving skills:", localSkills);
+    // ✅ CLEANUP: Removed debug console.log (functionality preserved)
     // After successful save, notify parent to close edit mode
     if (onEditStateChange) {
       onEditStateChange(false);

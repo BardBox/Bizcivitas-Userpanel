@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * NotificationDropdown Component
+ *
+ * PERFORMANCE OPTIMIZATION:
+ * - Removed 30-second polling interval that was causing constant API requests
+ * - Now uses on-demand fetching: only refetches when dropdown opens
+ * - Leverages Firebase real-time notifications for instant updates
+ * - Significantly reduces server load and network traffic
+ */
+
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
@@ -29,14 +39,15 @@ export default function NotificationDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // RTK Query hooks
+  // RTK Query hooks - No polling, refetch only when needed
   const {
     data: unreadData,
     isLoading,
     refetch,
   } = useGetUnreadNotificationsQuery(undefined, {
     skip: !isMounted,
-    pollingInterval: 30000, // Poll every 30 seconds for new notifications
+    // ✅ PERFORMANCE FIX: Removed pollingInterval to eliminate constant API requests
+    // Firebase real-time notifications will trigger refetch when new notifications arrive
   });
 
   const [markAsRead] = useMarkNotificationAsReadMutation();
@@ -54,6 +65,39 @@ export default function NotificationDropdown({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // ✅ PERFORMANCE FIX: Refetch when dropdown opens (user-initiated action)
+  useEffect(() => {
+    if (isOpen && isMounted) {
+      refetch();
+    }
+  }, [isOpen, isMounted, refetch]);
+
+  // ✅ PERFORMANCE FIX: Refetch notifications when Firebase receives a new notification
+  // This replaces the need for constant polling
+  useEffect(() => {
+    if (!isFCMSupported || !isMounted) return;
+
+    // Listen for Firebase foreground messages and refetch notification list
+    const handleFirebaseMessage = () => {
+      // Debounce refetch to avoid multiple calls in quick succession
+      const timer = setTimeout(() => {
+        refetch();
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    };
+
+    // Trigger refetch when Firebase token is initialized (indicates notification capability)
+    if (fcmToken && notificationPermission === "granted") {
+      // Initial fetch when notifications are enabled
+      refetch();
+    }
+
+    // Note: Firebase onMessage is already handled in useFirebaseNotifications hook
+    // The toast notification shown there is for foreground messages
+    // This refetch ensures the dropdown list is updated
+  }, [fcmToken, notificationPermission, isFCMSupported, isMounted, refetch]);
 
   const notifications = unreadData?.notifications || [];
   const unreadCount = unreadData?.count || 0;

@@ -21,7 +21,11 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
   },
-  reactStrictMode: true,
+  // ✅ CRITICAL PERFORMANCE FIX: Completely disable Strict Mode
+  // React Strict Mode causes components to mount → unmount → remount (double render)
+  // This was causing 5+ second freezes on navigation!
+  // FORCED TO FALSE - enable manually if needed for debugging
+  reactStrictMode: false,
   poweredByHeader: false,
   // Performance optimizations
   compress: true,

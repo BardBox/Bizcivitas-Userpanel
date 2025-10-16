@@ -32,7 +32,7 @@ function ConnectionsPageContent() {
     data: connections,
     isLoading: connectionsLoading,
     error,
-    refetch: refetchConnections,
+    // ✅ PERFORMANCE FIX: Removed refetch - no longer needed
   } = useGetConnectionsQuery();
 
   // Fetch received requests for badge count
@@ -174,10 +174,13 @@ function ConnectionsPageContent() {
     }
   }, [searchParams]);
 
-  // Refetch connections when component mounts to ensure fresh data
-  useEffect(() => {
-    refetchConnections();
-  }, [refetchConnections]);
+  // ✅ PERFORMANCE FIX: Removed unnecessary refetch on mount
+  // RTK Query automatically fetches data on component mount
+  // This was causing duplicate API calls (one from query hook, one from refetch)
+  // Previously:
+  // useEffect(() => {
+  //   refetchConnections();
+  // }, [refetchConnections]);
 
   // Function to update tab with URL param
   const handleTabChange = (tab: "my-network" | "connect-members") => {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, memo, useCallback, useRef, useMemo } from "react";
+import { useState, memo, useCallback } from "react";
 import ProfileSection from "./ProfileSection";
 import Image from "next/image"; // Still needed for logo
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -173,53 +173,8 @@ export default function DashboardSidebar({
     () => new Set(["MAIN", "CONNECT", "ENGAGE", "ACCOUNT"]) // All sections open by default
   );
   const pathname = usePathname();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Memoize active item calculations for better performance
-  const activeItemPositions = useMemo(() => {
-    const positions: Record<string, { index: number; top: number }> = {};
-    navigationSections.forEach(section => {
-      const activeIndex = section.items.findIndex(item => pathname === item.href);
-      if (activeIndex !== -1) {
-        positions[section.title] = {
-          index: activeIndex,
-          top: activeIndex * 44 + 1
-        };
-      }
-    });
-    return positions;
-  }, [pathname]);
-
-  // Auto-hide scrollbar: Show when scrolling, hide when idle
-  useEffect(() => {
-    const scrollElement = scrollRef.current;
-    if (!scrollElement) return;
-
-    const handleScroll = () => {
-      // Add scrolling class
-      scrollElement.classList.add('scrolling');
-      
-      // Clear existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      
-      // Remove scrolling class after 1 second of no scrolling
-      scrollTimeoutRef.current = setTimeout(() => {
-        scrollElement.classList.remove('scrolling');
-      }, 1000);
-    };
-
-    scrollElement.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      scrollElement.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
+  // ✅ REMOVED: Blue line animation and scroll tracking (unnecessary complexity)
 
   // Toggle section expand/collapse
   const toggleSection = useCallback((sectionTitle: string) => {
@@ -299,7 +254,7 @@ export default function DashboardSidebar({
       </div>
 
       {/* Scrollable Navigation Area - Starts from MAIN section */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
         {/* Toggle Button - Hide on mobile */}
         {!isMobile && (
           <div
@@ -352,23 +307,9 @@ export default function DashboardSidebar({
                 
                 {/* Navigation Items - Show when expanded or sidebar collapsed */}
                 {(isExpanded || isCollapsed) && (
-                  <div className={`relative ${!isCollapsed ? 'ml-4 pl-3' : ''}`}>
-                    {/* Static gray line for parent section */}
-                    {!isCollapsed && (
-                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-200 rounded-full"></div>
-                    )}
-                    
-                    {/* Animated blue indicator that slides to active item */}
-                    {!isCollapsed && activeItemPositions[section.title] && (
-                      <div 
-                        className="absolute left-0 w-[3px] h-[42px] bg-gradient-to-b from-blue-500 to-blue-600 rounded-full transition-all duration-200 ease-out"
-                        style={{
-                          top: `${activeItemPositions[section.title].top}px`,
-                          willChange: 'top'
-                        }}
-                      />
-                    )}
-                    
+                  <div className={`${!isCollapsed ? 'ml-4' : ''}`}>
+                    {/* ✅ REMOVED: Gray and blue lines */}
+
                     <ul className="space-y-1">
                       {section.items.map((item) => (
                         <SidebarLink

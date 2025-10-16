@@ -15,12 +15,12 @@ export default function DashboardHeader() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // You can add search functionality here in the future
-    console.log("Search query:", searchQuery);
+    // ✅ CLEANUP: Removed debug console.log
   };
 
   const handleLogout = async () => {
     try {
-      console.log("Attempting logout...");
+      // ✅ CLEANUP: Removed debug console.log
       const result = await logout().unwrap();
 
       // Clear session storage only on client side

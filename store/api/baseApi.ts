@@ -29,14 +29,12 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  // ✅ PERFORMANCE FIX: Optimized cache configuration
-  // This allows RTK Query to properly share cached data across components
-  // while still preventing excessive refetches
-  refetchOnFocus: false, // Don't refetch on window focus (was causing 366 renders!)
+  // Aggressive caching for instant navigation
+  refetchOnFocus: false, // Don't refetch on window focus
   refetchOnReconnect: false, // Don't refetch on network reconnect
-  refetchOnMountOrArgChange: 60, // ✅ FIXED: Use cached data if < 60 seconds old (was: false)
-  // Cache data for 5 minutes (300 seconds) - keep unused data in cache
-  keepUnusedDataFor: 300,
+  refetchOnMountOrArgChange: false, // Use cached data, don't refetch on mount
+  // Cache data for 10 minutes - keep data fresh without constant refetching
+  keepUnusedDataFor: 600,
   // NOTE: Tag invalidation from mutations (like endorseSkill) will automatically refetch affected data
   // This means useGetCurrentUserQuery() called in multiple components will share the SAME cached data!
   tagTypes: [

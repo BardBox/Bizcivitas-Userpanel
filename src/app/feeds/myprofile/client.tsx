@@ -3,6 +3,7 @@
 import React, { useState, useRef, useMemo } from "react";
 import { AccordionItem } from "@/components/Dashboard/MyProfile/Accordion";
 import PersonalProfileCard from "@/components/Dashboard/MyProfile/PersonalProfileCard";
+import dynamic from "next/dynamic";
 
 import TravelDiary, {
   useTravelDiaryWithAccordion,

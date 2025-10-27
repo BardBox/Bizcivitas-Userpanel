@@ -62,7 +62,7 @@ const ProfileSection = memo(function ProfileSection({
   };
 
   const getUserTitle = () => {
-    if (!user) return "Loading...";
+    if (!user) return "BizCivitas Member";
     return (
       user.profile?.professionalDetails?.companyName ||
       user.companyName ||
@@ -72,26 +72,8 @@ const ProfileSection = memo(function ProfileSection({
     );
   };
 
-  // Show loading state while data is being fetched
-  if (isLoading) {
-    return (
-      <div className="mb-3">
-        {!isCollapsed ? (
-          <div className="flex items-center space-x-3 p-2.5 rounded-lg">
-            <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
-            <div className="flex-1 min-w-0">
-              <div className="h-4 bg-gray-200 rounded animate-pulse mb-2 w-24"></div>
-              <div className="h-3 bg-gray-200 rounded animate-pulse w-32"></div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Skip loading state - render immediately with cached data or placeholders
+  // This prevents the loading skeleton flash on every navigation
 
   // Show error state if profile failed to load
   if (error) {

@@ -1,85 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState, memo, useCallback } from "react";
-import ProfileSection from "./ProfileSection";
-import Image from "next/image"; // Still needed for logo
+import { useState, useCallback, memo } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import ProfileSection from "./ProfileSection";
 
-// Optimized Icon component using CSS mask - No HTTP requests, dynamic colors!
-const SidebarIcon = memo(function SidebarIcon({
-  src,
-  className = "w-5 h-5",
-  isActive,
-}: {
-  src: string;
-  className?: string;
-  isActive?: boolean;
-}) {
-  return (
-    <div 
-      className={className}
+const Arrow = ({ collapsed }: { collapsed: boolean }) => (
+  <svg
+    className="w-4 h-4 text-orange-500 group-hover:text-white"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d={collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
+    />
+  </svg>
+);
+
+const SidebarIcon = memo(
+  ({ src, isActive }: { src: string; isActive?: boolean }) => (
+    <div
+      className="w-5 h-5"
       style={{
-        WebkitMaskImage: `url(${src})`,
-        maskImage: `url(${src})`,
-        WebkitMaskRepeat: 'no-repeat',
-        maskRepeat: 'no-repeat',
-        WebkitMaskSize: 'contain',
-        maskSize: 'contain',
-        WebkitMaskPosition: 'center',
-        maskPosition: 'center',
-        backgroundColor: isActive ? '#2563eb' : '#6b7280', // blue-600 : gray-500
+        WebkitMask: `url(${src}) center/contain no-repeat`,
+        mask: `url(${src}) center/contain no-repeat`,
+        backgroundColor: isActive ? "#2563eb" : "#6b7280",
       }}
     />
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.src === nextProps.src &&
-    prevProps.className === nextProps.className &&
-    prevProps.isActive === nextProps.isActive
-  );
-});
-
-// Arrow Icons for sidebar toggle
-const ArrowLeftIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 19l-7-7 7-7"
-    />
-  </svg>
+  ),
+  (prev, next) => prev.src === next.src && prev.isActive === next.isActive
 );
 
-const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
-  </svg>
-);
-
-// Navigation structure with sections
 const navigationSections = [
   {
     title: "MAIN",
     items: [
-      { href: "/feeds", text: "Home", icon: "/dashboard/sidebaricons/home.svg" },
+      {
+        href: "/feeds",
+        text: "Home",
+        icon: "/dashboard/sidebaricons/home.svg",
+      },
       {
         href: "/feeds/dash",
         text: "Dashboard",
@@ -168,232 +134,143 @@ export default function DashboardSidebar({
   onToggleMobile?: () => void;
   isMobile?: boolean;
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    () => new Set(["MAIN", "CONNECT", "ENGAGE", "ACCOUNT"]) // All sections open by default
-  );
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(
+    new Set(navigationSections.map((s) => s.title))
+  );
 
-  // ✅ REMOVED: Blue line animation and scroll tracking (unnecessary complexity)
-
-  // Toggle section expand/collapse
-  const toggleSection = useCallback((sectionTitle: string) => {
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(sectionTitle)) {
-        newSet.delete(sectionTitle);
-      } else {
-        newSet.add(sectionTitle);
-      }
-      return newSet;
+  const toggleSection = useCallback((title: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(title) ? next.delete(title) : next.add(title);
+      return next;
     });
   }, []);
 
-  const handleNavClick = () => {
-    if (onNavigate) {
-      onNavigate();
-    }
-  };
-
-  const handleToggleClick = () => {
-    if (isMobile && onToggleMobile) {
-      onToggleMobile();
-    } else {
-      setIsCollapsed(!isCollapsed);
-    }
+  const handleToggle = () => {
+    if (isMobile) onToggleMobile?.();
+    else setIsCollapsed((prev) => !prev);
   };
 
   return (
     <aside
-      className={`sticky top-0 h-screen bg-gradient-to-b from-slate-50 to-white border-r border-gray-200 transition-all duration-300 flex flex-col ${
+      className={`h-screen flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 ${
         isCollapsed ? "w-20" : "w-72"
       }`}
     >
-      {/* Fixed Header Section - Logo + Profile */}
-      <div className="flex-shrink-0 pt-6 px-5 ">
-        {/* Logo Section */}
-        <div className="mb-6 flex justify-center">
-          <div className="flex items-center space-x-2">
-            {!isCollapsed && (
-              <>
-                <Link
-                  href="/feeds"
-                  prefetch={false}
-                  className="flex items-center transition-transform hover:scale-105"
+      {/* Logo */}
+      <div className="pt-6 px-5 mb-6 flex justify-center">
+        <Link href="/feeds" className="transition-transform hover:scale-105">
+          <Image
+            src={isCollapsed ? "/favicon.ico" : "/bizcivitas.svg"}
+            width={150}
+            height={40}
+            alt="BizCivitas"
+            priority
+          />
+        </Link>
+      </div>
+
+      {/* Profile */}
+      <ProfileSection isCollapsed={isCollapsed} onNavigate={onNavigate} />
+
+      <div className="my-4 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+
+      {/* Sidebar Toggle */}
+      {!isMobile && (
+        <button
+          onClick={handleToggle}
+          className={`absolute top-24 transition-all duration-300 ${
+            isCollapsed ? "left-[66px]" : "left-[276px]"
+          } bg-white border-2 border-orange-400 hover:bg-orange-400 text-orange-500 hover:text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          <Arrow collapsed={isCollapsed} />
+        </button>
+      )}
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-4 pb-6">
+        {navigationSections.map(({ title, items }, i) => {
+          const open = expanded.has(title);
+          return (
+            <div key={title} className={i > 0 ? "mt-6" : ""}>
+              {!isCollapsed && (
+                <button
+                  onClick={() => toggleSection(title)}
+                  className="w-full flex justify-between items-center px-2 py-2.5 mb-3 text-[13px] font-bold text-orange-600 uppercase tracking-wide"
                 >
-                  <Image
-                    src="/bizcivitas.svg"
-                    width={150}
-                    height={40}
-                    alt="BizCivitas Logo"
-                    className="object-contain"
-                    priority
-                  />
-                </Link>
-              </>
-            )}
-            {isCollapsed && (
-              <Link href="/feeds" prefetch={false} className="flex items-center transition-transform hover:scale-110">
-                <Image
-                  src="/favicon.ico"
-                  width={150}
-                  height={40}
-                  alt="BizCivitas Logo"
-                  priority
-                />
-              </Link>
-            )}
-          </div>
-        </div>
-        
-        {/* User Profile Section - Fixed, no scroll */}
-        <ProfileSection isCollapsed={isCollapsed} onNavigate={handleNavClick} />
-        
-        {/* Elegant Divider after profile */}
-        <div className="mt-4 mb-2 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-      </div>
-
-      {/* Scrollable Navigation Area - Starts from MAIN section */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
-        {/* Toggle Button - Hide on mobile */}
-        {!isMobile && (
-          <div
-            className={`fixed z-10 transition-all duration-300 ${
-              isCollapsed ? "left-[66px]" : "left-[276px]"
-            } top-24`}
-          >
-            <button
-              onClick={handleToggleClick}
-              className="bg-white border-2 border-orange-400 hover:bg-orange-400 text-orange-500 hover:text-white p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200 group"
-                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-              {isCollapsed ? (
-                <ArrowRightIcon className="w-3.5 h-3.5 text-orange-500 group-hover:text-white" />
-              ) : (
-                <ArrowLeftIcon className="w-3.5 h-3.5 text-orange-500 group-hover:text-white" />
+                  <span className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-gradient-to-b from-orange-400 to-orange-500 rounded-full" />
+                    {title}
+                  </span>
+                  {open ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
               )}
-            </button>
-          </div>
-        )}
-        {/* Navigation with Collapsible Sections */}
-        <nav className="py-3">
-          {navigationSections.map((section, sectionIndex) => {
-            const isExpanded = expandedSections.has(section.title);
-            
-            return (
-              <div key={section.title} className={sectionIndex > 0 ? "mt-6" : ""}>
-                {/* Section Title - Clickable to expand/collapse */}
-                {!isCollapsed && (
-                  <button
-                    onClick={() => toggleSection(section.title)}
-                    className="w-full flex items-center justify-between px-2 py-2.5 mb-3 text-[13px] font-bold text-gray-700 uppercase tracking-wide text-orange-600 transition-colors duration-150 rounded-lg group"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <div className="w-1 h-5 bg-gradient-to-b from-orange-400 to-orange-500 rounded-full"></div>
-                      <span>{section.title}</span>
-                    </span>
-                    {isExpanded ? (
-                      <ChevronDown className="w-4 h-4 text-gray-500 text-orange-500 transition-colors duration-150" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-orange-500 transition-colors duration-150" />
-                    )}
-                  </button>
-                )}
-                
-                {/* Section Divider for collapsed sidebar */}
-                {isCollapsed && sectionIndex > 0 && (
-                  <div className="my-3 mx-3 border-t border-gray-200"></div>
-                )}
-                
-                {/* Navigation Items - Show when expanded or sidebar collapsed */}
-                {(isExpanded || isCollapsed) && (
-                  <div className={`${!isCollapsed ? 'ml-4' : ''}`}>
-                    {/* ✅ REMOVED: Gray and blue lines */}
-
-                    <ul className="space-y-1">
-                      {section.items.map((item) => (
-                        <SidebarLink
-                          key={item.href}
-                          href={item.href}
-                          text={item.text}
-                          iconPath={item.icon}
-                          isActive={pathname === item.href}
-                          isCollapsed={isCollapsed}
-                          onClick={handleNavClick}
-                        />
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-      </div>
+              {(open || isCollapsed) && (
+                <ul className={`${!isCollapsed ? "ml-4" : ""} space-y-1`}>
+                  {items.map((item) => (
+                    <SidebarLink
+                      key={item.href}
+                      {...item}
+                      isActive={pathname === item.href}
+                      isCollapsed={isCollapsed}
+                      onClick={onNavigate}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </nav>
     </aside>
-  ); 
+  );
 }
 
-interface SidebarLinkProps {
-  href: string;
-  text: string;
-  iconPath: string;
-  isActive: boolean;
-  isCollapsed: boolean;
-  onClick?: () => void;
-}
-
-// Memoize SidebarLink to prevent unnecessary re-renders
-const SidebarLink = memo(function SidebarLink({
-  href,
-  text,
-  iconPath,
-  isActive,
-  isCollapsed,
-  onClick,
-}: SidebarLinkProps) {
-  return (
+const SidebarLink = memo(
+  ({
+    href,
+    text,
+    icon,
+    isActive,
+    isCollapsed,
+    onClick,
+  }: {
+    href: string;
+    text: string;
+    icon: string;
+    isActive: boolean;
+    isCollapsed: boolean;
+    onClick?: () => void;
+  }) => (
     <li>
       <Link
         href={href}
         onClick={onClick}
         prefetch={false}
-        className={`
-          group relative flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150
-          ${
-            isActive
-              ? "bg-blue-50/50 text-blue-700"
-              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-          }
-          ${isCollapsed ? "justify-center px-4" : "justify-start"}
-        `}
+        className={`group flex items-center rounded-xl px-3 py-2.5 text-sm transition-colors ${
+          isActive
+            ? "bg-blue-50/50 text-blue-700 font-semibold"
+            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        } ${isCollapsed ? "justify-center px-4" : ""}`}
         title={isCollapsed ? text : undefined}
       >
-        {/* Active indicator - only for collapsed sidebar */}
         {isActive && isCollapsed && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>
+          <div className="absolute left-0 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full" />
         )}
-        
-        <div className={isCollapsed ? "" : "mr-3"}>
-          <SidebarIcon
-            src={iconPath}
-            className="w-5 h-5"
-            isActive={isActive}
-          />
-        </div>
-         {!isCollapsed && (
-           <span className={`truncate text-sm ${isActive ? "font-semibold" : "font-medium"}`}>
-             {text}
-           </span>
-         )}
+        <SidebarIcon src={icon} isActive={isActive} />
+        {!isCollapsed && <span className="ml-3 truncate">{text}</span>}
       </Link>
     </li>
-  );
-}, (prevProps, nextProps) => {
-  // Only re-render if these props change
-  return (
-    prevProps.href === nextProps.href &&
-    prevProps.isActive === nextProps.isActive &&
-    prevProps.isCollapsed === nextProps.isCollapsed
-  );
-});
+  ),
+  (prev, next) =>
+    prev.href === next.href &&
+    prev.isActive === next.isActive &&
+    prev.isCollapsed === next.isCollapsed
+);

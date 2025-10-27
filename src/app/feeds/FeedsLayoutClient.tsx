@@ -3,8 +3,6 @@
 import { useState } from "react";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
-import PerformanceLogger from "@/components/PerformanceLogger";
-import StrictModeDetector from "@/components/StrictModeDetector";
 import { X } from "lucide-react";
 
 export default function FeedsLayoutClient({
@@ -52,11 +50,13 @@ export default function FeedsLayoutClient({
 
       {/* Main Content */}
       <div
-        className="flex-1"
+        className="flex-1 flex flex-col"
         onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
       >
         <DashboardHeader />
-        <main className="p-3 md:p-6">{children}</main>
+        <main className="p-3 md:p-6 relative flex-1">
+          {children}
+        </main>
       </div>
 
       {/* Mobile Floating Button */}
@@ -80,12 +80,6 @@ export default function FeedsLayoutClient({
           </svg>
         </button>
       )}
-
-      {/* Performance Logger - Shows navigation timing in console */}
-      <PerformanceLogger />
-
-      {/* Strict Mode Detector - Check if server restart is needed */}
-      <StrictModeDetector />
     </div>
   );
 }

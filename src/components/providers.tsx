@@ -1,17 +1,15 @@
 "use client";
 
-import { Provider } from "react-redux";
-import { store } from "../../store/store";
 import { Toaster } from "react-hot-toast";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <Provider store={store}>
+    <>
       {children}
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 3000, // 3 seconds instead of default 4 seconds
+          duration: 3000,
           style: {
             background: "#363636",
             color: "#fff",
@@ -24,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             },
           },
           error: {
-            duration: 4000, // Keep errors slightly longer
+            duration: 4000,
             iconTheme: {
               primary: "#EF4444",
               secondary: "#fff",
@@ -32,6 +30,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
         }}
       />
-    </Provider>
+    </>
   );
 }

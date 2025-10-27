@@ -1,5 +1,6 @@
 import FeedsLayoutClient from "./FeedsLayoutClient";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { ReduxProvider } from "@/components/ReduxProvider";
 
 export default function FeedsLayout({
   children,
@@ -7,8 +8,10 @@ export default function FeedsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
-      <FeedsLayoutClient>{children}</FeedsLayoutClient>
-    </ProtectedRoute>
+    <ReduxProvider>
+      <ProtectedRoute>
+        <FeedsLayoutClient>{children}</FeedsLayoutClient>
+      </ProtectedRoute>
+    </ReduxProvider>
   );
 }

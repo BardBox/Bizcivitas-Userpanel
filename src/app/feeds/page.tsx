@@ -74,22 +74,6 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen ">
-      {/* Hide scrollbar globally */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          ::-webkit-scrollbar {
-            display: none;
-          }
-          html,
-          body {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `,
-        }}
-      />
-
       {/* Main content */}
       <div
         className={`transition-all duration-300 no-scrollbar ${
@@ -103,9 +87,8 @@ export default function DashboardPage() {
             next={fetchMorePosts}
             hasMore={hasMore}
             loader={
-              <div className="text-center py-8 text-gray-600 text-sm flex justify-center items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2" />
-                Loading more posts...
+              <div className="text-center py-8 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
               </div>
             }
             endMessage={

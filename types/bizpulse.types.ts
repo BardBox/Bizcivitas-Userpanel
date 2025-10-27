@@ -324,4 +324,14 @@ export interface BizPulseMockPost {
   timeAgo: string;
   category: BizPulseCategory;
   tags: string[];
+  comments?: Array<{
+    id: string;
+    content: string;
+    author: {
+      name: string;
+      avatar?: string | null;
+    };
+    timeAgo: string;
+    likes: number;
+  }>;
 }

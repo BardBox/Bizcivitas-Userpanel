@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import NavigationLoader from "@/components/NavigationLoader";
 import { X } from "lucide-react";
 
 export default function FeedsLayoutClient({
@@ -55,7 +56,8 @@ export default function FeedsLayoutClient({
       >
         <DashboardHeader />
         <main className="p-3 md:p-6 relative flex-1">
-          {children}
+          <NavigationLoader />
+          <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
         </main>
       </div>
 

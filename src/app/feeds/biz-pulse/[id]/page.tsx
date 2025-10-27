@@ -89,27 +89,10 @@ export default function BizPulseDetailPage() {
           </h2>
 
           <div className="prose max-w-none text-gray-700 mb-6">
-            <p className="mb-4">{post.content}</p>
-
-            <p className="mb-4">
-              Mattis ipsum varius nulla eros velit pellentesque sed risus sit.
-              Tempor vel sit vitae elit. Semper pulvinar in ornare viverra orci
-              aliquam. Commodo lorem augue ut tincidunt posuere. Sed sed amet mi
-              erat sed nam. Nibh urna cursus auctor felis habitant eget
-              ullamcorper vitae. Eget sapien sit netus pretium aliquam non. Eu
-              id turpis tincidunt porta pulvinar amet gravida risus consequat.
-              Vitae egestas erat risus rhoncus proin vitae molestie lacus.
-              Tempus imperdiet ac dictum turpis blandit in. Nunc blandit vitae
-              orci eu magna nulla diam.
-            </p>
-
-            <p className="mb-4">
-              Tempor amet quis id mollis tincidunt integer. Ut sit interdum mi
-              est habitant. Lacus faucibus cursit odio velit pretium turpis
-              bibendum urna quis arcu pharetra egestas. Ultrices justo nibh
-              aliquam dignissim. Id faucibus eros dignissim aliquam faucibus.
-              Orci ac proin duis.
-            </p>
+            <div
+              className="mb-4"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
           </div>
 
           {/* Post Meta */}
@@ -172,47 +155,37 @@ export default function BizPulseDetailPage() {
               </button>
             </div>
 
-            {/* Sample Comments */}
             <div className="space-y-6">
-              <div className="flex space-x-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                  MP
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="font-medium text-gray-900">
-                      Marley Philips
-                    </span>
-                    <span className="text-sm text-gray-500">2h</span>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      ⋯
-                    </button>
+              {post.comments && post.comments.length > 0 ? (
+                post.comments.map((comment) => (
+                  <div key={comment.id} className="flex space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                      {getInitials(comment.author.name)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="font-medium text-gray-900">
+                          {comment.author.name}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {comment.timeAgo}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 mb-4">{comment.content}</p>
+                      <div className="flex items-center space-x-4">
+                        <button className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700">
+                          <Heart className="w-4 h-4" />
+                          <span>{comment.likes}</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-gray-700 mb-3">
-                    Convallis rhoncus viverra euismod ut at. Integer bibendum ut
-                    mauris hendrerit ullamcorper condimentum. Ut sed laoreet
-                    enim ornare in sed amet. Pellentesque odio mauris nunc quam
-                    ac. Adipiscing tellus accumsan consectetur gravida facilisi
-                    morbi adipiscing purus.
-                  </p>
-                  <p className="text-gray-700 mb-4">
-                    Locus congue gravida vitae augue orci arcu augue cras. Eu
-                    eget arcu praesent vestibulum ultrices odio a. A viverra
-                    blandit fermentum tempor. Odio...
-                  </p>
-                  <div className="flex items-center space-x-4">
-                    <button className="text-sm text-gray-500 hover:text-gray-700">
-                      More ↓
-                    </button>
-                    <button className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700">
-                      <Heart className="w-4 h-4" />
-                      <span>30</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional comments would go here */}
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  No comments yet
+                </p>
+              )}
             </div>
           </div>
         </div>

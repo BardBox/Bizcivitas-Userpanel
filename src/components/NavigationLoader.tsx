@@ -3,6 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
+// Cache for storing recently visited pages and their timestamps
+const visitedPagesCache = new Map<string, number>();
+const CACHE_DURATION = 60000; // 1 minute cache duration
+
 export default function NavigationLoader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -17,12 +21,32 @@ export default function NavigationLoader() {
       return;
     }
 
+    const currentPath = pathname + searchParams.toString();
+    const lastVisitTime = visitedPagesCache.get(currentPath);
+    const now = Date.now();
+
+    // Check if the page was recently visited
+    if (lastVisitTime && now - lastVisitTime < CACHE_DURATION) {
+      // Skip loader for recently visited pages
+      return;
+    }
+
     // Start loading immediately when pathname changes
     setLoading(true);
 
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+    }
+
+    // Update the cache with current timestamp
+    visitedPagesCache.set(currentPath, now);
+
+    // Cleanup old cache entries
+    for (const [path, timestamp] of visitedPagesCache.entries()) {
+      if (now - timestamp > CACHE_DURATION) {
+        visitedPagesCache.delete(path);
+      }
     }
 
     // Hide loader after a short delay (allow page to render)

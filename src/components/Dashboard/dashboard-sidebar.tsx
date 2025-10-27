@@ -254,7 +254,7 @@ const SidebarLink = memo(
         href={href}
         onClick={onClick}
         prefetch={false}
-        className={`group flex items-center rounded-xl px-3 py-2.5 text-sm transition-colors ${
+        className={`group flex items-center rounded-md px-3 py-2.5 text-sm transition-colors ${
           isActive
             ? "bg-blue-50/50 text-blue-700 font-semibold"
             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"

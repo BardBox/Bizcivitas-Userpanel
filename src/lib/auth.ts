@@ -11,18 +11,18 @@ let accessTokenStore: string | null = null;
  */
 function decodeJWT(token: string): { exp?: number; role?: string } | null {
   try {
-    const base64Url = token.split('.')[1];
+    const base64Url = token.split(".")[1];
     if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('Failed to decode JWT:', error);
+    console.error("Failed to decode JWT:", error);
     return null;
   }
 }
@@ -70,9 +70,31 @@ export function isAuthenticated(): boolean {
     }
   }
 
-  // Quick localStorage check (single operation)
-  const legacyToken = localStorage.getItem("accessToken");
-  if (!legacyToken) return false;
+  // Check both localStorage and sessionStorage
+  const legacyToken =
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("accessToken");
+  if (!legacyToken) {
+    // Try to get token from user data
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        const token =
+          user.token ||
+          user.accessToken ||
+          user.auth?.token ||
+          user.data?.token;
+        if (token) {
+          setAccessToken(token);
+          return !isTokenExpired(token);
+        }
+      } catch (e) {
+        console.error("Failed to parse user data:", e);
+      }
+    }
+    return false;
+  }
 
   try {
     if (!isTokenExpired(legacyToken)) {
@@ -108,8 +130,33 @@ export function getAccessToken(): string | null {
         clearAccessToken();
       }
     } catch (error) {
-      console.error('Token validation error:', error);
+      console.error("Token validation error:", error);
       clearAccessToken();
+    }
+  }
+
+  // Check both localStorage and sessionStorage
+  const legacyToken =
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("accessToken");
+  if (legacyToken) {
+    setAccessToken(legacyToken);
+    return legacyToken;
+  }
+
+  // Try to get token from user data
+  const userData = localStorage.getItem("user");
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      const token =
+        user.token || user.accessToken || user.auth?.token || user.data?.token;
+      if (token) {
+        setAccessToken(token);
+        return token;
+      }
+    } catch (e) {
+      console.error("Failed to parse user data:", e);
     }
   }
 
@@ -127,7 +174,7 @@ export function getUserRole(): string | null {
     const decoded = decodeJWT(token);
     return decoded?.role || null;
   } catch (error) {
-    console.error('Failed to get user role:', error);
+    console.error("Failed to get user role:", error);
     return null;
   }
 }
@@ -148,13 +195,15 @@ export async function logout(): Promise<void> {
 
   // Call server logout endpoint to clear HttpOnly cookies
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev-backend.bizcivitas.com/api/v1';
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://dev-backend.bizcivitas.com/api/v1";
     await fetch(`${backendUrl}/users/logout`, {
-      method: 'POST',
-      credentials: 'include', // Send HttpOnly cookies
+      method: "POST",
+      credentials: "include", // Send HttpOnly cookies
     });
   } catch (error) {
-    console.error('Logout API error:', error);
+    console.error("Logout API error:", error);
     // Continue with client-side cleanup even if server call fails
   }
 }
@@ -166,14 +215,16 @@ export async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev-backend.bizcivitas.com/api/v1';
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://dev-backend.bizcivitas.com/api/v1";
     const response = await fetch(`${backendUrl}/users/refresh`, {
-      method: 'POST',
-      credentials: 'include', // Send HttpOnly refresh token cookie
+      method: "POST",
+      credentials: "include", // Send HttpOnly refresh token cookie
     });
 
     if (!response.ok) {
-      throw new Error('Token refresh failed');
+      throw new Error("Token refresh failed");
     }
 
     const data = await response.json();
@@ -186,7 +237,7 @@ export async function refreshAccessToken(): Promise<string | null> {
 
     return null;
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error("Token refresh error:", error);
     clearAccessToken();
     return null;
   }

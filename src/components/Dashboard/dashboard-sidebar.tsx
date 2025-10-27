@@ -155,7 +155,7 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`h-screen flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 ${
+      className={`h-full  flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 ${
         isCollapsed ? "w-20" : "w-72"
       }`}
     >

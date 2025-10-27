@@ -2,6 +2,7 @@ import { configureStore, createSlice } from "@reduxjs/toolkit";
 import membersReducer from "./membersSlice";
 import toastReducer from "./toastSlice";
 import postsReducer from "./postsSlice";
+import authReducer from "./authSlice";
 import { baseApi } from "./api/baseApi";
 // Import latest events API
 import "./api/eventsApi.latest";
@@ -20,6 +21,7 @@ export const store = configureStore({
     members: membersReducer,
     toast: toastReducer,
     posts: postsReducer,
+    auth: authReducer,
     // Add API reducer
     [baseApi.reducerPath]: baseApi.reducer,
   },

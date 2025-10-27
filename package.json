@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.9.0",
+    "@reduxjs/toolkit": "^2.9.2",
+    "@types/axios": "^0.9.36",
+    "axios": "^1.12.2",
     "browser-image-compression": "^2.0.2",
     "country-state-city": "^3.2.1",
     "dompurify": "^3.2.7",

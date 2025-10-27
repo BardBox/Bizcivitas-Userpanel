@@ -1,10 +1,18 @@
 "use client";
 
+import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
+import { Provider as ReduxProvider } from "react-redux";
+import { store } from "@/store/store";
+import { initializeAuth } from "@/lib/authInitializer";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
   return (
-    <>
+    <ReduxProvider store={store}>
       {children}
       <Toaster
         position="top-right"
@@ -30,6 +38,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
         }}
       />
-    </>
+    </ReduxProvider>
   );
 }

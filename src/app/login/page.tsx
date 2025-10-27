@@ -21,6 +21,11 @@ function LoginPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent any parent handlers
+
+    console.log("🔥 handleSubmit called!"); // Debug log
+    console.log("📋 Form data:", formData);
+
     setLoading(true);
     setError("");
 
@@ -131,7 +136,11 @@ function LoginPageContent() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form
+          className="mt-8 space-y-6"
+          onSubmit={handleSubmit}
+          action="javascript:void(0);"
+        >
           <div className="rounded-md shadow-sm -space-y-px">
             <input
               id="email"

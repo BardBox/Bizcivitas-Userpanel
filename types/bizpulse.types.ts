@@ -334,4 +334,25 @@ export interface BizPulseMockPost {
     timeAgo: string;
     likes: number;
   }>;
+  // Poll data (for pulse-polls type)
+  poll?: {
+    _id: string;
+    question: string;
+    options: Array<{
+      _id: string;
+      text: string;
+      votes: number;
+    }>;
+    totalVotes: number;
+    voters: Array<{
+      _id: string;
+      userId: string;
+      optionIndex: number;
+    }>;
+  };
+  // Original post type to differentiate
+  postType?: 'poll' | 'regular';
+  // User interaction state
+  isLiked?: boolean;
+  currentUserId?: string;
 }

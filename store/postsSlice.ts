@@ -20,7 +20,10 @@ export const fetchPosts = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await bizpulseApi.fetchPosts(params);
+      const response = await bizpulseApi.fetchWallFeeds({
+        type: params?.category,
+        search: params?.search,
+      });
       // Wallfeed response structure: { data: { wallFeeds: [...] } }
       const wallFeeds = response.data?.wallFeeds || [];
       const transformedPosts = transformBizPulsePostsToMock(wallFeeds);
@@ -35,8 +38,8 @@ export const fetchPostById = createAsyncThunk(
   "posts/fetchPostById",
   async (postId: string, { rejectWithValue }) => {
     try {
-      const response = await bizpulseApi.fetchPostById(postId);
-      const transformedPost = transformBizPulsePostsToMock([response.data])[0];
+      const response = await bizpulseApi.fetchWallFeedById(postId);
+      const transformedPost = transformBizPulsePostsToMock([response.data.wallFeed])[0];
       return transformedPost;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -48,8 +51,8 @@ export const likePostAsync = createAsyncThunk(
   "posts/likePost",
   async (postId: string, { rejectWithValue }) => {
     try {
-      const response = await bizpulseApi.likePost(postId);
-      const transformedPost = transformBizPulsePostsToMock([response.data])[0];
+      const response = await bizpulseApi.likeWallFeed(postId);
+      const transformedPost = transformBizPulsePostsToMock([response.data.wallFeed])[0];
       return { postId, updatedPost: transformedPost };
     } catch (error: any) {
       return rejectWithValue(error.message);

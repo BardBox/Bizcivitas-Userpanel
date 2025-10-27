@@ -1,0 +1,119 @@
+"use client";
+
+import React from "react";
+import Image from "next/image";
+import { format } from "date-fns";
+import LikeButton from "./LikeButton";
+import { MoreHorizontal, Trash2 } from "lucide-react";
+
+interface Comment {
+  _id: string;
+  content: string;
+  userId: {
+    _id: string;
+    fname: string;
+    lname: string;
+    avatar?: string;
+    username: string;
+  };
+  createdAt: string;
+  likes: Array<{ userId: string }>;
+  likeCount: number;
+  isLiked: boolean;
+  mediaUrl?: string;
+}
+
+interface CommentListProps {
+  comments: Comment[];
+  currentUserId: string;
+  onLikeComment: (commentId: string) => void;
+  onDeleteComment: (commentId: string) => void;
+  loading?: { [key: string]: boolean };
+}
+
+export default function CommentList({
+  comments,
+  currentUserId,
+  onLikeComment,
+  onDeleteComment,
+  loading = {},
+}: CommentListProps) {
+  return (
+    <div className="space-y-4">
+      {comments.map((comment) => (
+        <div key={comment._id} className="flex gap-4">
+          {/* User Avatar */}
+          <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+              src={comment.userId.avatar || "/default-avatar.png"}
+              alt={`${comment.userId.fname} ${comment.userId.lname}`}
+              fill
+              className="object-cover"
+            />
+          </div>
+
+          {/* Comment Content */}
+          <div className="flex-1">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold">
+                    {comment.userId.fname} {comment.userId.lname}
+                  </h4>
+                  <p className="text-sm text-gray-500">
+                    {format(
+                      new Date(comment.createdAt),
+                      "MMM d, yyyy 'at' h:mm a"
+                    )}
+                  </p>
+                </div>
+
+                {/* Actions Menu */}
+                {comment.userId._id === currentUserId && (
+                  <div className="relative group">
+                    <button className="p-1 hover:bg-gray-100 rounded-full">
+                      <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                    </button>
+                    <div className="absolute right-0 mt-1 hidden group-hover:block">
+                      <button
+                        onClick={() => onDeleteComment(comment._id)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 bg-white rounded-lg shadow-lg hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <p className="mt-2">{comment.content}</p>
+
+              {comment.mediaUrl && (
+                <div className="mt-3 relative w-full h-48">
+                  <Image
+                    src={comment.mediaUrl}
+                    alt="Comment attachment"
+                    fill
+                    className="object-cover rounded-lg"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Like Button */}
+            <div className="mt-2 ml-4">
+              <LikeButton
+                isLiked={comment.isLiked}
+                likeCount={comment.likeCount}
+                onLike={() => onLikeComment(comment._id)}
+                loading={loading[comment._id]}
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

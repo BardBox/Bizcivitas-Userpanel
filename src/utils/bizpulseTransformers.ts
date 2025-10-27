@@ -4,6 +4,7 @@ import {
   BizPulseWallfeedType,
   BizPulseCategory,
 } from "../../types/bizpulse.types";
+import { WallFeedPost } from "../types/bizpulse.types";
 
 /**
  * Transform backend BizPulsePost to frontend BizPulseMockPost format
@@ -46,12 +47,73 @@ export function transformBizPulsePostToMock(
 }
 
 /**
+ * Transform WallFeedPost (from API) to BizPulseMockPost format
+ * This is used when fetching from the new WallFeed API
+ */
+export function transformWallFeedPostToMock(
+  post: WallFeedPost
+): BizPulseMockPost {
+  // Base URL for images
+  const BASE_URL = "https://backend.bizcivitas.com/api/v1";
+
+  // Map camelCase type to kebab-case category
+  const categoryMap: Record<string, BizPulseCategory> = {
+    travelStories: "travel-stories",
+    lightPulse: "light-pulse",
+    article: "spotlight-stories",
+    poll: "pulse-polls",
+    pulsePolls: "pulse-polls",
+    businessBoosters: "business-boosters",
+    foundersDesk: "founders-desk",
+    trip: "travel-stories",
+    upcomingEvent: "all",
+    announcement: "all",
+  };
+
+  return {
+    id: post._id,
+    title: post.title || "Untitled Post",
+    content: Array.isArray(post.description)
+      ? post.description
+          .map((desc) => desc.trim())
+          .filter((desc) => desc)
+          .join("<br><br>")
+      : post.description || "",
+    author: {
+      name: post.userId ? `${post.userId.fname} ${post.userId.lname}` : "BizCivitas",
+      title: "Member",
+      avatar: post.userId?.avatar || null,
+    },
+    image:
+      Array.isArray(post.images) && post.images.length > 0
+        ? `${BASE_URL}/image/${post.images[0]}`
+        : undefined,
+    stats: {
+      likes: post.likeCount || 0,
+      comments: post.commentCount || 0,
+      shares: 0,
+      views: 0,
+    },
+    timeAgo: post.timeAgo || (post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently"),
+    category: categoryMap[post.type] || "all",
+    tags: [],
+    isLiked: post.isLiked,
+    poll: post.poll,
+    postType: post.poll ? "poll" : "regular",
+  };
+}
+
+/**
  * Transform array of BizPulsePost to BizPulseMockPost
  */
 export function transformBizPulsePostsToMock(
-  posts: BizPulsePost[]
+  posts: BizPulsePost[] | WallFeedPost[]
 ): BizPulseMockPost[] {
-  return posts.map(transformBizPulsePostToMock);
+  // Check if the first post has the WallFeedPost structure
+  if (posts.length > 0 && 'userId' in posts[0] && typeof posts[0].userId === 'object') {
+    return (posts as WallFeedPost[]).map(transformWallFeedPostToMock);
+  }
+  return (posts as BizPulsePost[]).map(transformBizPulsePostToMock);
 }
 
 /**

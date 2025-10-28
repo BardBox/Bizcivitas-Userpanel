@@ -53,6 +53,10 @@ self.addEventListener('notificationclick', (event) => {
   // Get the URL to open from notification data
   const clickAction = event.notification.data?.click_action || '/feeds';
 
+  // Validate that clickAction is a safe internal route
+  const isSafeRoute = clickAction.startsWith('/') && !clickAction.startsWith('//');
+  const safeClickAction = isSafeRoute ? clickAction : '/feeds';
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Check if there's already a window/tab open
@@ -61,10 +65,10 @@ self.addEventListener('notificationclick', (event) => {
         if (client.url.includes('/feeds') && 'focus' in client) {
           // Focus existing window and navigate to the specific page
           client.focus();
-          if (clickAction !== '/feeds') {
+          if (safeClickAction !== '/feeds') {
             client.postMessage({
               type: 'NAVIGATE',
-              url: clickAction
+              url: safeClickAction
             });
           }
           return client;
@@ -72,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
       }
       // If no window is open, open a new one
       if (clients.openWindow) {
-        return clients.openWindow(clickAction);
+        return clients.openWindow(safeClickAction);
       }
     })
   );

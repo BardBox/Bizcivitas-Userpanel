@@ -187,31 +187,17 @@ export async function logout(): Promise<void> {
   if (typeof window === "undefined") return;
 
   try {
-    // Try to send FCM token to backend for removal
+    // Get FCM token for logout
     const fcmToken = localStorage.getItem("fcmToken");
-    const accessToken = getAccessToken();
-
-    if (fcmToken && accessToken) {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      try {
-        await fetch(`${backendUrl}/users/remove-fcm-token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-          body: JSON.stringify({ token: fcmToken }),
-        });
-      } catch (tokenError) {
-        console.error("FCM token removal error:", tokenError);
-      }
-    }
-
-    // Call server logout endpoint to clear HttpOnly cookies
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+    // Call server logout endpoint to clear HttpOnly cookies and remove FCM token
     await fetch(`${backendUrl}/users/logout`, {
-      method: "POST",
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fcmToken: fcmToken || "" }),
       credentials: "include",
     });
   } catch (error) {

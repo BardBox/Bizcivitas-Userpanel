@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/generate-firebase-config.js && next dev",
+    "build": "node scripts/generate-firebase-config.js && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "firebase:config": "node scripts/generate-firebase-config.js"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.9.2",

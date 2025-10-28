@@ -314,10 +314,11 @@ export const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Connections", "Profile"],
     }),
-    logout: builder.mutation<{ message: string }, void>({
-      query: () => ({
+    logout: builder.mutation<{ message: string }, { fcmToken: string }>({
+      query: (data) => ({
         url: "/users/logout",
         method: "PATCH",
+        body: data,
         credentials: "include",
       }),
       invalidatesTags: ["User", "Profile"],

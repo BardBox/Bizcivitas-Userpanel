@@ -76,13 +76,11 @@ function LoginPageContent() {
       if (data?.data?.user) {
         const user = data.data.user;
 
-        // Save user data to localStorage
+        // Save user data to localStorage (without FCM tokens)
         localStorage.setItem("user", JSON.stringify(user));
 
         // Dispatch user to Redux store
         dispatch(setUser(user));
-
-        console.log("✅ User saved to localStorage and Redux:", user);
 
         // Store accessToken and role efficiently
         let token = null;
@@ -101,6 +99,59 @@ function LoginPageContent() {
         }
         if (user.role) {
           localStorage.setItem("role", user.role);
+        }
+
+        // Handle FCM token from response
+        let fcmToken = data?.data?.fcmToken || data?.fcmToken;
+        if (!fcmToken && data?.data?.user?.fcmToken) {
+          fcmToken = data.data.user.fcmToken;
+        }
+
+        if (fcmToken) {
+          // Check if this is a new token
+          const existingToken = localStorage.getItem("fcmToken");
+          if (existingToken !== fcmToken) {
+            console.log("New FCM token detected, updating..."); // Debug log
+
+            try {
+              const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+              // First, remove old token if it exists
+              if (existingToken) {
+                await fetch(`${backendUrl}/users/remove-fcm-token`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  credentials: "include",
+                  body: JSON.stringify({ token: existingToken }),
+                });
+              }
+
+              // Then add new token
+              await fetch(`${backendUrl}/users/add-fcm-token`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  token: fcmToken,
+                  deviceId: window.navigator.userAgent, // Add device identifier
+                  timestamp: new Date().toISOString(), // Add timestamp
+                }),
+              });
+
+              // Only store the token after successful registration
+              localStorage.setItem("fcmToken", fcmToken);
+            } catch (error) {
+              console.error("Error managing FCM token:", error);
+            }
+          } else {
+            console.log("Using existing FCM token"); // Debug log
+          }
         }
       }
 

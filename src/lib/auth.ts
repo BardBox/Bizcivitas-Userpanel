@@ -186,29 +186,89 @@ export function getUserRole(): string | null {
 export async function logout(): Promise<void> {
   if (typeof window === "undefined") return;
 
-  // Clear in-memory token
-  clearAccessToken();
-
-  // Clear legacy localStorage (for backward compatibility)
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("role");
-
-  // Call server logout endpoint to clear HttpOnly cookies
   try {
+    // Try to send FCM token to backend for removal
+    const fcmToken = localStorage.getItem("fcmToken");
+    const accessToken = getAccessToken();
+
+    if (fcmToken && accessToken) {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      try {
+        await fetch(`${backendUrl}/users/remove-fcm-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({ token: fcmToken }),
+        });
+      } catch (tokenError) {
+        console.error("FCM token removal error:", tokenError);
+      }
+    }
+
+    // Call server logout endpoint to clear HttpOnly cookies
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     await fetch(`${backendUrl}/users/logout`, {
       method: "POST",
-      credentials: "include", // Send HttpOnly cookies
+      credentials: "include",
     });
   } catch (error) {
     console.error("Logout API error:", error);
-    // Continue with client-side cleanup even if server call fails
+  } finally {
+    // Clear in-memory token
+    clearAccessToken();
+
+    // Clear all local storage
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
   }
 }
 
 /**
  * Refresh access token using HttpOnly refresh token cookie
  */
+/**
+ * Get the current FCM token
+ */
+export function getFcmToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("fcmToken");
+}
+
+/**
+ * Set FCM token and optionally register with backend
+ */
+export async function setFcmToken(
+  token: string,
+  registerWithBackend = true
+): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem("fcmToken", token);
+
+  if (registerWithBackend) {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const accessToken = getAccessToken();
+
+      await fetch(`${backendUrl}/users/add-fcm-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ token }),
+      });
+    } catch (error) {
+      console.error("Error registering FCM token:", error);
+    }
+  }
+}
+
 export async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 

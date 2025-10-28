@@ -114,6 +114,21 @@ export const notificationApi = baseApi.injectEndpoints({
         response.data,
     }),
 
+    // Remove FCM token (called on logout)
+    removeFcmToken: builder.mutation<
+      { fcmTokens: string[]; removed: boolean },
+      { fcmToken: string }
+    >({
+      query: (data) => ({
+        url: "/notifications/removeFcmToken",
+        method: "POST",
+        body: data,
+      }),
+      transformResponse: (
+        response: ApiResponse<{ fcmTokens: string[]; removed: boolean }>
+      ) => response.data,
+    }),
+
     // Send notification to specific user
     sendNotificationToUser: builder.mutation<
       any,
@@ -160,6 +175,7 @@ export const {
   useDeleteNotificationMutation,
   useDeleteAllNotificationsMutation,
   useUpdateFcmTokenMutation,
+  useRemoveFcmTokenMutation,
   useSendNotificationToUserMutation,
   useSendNotificationToAllMutation,
 } = notificationApi;

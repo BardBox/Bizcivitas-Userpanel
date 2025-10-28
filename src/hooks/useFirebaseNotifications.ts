@@ -10,7 +10,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { requestForToken, getMessagingInstance } from "@/lib/firebase";
-import { useUpdateFcmTokenMutation } from "../../store/api/notificationApi";
+import {
+  useUpdateFcmTokenMutation,
+  useRemoveFcmTokenMutation,
+} from "../../store/api/notificationApi";
 
 export interface FCMNotification {
   title?: string;
@@ -27,6 +30,7 @@ export const useFirebaseNotifications = () => {
   const [isFCMSupported, setIsFCMSupported] = useState<boolean>(false);
   const [updateFcmToken, { isLoading: isUpdatingToken }] =
     useUpdateFcmTokenMutation();
+  const [removeFcmToken] = useRemoveFcmTokenMutation();
 
   // ✅ PERFORMANCE FIX: Check FCM support without loading Firebase SDK
   useEffect(() => {
@@ -184,10 +188,23 @@ export const useFirebaseNotifications = () => {
   }, [notificationPermission, fcmToken, initializeFCM, updateFcmToken]);
 
   // Clear token when user logs out or denies permission
-  const clearFCMToken = useCallback(() => {
+  const clearFCMToken = useCallback(async () => {
+    const currentToken = fcmToken || localStorage.getItem("fcmToken");
+
+    // Remove token from backend if it exists
+    if (currentToken) {
+      try {
+        await removeFcmToken({ fcmToken: currentToken }).unwrap();
+        console.log("FCM token removed from backend");
+      } catch (error) {
+        console.error("Failed to remove FCM token from backend:", error);
+      }
+    }
+
+    // Clear local state and storage
     setFcmToken(null);
     localStorage.removeItem("fcmToken");
-  }, []);
+  }, [fcmToken, removeFcmToken]);
 
   return {
     fcmToken,

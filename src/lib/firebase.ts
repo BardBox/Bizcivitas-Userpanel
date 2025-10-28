@@ -101,20 +101,41 @@ const initializeMessaging = async () => {
  */
 export const requestForToken = async (): Promise<string | null> => {
   try {
+    // Check if service worker is supported
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service workers are not supported in this browser');
+      return null;
+    }
+
     // Lazy load messaging when user actually requests notifications
     const messagingInstance = await initializeMessaging();
-    if (!messagingInstance) return null;
+    if (!messagingInstance) {
+      console.warn('Firebase messaging not supported');
+      return null;
+    }
 
     // Request permission
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") return null;
+    if (permission !== "granted") {
+      console.warn('Notification permission denied');
+      return null;
+    }
 
     // Dynamically import getToken
     const { getToken } = await import("firebase/messaging");
 
+    // Firebase will automatically register the service worker at /firebase-messaging-sw.js
+    // with the correct scope: /firebase-cloud-messaging-push-scope
     const currentToken = await getToken(messagingInstance, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: await navigator.serviceWorker.register('/firebase-messaging-sw.js')
     });
+
+    if (currentToken) {
+      console.log('FCM token retrieved successfully');
+    } else {
+      console.warn('No registration token available');
+    }
 
     return currentToken || null;
   } catch (err) {

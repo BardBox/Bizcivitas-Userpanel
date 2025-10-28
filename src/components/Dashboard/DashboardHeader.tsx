@@ -19,32 +19,25 @@ export default function DashboardHeader() {
   };
 
   const handleLogout = async () => {
-    try {
-      // ✅ CLEANUP: Removed debug console.log
-      const result = await logout().unwrap();
+    // Get FCM token from localStorage
+    // Use placeholder if not found (backend requires fcmToken field)
+    const fcmToken = localStorage.getItem("fcmToken") || "no-fcm-token";
 
-      // Clear session storage only on client side
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem("userProfile");
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
-      }
+    // Call logout API in background (fire and forget)
+    logout({ fcmToken }).catch((err) => {
+      // Silently fail - user is already logged out on frontend
+      console.error("Logout API error (already logged out):", err);
+    });
 
-      router.push("/login");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      // Show more detailed error message
-      let errorMessage = "Unknown error";
-      if (err?.data?.message) {
-        errorMessage = err.data.message;
-      } else if (err?.error) {
-        errorMessage = err.error;
-      } else if (err?.status) {
-        errorMessage = `HTTP ${err.status}`;
-      }
-
-      alert(`Logout failed: ${errorMessage}. Please try again.`);
+    // Clear all storage IMMEDIATELY
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+      sessionStorage.clear();
     }
+
+    // Force immediate hard redirect using window.location
+    // This is more reliable than router.replace for logout
+    window.location.href = "/login";
   };
 
   return (

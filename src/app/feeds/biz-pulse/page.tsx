@@ -16,6 +16,7 @@ import TabNavigation from "@/components/Dashboard/TabNavigation";
 import SearchBar from "@/components/Dashboard/SearchBar";
 import PostsGrid from "@/components/Dashboard/PostsGrid";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import NotificationPromptBanner from "@/components/Dashboard/NotificationPromptBanner";
 
 export default function BizPulsePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -129,6 +130,9 @@ export default function BizPulsePage() {
           </button>
         </div>
       </div>
+
+      {/* Notification Prompt Banner */}
+      <NotificationPromptBanner />
 
       {/* Search Bar */}
       <SearchBar />

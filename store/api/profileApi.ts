@@ -220,10 +220,11 @@ export const profileApi = baseApi.injectEndpoints({
     // ============================================
     // AUTH MUTATIONS
     // ============================================
-    logout: builder.mutation<{ message: string }, void>({
-      query: () => ({
+    logout: builder.mutation<{ message: string }, { fcmToken: string }>({
+      query: (data) => ({
         url: "/users/logout",
         method: "PATCH",
+        body: data,
         credentials: "include",
       }),
       invalidatesTags: ["User", "Profile"],

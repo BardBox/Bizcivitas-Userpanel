@@ -1,6 +1,6 @@
 "use client";
 
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../../store/store";
 import BizPulseCard from "@/components/Dashboard/BizPulseCard";
 import PollCard from "@/components/Dashboard/PollCard";
@@ -8,8 +8,11 @@ import { WallFeedPost } from "@/types/bizpulse.types";
 import { BizPulseMockPost } from "../../../types/bizpulse.types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { memo, useState, useEffect } from "react";
+import { updatePost } from "../../../store/postsSlice";
+import { transformBizPulsePostsToMock } from "@/utils/bizpulseTransformers";
 
 const PostsGrid = memo(function PostsGrid() {
+  const dispatch = useDispatch();
   const { filteredPosts, loading } = useSelector(
     (state: RootState) => state.posts
   );
@@ -97,8 +100,10 @@ const PostsGrid = memo(function PostsGrid() {
               post={wallFeedPost}
               currentUserId={currentUserId}
               onVoteSuccess={(updatedPost) => {
-                // Handle vote success - you can dispatch Redux action here if needed
-                console.log("Vote successful:", updatedPost);
+                // Transform the updated WallFeedPost back to BizPulseMockPost and update Redux
+                const transformedPost = transformBizPulsePostsToMock([updatedPost])[0];
+                dispatch(updatePost(transformedPost));
+                console.log("Vote successful, Redux updated:", transformedPost);
               }}
               onLike={(postId) => {
                 // Handle like - you can dispatch Redux action here if needed

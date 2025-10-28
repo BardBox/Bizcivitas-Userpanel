@@ -1,5 +1,5 @@
-import { store } from "@/store";
-import { setUser } from "@/store/authSlice";
+import { store } from "../../store/store";
+import { setUser } from "../../store/authSlice";
 
 export function initializeAuth() {
   if (typeof window === "undefined") return;

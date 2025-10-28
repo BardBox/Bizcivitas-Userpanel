@@ -33,74 +33,23 @@ export default function PollCard({
   const poll = post.poll;
   if (!poll) return null;
 
-  // Check if user has already voted - use local state if available, otherwise fall back to post data
-  // IMPORTANT: voter.userId can be either a string or an object with _id property
-  console.log("🔍 Poll Details:", {
-    pollId: post._id,
-    pollQuestion: poll.question,
-    votersCount: poll.voters.length,
-    voters: poll.voters.map((v) => ({
-      userId: v.userId,
-      userIdType: typeof v.userId,
-      userIdValue:
-        typeof v.userId === "object" ? (v.userId as any)?._id : v.userId,
-    })),
-    currentUserId,
-    currentUserIdType: typeof currentUserId,
-  });
-
+  // Check if user has already voted - Simple logic like mobile app
   const userVote = poll.voters.find((voter) => {
-    // Normalize voter.userId to string
-    const voterId =
-      typeof voter.userId === "object" && voter.userId !== null
-        ? String((voter.userId as any)?._id ?? voter.userId)
-        : String(voter.userId);
+    // Handle both string and object userId formats
+    const voterId = typeof voter.userId === "object" && voter.userId !== null
+      ? (voter.userId as any)?._id
+      : voter.userId;
 
-    // Normalize currentUserId to string
-    const normalizedCurrentUserId = String(currentUserId);
-
-    console.log("🔍 Vote Check:", {
-      voter: voter,
-      voterUserId: voter.userId,
-      voterUserIdType: typeof voter.userId,
-      voterIdObject: typeof voter.userId === "object" ? voter.userId : null,
-      extractedVoterId: voterId,
-      currentUserId: normalizedCurrentUserId,
-      matches: voterId === normalizedCurrentUserId,
-    });
-
-    const matches = voterId === normalizedCurrentUserId;
-    if (matches) {
-      console.log("✅ Found matching vote:", {
-        voterId,
-        currentUserId: normalizedCurrentUserId,
-        optionIndex: voter.optionIndex,
-      });
-    }
-    return matches;
+    return String(voterId) === String(currentUserId);
   });
 
+  // Use local state if available, otherwise check voters array
   const hasVoted =
-    localHasVoted !== null ? localHasVoted : post.hasVoted ?? !!userVote;
+    localHasVoted !== null ? localHasVoted : !!userVote;
   const votedOptionIndex =
     localVotedOptionIndex !== null
       ? localVotedOptionIndex
-      : post.userVotedOptionIndex ?? userVote?.optionIndex;
-
-  // Debug logging
-  console.log("🗳️ Poll Vote Status:", {
-    postId: post._id,
-    pollQuestion: poll.question,
-    currentUserId,
-    hasVoted,
-    votedOptionIndex,
-    postHasVoted: post.hasVoted,
-    postUserVotedOptionIndex: post.userVotedOptionIndex,
-    votersArray: poll.voters,
-    userVoteFromArray: userVote,
-    localHasVoted,
-    localVotedOptionIndex,
-  });
+      : userVote?.optionIndex;
 
   // Calculate percentage for each option
   const calculatePercentage = (votes: number, total: number): number => {
@@ -108,20 +57,25 @@ export default function PollCard({
     return Math.round((votes / total) * 100);
   };
 
-  // Handle vote submission or change vote
+  // Handle vote submission - Same logic as mobile app
   const handleVote = async (optionIndex: number) => {
     if (isVoting) return;
 
     // Check if currentUserId is available
     if (!currentUserId) {
-      setError("Unable to vote. Please try refreshing the page.");
+      setError("Unable to vote. Please log in first.");
       setTimeout(() => setError(null), 3000);
+      console.error("❌ Vote failed: currentUserId is empty", {
+        currentUserId,
+        hasVoted,
+        votedOptionIndex
+      });
       return;
     }
 
-    // If user already voted on this exact option, do nothing
-    if (hasVoted && votedOptionIndex === optionIndex) {
-      setError("You've already voted for this option");
+    // Check if user has already voted - prevent duplicate votes (mobile app logic)
+    if (hasVoted) {
+      setError("You have already voted!");
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -129,77 +83,55 @@ export default function PollCard({
     setIsVoting(true);
     setError(null);
 
-    // Immediately update UI state before API call
+    console.log("🗳️ Starting vote process:", {
+      optionIndex,
+      currentUserId,
+      postId: post._id
+    });
+
+    // Optimistically update UI
     setSelectedOption(poll.options[optionIndex]._id);
     setLocalHasVoted(true);
     setLocalVotedOptionIndex(optionIndex);
 
     try {
-      // If user has already voted, we need to remove the old vote first, then vote again
-      if (hasVoted) {
-        console.log(
-          "🔄 Changing vote from option",
-          votedOptionIndex,
-          "to option",
-          optionIndex
-        );
-
-        // Step 1: Remove old vote and WAIT for it to complete
-        try {
-          const removeResponse = await bizpulseApi.removeVote(post._id);
-          console.log("✅ Vote removed successfully:", removeResponse);
-
-          // Step 2: Verify the vote was actually removed
-          if (!removeResponse.success) {
-            throw new Error("Failed to remove previous vote");
-          }
-
-          // Step 3: Update local state immediately
-          setLocalHasVoted(false);
-          setLocalVotedOptionIndex(null);
-
-          // Step 4: Update the post state with the response from remove vote
-          if (removeResponse.data?.wallFeed) {
-            onVoteSuccess?.(removeResponse.data.wallFeed);
-          }
-
-          // Step 5: Add a delay to ensure backend state is fully updated
-          await new Promise((resolve) => setTimeout(resolve, 300));
-        } catch (removeErr: any) {
-          console.error("❌ Failed to remove previous vote:", removeErr);
-          throw new Error(
-            "Cannot change vote: " +
-              (removeErr.message || "Failed to remove previous vote")
-          );
-        }
-      }
-
-      // Now submit the new vote
-      console.log("📮 Submitting new vote for option", optionIndex);
+      // Submit vote to backend
+      console.log("📮 Submitting vote for option", optionIndex);
       const response = await bizpulseApi.voteOnPoll(post._id, optionIndex);
-      console.log("✅ New vote submitted:", response);
+      console.log("✅ Vote submitted, full response:", response);
+      console.log("Response structure:", {
+        success: response.success,
+        hasData: !!response.data,
+        message: response.message
+      });
 
-      if (response.success && response.data.wallFeed) {
-        // Update local state immediately
-        setLocalHasVoted(true);
-        setLocalVotedOptionIndex(optionIndex);
-
-        onVoteSuccess?.(response.data.wallFeed);
+      if (response.success && response.data) {
+        // Update with fresh data from server (backend returns wallFeed directly in data)
+        onVoteSuccess?.(response.data);
+        console.log("🎉 Vote successfully saved to backend!");
+      } else {
+        // Revert optimistic update if failed
+        setLocalHasVoted(null);
+        setLocalVotedOptionIndex(null);
+        setSelectedOption(null);
+        throw new Error(response.message || "Vote failed");
       }
     } catch (err: any) {
       console.error("❌ Vote error:", err);
-      // Reset all local state on error
-      setLocalHasVoted(false);
+
+      // Rollback optimistic update
+      setLocalHasVoted(null);
       setLocalVotedOptionIndex(null);
       setSelectedOption(null);
-      setError(err.message || "Failed to submit vote");
-      setTimeout(() => setError(null), 3000);
+
+      setError(err.message || "Failed to submit vote. Please try again.");
+      setTimeout(() => setError(null), 5000);
     } finally {
       setIsVoting(false);
     }
   };
 
-  // Handle vote removal
+  // Handle vote removal - Same logic as mobile app
   const handleRemoveVote = async () => {
     if (!hasVoted || isVoting) return;
 
@@ -211,20 +143,29 @@ export default function PollCard({
       const response = await bizpulseApi.removeVote(post._id);
       console.log("✅ Vote removed successfully:", response);
 
-      if (response.success && response.data.wallFeed) {
-        if (response.success) {
-          // Update local state immediately
-          setLocalHasVoted(false);
-          setLocalVotedOptionIndex(null);
-          setSelectedOption(null);
-          onVoteSuccess?.(response.data.wallFeed);
-        } else {
-          throw new Error(response.message || "Failed to remove vote");
-        }
+      if (response.success && response.data) {
+        // Clear the selected option
+        setLocalHasVoted(null);
+        setLocalVotedOptionIndex(null);
+        setSelectedOption(null);
+
+        // Update with fresh data from server (backend returns wallFeed directly in data)
+        onVoteSuccess?.(response.data);
+      } else {
+        throw new Error(response.message || "Failed to remove vote");
       }
     } catch (err: any) {
       console.error("❌ Remove vote error:", err);
-      setError(err.message || "Failed to remove vote");
+
+      const errorMessage = err.message || "Failed to remove vote";
+
+      // Check if user hasn't voted yet
+      if (err.message && err.message.includes("not voted")) {
+        setError("You have not voted yet on this poll.");
+      } else {
+        setError(errorMessage);
+      }
+
       setTimeout(() => setError(null), 3000);
     } finally {
       setIsVoting(false);
@@ -324,22 +265,24 @@ export default function PollCard({
               <button
                 key={option._id}
                 onClick={() => handleVote(index)}
-                disabled={isVoting}
+                disabled={isVoting || (hasVoted && !isVotedOption)}
                 className={`w-full text-left transition-all ${
                   isVotedOption
-                    ? "bg-blue-500 border-blue-600 ring-2 ring-blue-400 shadow-md"
+                    ? "bg-green-500 border-green-600 ring-2 ring-green-400 shadow-md"
                     : hasVoted
-                    ? "bg-white border-gray-200 text-gray-700 opacity-75"
+                    ? "bg-gray-100 border-gray-300 text-gray-500 opacity-60 cursor-not-allowed"
                     : "bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm"
                 } ${
                   isSelected ? "bg-blue-50 border-blue-300 shadow-sm" : ""
-                } border rounded-lg p-4 relative overflow-hidden cursor-pointer disabled:cursor-not-allowed`}
+                } border rounded-lg p-4 relative overflow-hidden ${
+                  hasVoted && !isVotedOption ? "cursor-not-allowed" : "cursor-pointer"
+                } disabled:cursor-not-allowed`}
               >
                 {/* Progress Bar Background - show for all options when hasVoted */}
                 {hasVoted && (
                   <div
                     className={`absolute inset-0 transition-all duration-500 ${
-                      isVotedOption ? "bg-blue-400/20" : "bg-gray-100"
+                      isVotedOption ? "bg-green-400/30" : "bg-gray-200"
                     }`}
                     style={{ width: `${percentage}%` }}
                   />
@@ -350,7 +293,7 @@ export default function PollCard({
                   <div className="flex-1">
                     <p
                       className={`font-medium ${
-                        isVotedOption ? "text-white" : "text-gray-900"
+                        isVotedOption ? "text-white" : hasVoted ? "text-gray-500" : "text-gray-900"
                       }`}
                     >
                       {option.text}
@@ -358,7 +301,7 @@ export default function PollCard({
                     {hasVoted && (
                       <p
                         className={`text-sm mt-1 ${
-                          isVotedOption ? "text-blue-100" : "text-gray-600"
+                          isVotedOption ? "text-green-100" : "text-gray-500"
                         }`}
                       >
                         {option.votes} {option.votes === 1 ? "vote" : "votes"}
@@ -369,7 +312,7 @@ export default function PollCard({
                     <div className="ml-4">
                       <span
                         className={`text-lg font-bold ${
-                          isVotedOption ? "text-white" : "text-gray-700"
+                          isVotedOption ? "text-white" : "text-gray-500"
                         }`}
                       >
                         {percentage}%
@@ -396,12 +339,12 @@ export default function PollCard({
             {poll.totalVotes === 1 ? "vote" : "votes"}
           </p>
           {hasVoted && !isVoting && (
-            <button
+            <a
               onClick={handleRemoveVote}
-              className="text-sm text-red-600 hover:text-red-700 font-medium hover:underline"
+              className="text-sm text-red-600 hover:text-red-700 underline cursor-pointer transition-colors"
             >
-              Remove my vote
-            </button>
+              Remove vote
+            </a>
           )}
         </div>
       </div>

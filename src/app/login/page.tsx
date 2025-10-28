@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 import Link from "next/link";
 import PublicRoute from "@/components/auth/PublicRoute";
 import { setAccessToken } from "@/lib/auth";
+import { setUser } from "../../../store/authSlice";
 import { debugLogin, debugApiCall, quickDebug } from "@/utils/debug";
 
 function LoginPageContent() {
@@ -12,6 +14,7 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -66,6 +69,15 @@ function LoginPageContent() {
 
       if (data?.data?.user) {
         const user = data.data.user;
+
+        // Save user data to localStorage
+        localStorage.setItem("user", JSON.stringify(user));
+
+        // Dispatch user to Redux store
+        dispatch(setUser(user));
+
+        console.log("✅ User saved to localStorage and Redux:", user);
+
         // Store accessToken and role efficiently
         let token = null;
         if (data?.data?.accessToken) {

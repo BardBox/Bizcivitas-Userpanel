@@ -39,7 +39,7 @@ export const fetchPostById = createAsyncThunk(
   async (postId: string, { rejectWithValue }) => {
     try {
       const response = await bizpulseApi.fetchWallFeedById(postId);
-      const transformedPost = transformBizPulsePostsToMock([response.data.wallFeed])[0];
+      const transformedPost = transformBizPulsePostsToMock([response.data])[0];
       return transformedPost;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -52,7 +52,7 @@ export const likePostAsync = createAsyncThunk(
   async (postId: string, { rejectWithValue }) => {
     try {
       const response = await bizpulseApi.likeWallFeed(postId);
-      const transformedPost = transformBizPulsePostsToMock([response.data.wallFeed])[0];
+      const transformedPost = transformBizPulsePostsToMock([response.data])[0];
       return { postId, updatedPost: transformedPost };
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -129,6 +129,15 @@ const postsSlice = createSlice({
         post.stats.shares += 1;
       }
     },
+    updatePost: (state, action: PayloadAction<BizPulseMockPost>) => {
+      const existingIndex = state.posts.findIndex(
+        (p) => p.id === action.payload.id
+      );
+      if (existingIndex >= 0) {
+        state.posts[existingIndex] = action.payload;
+        postsSlice.caseReducers.filterPosts(state);
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -192,6 +201,7 @@ export const {
   unlikePost,
   addComment,
   sharePost,
+  updatePost,
 } = postsSlice.actions;
 
 export default postsSlice.reducer;

@@ -13,9 +13,7 @@ interface WallFeedResponse {
 
 interface SingleWallFeedResponse {
   success: boolean;
-  data: {
-    wallFeed: WallFeedPost;
-  };
+  data: WallFeedPost;  // Backend returns wallFeed directly in data, not nested
   message?: string;
 }
 
@@ -182,7 +180,25 @@ class BizPulseApiService {
       if (response.status === 401) {
         throw new Error("Authentication required. Please log in again.");
       }
-      throw new Error(`Failed to remove vote: ${response.statusText}`);
+
+      // Try to get error message from response body
+      let errorMessage = `Failed to remove vote: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData?.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (e) {
+        // If JSON parsing fails, use statusText
+      }
+
+      console.error("Remove vote error:", {
+        status: response.status,
+        statusText: response.statusText,
+        errorMessage
+      });
+
+      throw new Error(errorMessage);
     }
 
     return response.json();

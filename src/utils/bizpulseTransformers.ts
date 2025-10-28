@@ -11,39 +11,106 @@ import { WallFeedPost } from "../types/bizpulse.types";
  * This allows existing components to work with API data
  */
 export function transformBizPulsePostToMock(
-  post: BizPulsePost
+  post: WallFeedPost | BizPulsePost
 ): BizPulseMockPost {
   // Base URL for images
-  const BASE_URL = "https://backend.bizcivitas.com/api/v1";
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  if (!BASE_URL) {
+    console.error("NEXT_PUBLIC_BACKEND_URL is not set");
+  }
 
-  return {
-    id: post._id,
-    title: post.title || "Untitled Post",
-    content: Array.isArray(post.description)
-      ? post.description
-          .map((desc) => desc.trim())
-          .filter((desc) => desc)
-          .join("<br><br>")
-      : post.description || "",
-    author: {
-      name: "BizCivitas Admin", // Wallfeed content is from admin
-      title: "Administrator",
-      avatar: null,
-    },
-    image:
-      Array.isArray(post.images) && post.images.length > 0
-        ? `${BASE_URL}/image/${post.images[0]}`
-        : undefined,
-    stats: {
-      likes: 0, // Wallfeed doesn't have likes
-      comments: 0, // Wallfeed doesn't have comments
-      shares: 0,
-      views: 0,
-    },
-    timeAgo: post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently",
-    category: mapPostTypeToCategory(post.type),
-    tags: [],
+  const isWallFeedPost = (p: any): p is WallFeedPost => {
+    return "userId" in p && "likeCount" in p;
   };
+
+  const normalizeCategory = (type: string): BizPulseCategory => {
+    // Convert from camelCase to kebab-case
+    const map: Record<string, BizPulseCategory> = {
+      travelStories: "travel-stories",
+      lightPulse: "light-pulse",
+      article: "spotlight-stories" as BizPulseCategory,
+      poll: "pulse-polls",
+      pulsePolls: "pulse-polls",
+      businessBoosters: "business-boosters",
+      foundersDesk: "founders-desk",
+    };
+    return map[type] || "all";
+  };
+
+  if (isWallFeedPost(post)) {
+    return {
+      id: post._id,
+      title: post.title || "Untitled Post",
+      content: Array.isArray(post.description)
+        ? post.description
+            .map((desc) => desc.trim())
+            .filter((desc) => desc)
+            .join("<br><br>")
+        : post.description || "",
+      author: {
+        name: post.userId
+          ? `${post.userId.fname} ${post.userId.lname}`
+          : "BizCivitas Admin",
+        title: post.userId?.role || "Member",
+        avatar: post.userId?.avatar || null,
+      },
+      image: (() => {
+        // Try to get image from images array
+        if (Array.isArray(post.images) && post.images.length > 0) {
+          return `${BASE_URL}/image/${post.images[0]}`;
+        }
+        // Try to get from article image
+        if (post.article?.image) {
+          return `${BASE_URL}/image/${post.article.image}`;
+        }
+        return undefined;
+      })(),
+      stats: {
+        likes: post.likeCount || 0,
+        comments: post.commentCount || 0,
+        shares: 0,
+        views: 0,
+      },
+      timeAgo:
+        post.timeAgo ||
+        (post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently"),
+      category: normalizeCategory(post.type),
+      tags: [],
+      isLiked: post.isLiked || false,
+      poll: post.poll,
+      postType: post.poll ? "poll" : "regular",
+    };
+  } else {
+    // Handle BizPulsePost type
+    return {
+      id: post._id,
+      title: post.title || "Untitled Post",
+      content: Array.isArray(post.description)
+        ? post.description
+            .map((desc) => desc.trim())
+            .filter((desc) => desc)
+            .join("<br><br>")
+        : post.description || "",
+      author: {
+        name: "BizCivitas Admin",
+        title: "Administrator",
+        avatar: null,
+      },
+      image:
+        Array.isArray(post.images) && post.images.length > 0
+          ? `${BASE_URL}/image/${post.images[0]}`
+          : undefined,
+      stats: {
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        views: 0,
+      },
+      timeAgo: post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently",
+      category: normalizeCategory(post.type || "all"),
+      tags: [],
+    };
+  }
 }
 
 /**
@@ -53,10 +120,24 @@ export function transformBizPulsePostToMock(
 export function transformWallFeedPostToMock(
   post: WallFeedPost
 ): BizPulseMockPost {
-  // Base URL for images
-  const BASE_URL = "https://backend.bizcivitas.com/api/v1";
+  return transformBizPulsePostToMock(post);
+}
 
-  // Map camelCase type to kebab-case category
+/**
+ * Transform array of BizPulsePost to BizPulseMockPost
+ */
+export function transformBizPulsePostsToMock(
+  posts: BizPulsePost[] | WallFeedPost[]
+): BizPulseMockPost[] {
+  return posts.map((post) => transformBizPulsePostToMock(post));
+}
+
+/**
+ * Map backend wallfeed type to frontend category
+ */
+export function mapPostTypeToCategory(
+  type: BizPulseCategory
+): BizPulseCategory {
   const categoryMap: Record<string, BizPulseCategory> = {
     travelStories: "travel-stories",
     lightPulse: "light-pulse",
@@ -70,68 +151,7 @@ export function transformWallFeedPostToMock(
     announcement: "all",
   };
 
-  return {
-    id: post._id,
-    title: post.title || "Untitled Post",
-    content: Array.isArray(post.description)
-      ? post.description
-          .map((desc) => desc.trim())
-          .filter((desc) => desc)
-          .join("<br><br>")
-      : post.description || "",
-    author: {
-      name: post.userId ? `${post.userId.fname} ${post.userId.lname}` : "BizCivitas",
-      title: "Member",
-      avatar: post.userId?.avatar || null,
-    },
-    image:
-      Array.isArray(post.images) && post.images.length > 0
-        ? `${BASE_URL}/image/${post.images[0]}`
-        : undefined,
-    stats: {
-      likes: post.likeCount || 0,
-      comments: post.commentCount || 0,
-      shares: 0,
-      views: 0,
-    },
-    timeAgo: post.timeAgo || (post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently"),
-    category: categoryMap[post.type] || "all",
-    tags: [],
-    isLiked: post.isLiked,
-    poll: post.poll,
-    postType: post.poll ? "poll" : "regular",
-  };
-}
-
-/**
- * Transform array of BizPulsePost to BizPulseMockPost
- */
-export function transformBizPulsePostsToMock(
-  posts: BizPulsePost[] | WallFeedPost[]
-): BizPulseMockPost[] {
-  // Check if the first post has the WallFeedPost structure
-  if (posts.length > 0 && 'userId' in posts[0] && typeof posts[0].userId === 'object') {
-    return (posts as WallFeedPost[]).map(transformWallFeedPostToMock);
-  }
-  return (posts as BizPulsePost[]).map(transformBizPulsePostToMock);
-}
-
-/**
- * Map backend wallfeed type to frontend category
- */
-export function mapPostTypeToCategory(
-  type: BizPulseWallfeedType
-): BizPulseCategory {
-  const typeMap: Record<BizPulseWallfeedType, BizPulseCategory> = {
-    travelStories: "travel-stories",
-    lightPulse: "light-pulse",
-    spotlightStories: "spotlight-stories",
-    pulsePolls: "pulse-polls",
-    businessBoosters: "business-boosters",
-    foundersDesk: "founders-desk",
-  };
-
-  return typeMap[type] || "all";
+  return categoryMap[type] || "all";
 }
 
 /**

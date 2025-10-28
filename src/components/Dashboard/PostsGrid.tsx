@@ -7,9 +7,11 @@ import PollCard from "@/components/Dashboard/PollCard";
 import { WallFeedPost } from "@/types/bizpulse.types";
 import { BizPulseMockPost } from "../../../types/bizpulse.types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { memo, useState, useEffect } from "react";
+import { memo, useEffect } from "react";
 import { updatePost } from "../../../store/postsSlice";
 import { transformBizPulsePostsToMock } from "@/utils/bizpulseTransformers";
+import { bizpulseApi } from "@/services/bizpulseApi";
+import toast from "react-hot-toast";
 
 const PostsGrid = memo(function PostsGrid() {
   const dispatch = useDispatch();
@@ -24,6 +26,39 @@ const PostsGrid = memo(function PostsGrid() {
     console.log("User from Redux:", user);
     console.log("Current User ID:", currentUserId);
   }, [user, currentUserId]);
+
+  // Handle like functionality
+  const handleLike = async (postId: string) => {
+    try {
+      const response = await bizpulseApi.likeWallFeed(postId);
+      if (response.success && response.data) {
+        // Find existing post to preserve any missing data
+        const existingPost = filteredPosts.find((p) => p.id === postId);
+        // Transform the updated WallFeedPost to BizPulseMockPost
+        const transformedPost = transformBizPulsePostsToMock([
+          response.data,
+        ])[0];
+
+        // Merge with existing post data to preserve image and other fields
+        const updatedPost = {
+          ...existingPost,
+          ...transformedPost,
+          image: transformedPost.image || existingPost?.image, // Preserve image if not in response
+        };
+
+        dispatch(updatePost(updatedPost));
+
+        // Show success message
+        const isLiked = response.data.isLiked;
+        toast.success(isLiked ? "Post liked!" : "Post unliked!");
+
+        console.log("Like successful, Redux updated:", transformedPost);
+      }
+    } catch (error: any) {
+      console.error("Failed to like post:", error);
+      toast.error(error.message || "Failed to like post");
+    }
+  };
 
   if (loading) {
     return (
@@ -101,14 +136,13 @@ const PostsGrid = memo(function PostsGrid() {
               currentUserId={currentUserId}
               onVoteSuccess={(updatedPost) => {
                 // Transform the updated WallFeedPost back to BizPulseMockPost and update Redux
-                const transformedPost = transformBizPulsePostsToMock([updatedPost])[0];
+                const transformedPost = transformBizPulsePostsToMock([
+                  updatedPost,
+                ])[0];
                 dispatch(updatePost(transformedPost));
                 console.log("Vote successful, Redux updated:", transformedPost);
               }}
-              onLike={(postId) => {
-                // Handle like - you can dispatch Redux action here if needed
-                console.log("Like clicked:", postId);
-              }}
+              onLike={handleLike}
             />
           );
         }
@@ -127,6 +161,8 @@ const PostsGrid = memo(function PostsGrid() {
             category={post.category}
             tags={post.tags}
             featured={index === 0} // Make first post featured
+            onLike={handleLike}
+            isLiked={post.isLiked || false}
           />
         );
       })}

@@ -26,6 +26,8 @@ interface BizPulseCardProps {
   category: string;
   tags?: string[];
   featured?: boolean;
+  onLike?: (postId: string) => void;
+  isLiked?: boolean;
 }
 
 export default function BizPulseCard({
@@ -39,8 +41,10 @@ export default function BizPulseCard({
   category,
   tags = [],
   featured = false,
+  onLike,
+  isLiked: initialIsLiked = false,
 }: BizPulseCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
 
   const getInitials = (name: string) => {
     return name
@@ -68,6 +72,7 @@ export default function BizPulseCard({
     e.preventDefault();
     e.stopPropagation();
     setIsLiked(!isLiked);
+    onLike?.(id);
   };
 
   const handleShare = (e: React.MouseEvent) => {
@@ -193,7 +198,7 @@ export default function BizPulseCard({
           <div className="flex items-center justify-between">
             {/* Stats */}
             <div className="flex items-center space-x-4 text-xs text-gray-500">
-              {stats.views && (
+              {stats.views && stats.views > 0 && (
                 <div className="flex items-center space-x-1">
                   <Eye className="w-3 h-3" />
                   <span>{stats.views}</span>
@@ -201,11 +206,11 @@ export default function BizPulseCard({
               )}
               <div className="flex items-center space-x-1">
                 <Heart className="w-3 h-3" />
-                <span>{stats.likes}</span>
+                {stats.likes > 0 && <span>{stats.likes}</span>}
               </div>
               <div className="flex items-center space-x-1">
                 <MessageSquare className="w-3 h-3" />
-                <span>{stats.comments}</span>
+                {stats.comments > 0 && <span>{stats.comments}</span>}
               </div>
             </div>
 

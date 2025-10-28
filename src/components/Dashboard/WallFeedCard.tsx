@@ -198,7 +198,7 @@ export default function WallFeedCard({ post, onLike }: WallFeedCardProps) {
               <ThumbsUp
                 className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`}
               />
-              <span>{post.likeCount || 0}</span>
+              {(post.likeCount || 0) > 0 && <span>{post.likeCount}</span>}
             </button>
 
             <Link
@@ -206,7 +206,7 @@ export default function WallFeedCard({ post, onLike }: WallFeedCardProps) {
               className="flex items-center space-x-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
-              <span>{post.commentCount || 0}</span>
+              {(post.commentCount || 0) > 0 && <span>{post.commentCount}</span>}
             </Link>
           </div>
 

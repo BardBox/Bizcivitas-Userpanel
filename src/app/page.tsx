@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_URL ||
-        "https://backend.bizcivitas.com/api/v1";
+        process.env.NEXT_PUBLIC_BACKEND_URL;
 
       const response = await fetch(`${backendUrl}/users/login`, {
         method: "POST",

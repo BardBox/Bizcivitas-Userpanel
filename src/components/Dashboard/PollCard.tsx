@@ -36,16 +36,16 @@ export default function PollCard({
   // Check if user has already voted - Simple logic like mobile app
   const userVote = poll.voters.find((voter) => {
     // Handle both string and object userId formats
-    const voterId = typeof voter.userId === "object" && voter.userId !== null
-      ? (voter.userId as any)?._id
-      : voter.userId;
+    const voterId =
+      typeof voter.userId === "object" && voter.userId !== null
+        ? (voter.userId as any)?._id
+        : voter.userId;
 
     return String(voterId) === String(currentUserId);
   });
 
   // Use local state if available, otherwise check voters array
-  const hasVoted =
-    localHasVoted !== null ? localHasVoted : !!userVote;
+  const hasVoted = localHasVoted !== null ? localHasVoted : !!userVote;
   const votedOptionIndex =
     localVotedOptionIndex !== null
       ? localVotedOptionIndex
@@ -68,7 +68,7 @@ export default function PollCard({
       console.error("❌ Vote failed: currentUserId is empty", {
         currentUserId,
         hasVoted,
-        votedOptionIndex
+        votedOptionIndex,
       });
       return;
     }
@@ -86,7 +86,7 @@ export default function PollCard({
     console.log("🗳️ Starting vote process:", {
       optionIndex,
       currentUserId,
-      postId: post._id
+      postId: post._id,
     });
 
     // Optimistically update UI
@@ -102,7 +102,7 @@ export default function PollCard({
       console.log("Response structure:", {
         success: response.success,
         hasData: !!response.data,
-        message: response.message
+        message: response.message,
       });
 
       if (response.success && response.data) {
@@ -275,7 +275,9 @@ export default function PollCard({
                 } ${
                   isSelected ? "bg-blue-50 border-blue-300 shadow-sm" : ""
                 } border rounded-lg p-4 relative overflow-hidden ${
-                  hasVoted && !isVotedOption ? "cursor-not-allowed" : "cursor-pointer"
+                  hasVoted && !isVotedOption
+                    ? "cursor-not-allowed"
+                    : "cursor-pointer"
                 } disabled:cursor-not-allowed`}
               >
                 {/* Progress Bar Background - show for all options when hasVoted */}
@@ -293,7 +295,11 @@ export default function PollCard({
                   <div className="flex-1">
                     <p
                       className={`font-medium ${
-                        isVotedOption ? "text-white" : hasVoted ? "text-gray-500" : "text-gray-900"
+                        isVotedOption
+                          ? "text-white"
+                          : hasVoted
+                          ? "text-gray-500"
+                          : "text-gray-900"
                       }`}
                     >
                       {option.text}
@@ -364,11 +370,11 @@ export default function PollCard({
               <ThumbsUp
                 className={`w-4 h-4 ${post.isLiked ? "fill-current" : ""}`}
               />
-              <span>{post.likeCount || 0}</span>
+              {post.likeCount > 0 && <span>{post.likeCount}</span>}
             </button>
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <MessageSquare className="w-4 h-4" />
-              <span>{post.commentCount || 0}</span>
+              {post.commentCount > 0 && <span>{post.commentCount}</span>}
             </div>
           </div>
         </div>

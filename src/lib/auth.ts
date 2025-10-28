@@ -195,9 +195,7 @@ export async function logout(): Promise<void> {
 
   // Call server logout endpoint to clear HttpOnly cookies
   try {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://dev-backend.bizcivitas.com/api/v1";
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     await fetch(`${backendUrl}/users/logout`, {
       method: "POST",
       credentials: "include", // Send HttpOnly cookies
@@ -215,9 +213,7 @@ export async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
   try {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://dev-backend.bizcivitas.com/api/v1";
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const response = await fetch(`${backendUrl}/users/refresh`, {
       method: "POST",
       credentials: "include", // Send HttpOnly refresh token cookie

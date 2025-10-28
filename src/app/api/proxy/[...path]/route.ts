@@ -9,7 +9,7 @@ const getBackendBase = () => {
   // Prefer server-side env; fallback to public var
   const base = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
   // Final fallback to production backend if not set
-  return (base || "https://backend.bizcivitas.com/api/v1").replace(/\/$/, "");
+  return (base || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
 };
 
 const buildTargetUrl = (req: Request, pathParts: string[]) => {

@@ -44,7 +44,7 @@ export default function LikeButton({
           loading ? "animate-pulse" : ""
         }`}
       />
-      <span>{likeCount}</span>
+      {likeCount > 0 && <span>{likeCount}</span>}
     </button>
   );
 }

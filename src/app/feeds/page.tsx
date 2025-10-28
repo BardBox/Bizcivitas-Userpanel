@@ -49,7 +49,9 @@ function generatePost(id: number) {
 
 // --- Component ---
 export default function DashboardPage() {
-  console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+  }
 
   const [posts, setPosts] = useState(() =>
     Array.from({ length: 5 }, (_, i) => generatePost(i + 1))

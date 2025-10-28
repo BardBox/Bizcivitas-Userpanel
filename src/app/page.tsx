@@ -25,14 +25,21 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        process.env.NEXT_PUBLIC_BACKEND_URL;
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      if (!backendUrl) {
+        setError("Backend URL is not configured. Please contact support.");
+        return;
+      }
 
       const response = await fetch(`${backendUrl}/users/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // for HttpOnly cookies
+        headers: {
+          "Content-Type": "application/json",
+          // Add Authorization header if we have a token from previous session
+          ...(localStorage.getItem("accessToken")
+            ? { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
+            : {}),
+        },
         body: JSON.stringify(formData),
       });
 

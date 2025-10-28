@@ -35,7 +35,13 @@ function LoginPageContent() {
     try {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_URL ||
-        process.env.NEXT_PUBLIC_BACKEND_URL;
+        (process.env.NODE_ENV === "development"
+          ? "http://localhost:3000" // Development fallback
+          : (() => {
+              throw new Error(
+                "NEXT_PUBLIC_BACKEND_URL environment variable is not set. This is required for authentication to work."
+              );
+            })());
       const loginUrl = `${backendUrl}/users/login`;
 
       // 🔍 Debug login attempt

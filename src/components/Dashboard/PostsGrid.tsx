@@ -39,11 +39,24 @@ const PostsGrid = memo(function PostsGrid() {
           response.data,
         ])[0];
 
-        // Merge with existing post data to preserve image and other fields
+        if (!existingPost) {
+          console.warn(
+            `Post with ID ${postId} not found in filteredPosts. This could indicate a stale UI state.`
+          );
+        }
+
+        // Use transformedPost as base and merge with existing post data if available
         const updatedPost = {
-          ...existingPost,
           ...transformedPost,
-          image: transformedPost.image || existingPost?.image, // Preserve image if not in response
+          // Preserve image and any other essential fields from existing post if available
+          image: transformedPost.image || existingPost?.image || undefined,
+          // Preserve any additional fields that might be needed from existing post
+          ...((existingPost && {
+            category: existingPost.category,
+            tags: existingPost.tags,
+            // Add any other fields that should be preserved
+          }) ||
+            {}),
         };
 
         dispatch(updatePost(updatedPost));

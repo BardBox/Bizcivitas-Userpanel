@@ -13,11 +13,19 @@ import { WallFeedPost } from "../types/bizpulse.types";
 export function transformBizPulsePostToMock(
   post: WallFeedPost | BizPulsePost
 ): BizPulseMockPost {
-  // Base URL for images
+  // Base URL for images - fail fast if env var is missing
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   if (!BASE_URL) {
-    console.error("NEXT_PUBLIC_BACKEND_URL is not set");
+    throw new Error(
+      "NEXT_PUBLIC_BACKEND_URL environment variable is not set. This is required for image URLs to work correctly."
+    );
   }
+
+  // Helper to safely construct image URLs
+  const getImageUrl = (path?: string): string | undefined => {
+    if (!path) return undefined;
+    return `${BASE_URL}/image/${path}`;
+  };
 
   const isWallFeedPost = (p: any): p is WallFeedPost => {
     return "userId" in p && "likeCount" in p;
@@ -57,11 +65,11 @@ export function transformBizPulsePostToMock(
       image: (() => {
         // Try to get image from images array
         if (Array.isArray(post.images) && post.images.length > 0) {
-          return `${BASE_URL}/image/${post.images[0]}`;
+          return getImageUrl(post.images[0]);
         }
         // Try to get from article image
         if (post.article?.image) {
-          return `${BASE_URL}/image/${post.article.image}`;
+          return getImageUrl(post.article.image);
         }
         return undefined;
       })(),
@@ -98,7 +106,7 @@ export function transformBizPulsePostToMock(
       },
       image:
         Array.isArray(post.images) && post.images.length > 0
-          ? `${BASE_URL}/image/${post.images[0]}`
+          ? getImageUrl(post.images[0])
           : undefined,
       stats: {
         likes: 0,

@@ -24,9 +24,19 @@ const Arrow = ({ collapsed }: { collapsed: boolean }) => (
 );
 
 const SidebarIcon = memo(
-  ({ src, isActive }: { src: string; isActive?: boolean }) => (
+  ({
+    src,
+    isActive,
+    isCollapsed,
+  }: {
+    src: string;
+    isActive?: boolean;
+    isCollapsed?: boolean;
+  }) => (
     <div
-      className="w-5 h-5"
+      className={`transition-all duration-300 ${
+        isCollapsed ? "w-6 h-6" : "w-5 h-5"
+      }`}
       style={{
         WebkitMask: `url(${src}) center/contain no-repeat`,
         mask: `url(${src}) center/contain no-repeat`,
@@ -155,8 +165,8 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`h-full  flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 ${
-        isCollapsed ? "w-20" : "w-72"
+      className={`h-full fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 ${
+        isCollapsed ? "w-24" : "w-72"
       }`}
     >
       {/* Logo */}
@@ -181,8 +191,8 @@ export default function DashboardSidebar({
       {!isMobile && (
         <button
           onClick={handleToggle}
-          className={`absolute top-24 transition-all duration-300 ${
-            isCollapsed ? "left-[66px]" : "left-[276px]"
+          className={`fixed top-24 z-50 transition-all duration-300 ${
+            isCollapsed ? "left-20" : "left-72"
           } bg-white border-2 border-orange-400 hover:bg-orange-400 text-orange-500 hover:text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
@@ -254,18 +264,18 @@ const SidebarLink = memo(
         href={href}
         onClick={onClick}
         prefetch={false}
-        className={`group flex items-center rounded-md px-3 py-2.5 text-sm transition-colors ${
+        className={`group flex items-center rounded-md transition-all duration-300 ${
           isActive
             ? "bg-blue-50/50 text-blue-700 font-semibold"
             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        } ${isCollapsed ? "justify-center px-4" : ""}`}
+        } ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"}`}
         title={isCollapsed ? text : undefined}
       >
         {isActive && isCollapsed && (
           <div className="absolute left-0 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full" />
         )}
-        <SidebarIcon src={icon} isActive={isActive} />
-        {!isCollapsed && <span className="ml-3 truncate">{text}</span>}
+        <SidebarIcon src={icon} isActive={isActive} isCollapsed={isCollapsed} />
+        {!isCollapsed && <span className="ml-3 truncate text-sm">{text}</span>}
       </Link>
     </li>
   ),

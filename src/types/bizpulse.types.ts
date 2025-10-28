@@ -115,7 +115,10 @@ export interface WallFeedComment {
   mediaUrl?: string;
   mentions?: string[];
   likes: Like[];
+  likeCount: number;
+  isLiked: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 // Event, Article, Announcement Types

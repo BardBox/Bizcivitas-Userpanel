@@ -6,6 +6,57 @@ import {
 } from "../../types/bizpulse.types";
 import { WallFeedPost } from "../types/bizpulse.types";
 
+interface TransformedComment {
+  id: string;
+  content: string;
+  author: {
+    name: string;
+    avatar: string | null;
+  };
+  timeAgo: string;
+  likes: number;
+}
+
+/**
+ * Calculate time ago from ISO date string
+ */
+function calculateTimeAgo(dateString: string): string {
+  try {
+    const now = new Date();
+    const postDate = new Date(dateString);
+    const diffInMs = now.getTime() - postDate.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+
+    return postDate.toLocaleDateString();
+  } catch {
+    return "Recently";
+  }
+}
+
+/**
+ * Transform a comment to the frontend format
+ */
+const transformCommentToMock = (comment: any): TransformedComment => ({
+  id: comment._id || "",
+  content: comment.content || "",
+  author: {
+    name: comment.userId
+      ? `${comment.userId.fname || ""} ${comment.userId.lname || ""}`.trim() ||
+        "Unknown User"
+      : "Unknown User",
+    avatar: comment.userId?.avatar || null,
+  },
+  timeAgo: comment.createdAt ? calculateTimeAgo(comment.createdAt) : "Recently",
+  likes: comment.likeCount || comment.likes?.length || 0,
+});
+
 /**
  * Transform backend BizPulsePost to frontend BizPulseMockPost format
  * This allows existing components to work with API data
@@ -32,7 +83,6 @@ export function transformBizPulsePostToMock(
   };
 
   const normalizeCategory = (type: string): BizPulseCategory => {
-    // Convert from camelCase to kebab-case
     const map: Record<string, BizPulseCategory> = {
       travelStories: "travel-stories",
       lightPulse: "light-pulse",
@@ -46,7 +96,7 @@ export function transformBizPulsePostToMock(
   };
 
   if (isWallFeedPost(post)) {
-    return {
+    const transformedPost = {
       id: post._id,
       title: post.title || "Untitled Post",
       content: Array.isArray(post.description)
@@ -87,10 +137,16 @@ export function transformBizPulsePostToMock(
       isLiked: post.isLiked || false,
       poll: post.poll,
       postType: post.poll ? "poll" : "regular",
-    };
+    } as BizPulseMockPost;
+
+    if (post.comments && post.comments.length > 0) {
+      transformedPost.comments = post.comments.map(transformCommentToMock);
+    }
+
+    return transformedPost;
   } else {
     // Handle BizPulsePost type
-    return {
+    const transformedPost = {
       id: post._id,
       title: post.title || "Untitled Post",
       content: Array.isArray(post.description)
@@ -117,7 +173,13 @@ export function transformBizPulsePostToMock(
       timeAgo: post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently",
       category: normalizeCategory(post.type || "all"),
       tags: [],
-    };
+    } as BizPulseMockPost;
+
+    if (post.comments && post.comments.length > 0) {
+      transformedPost.comments = post.comments.map(transformCommentToMock);
+    }
+
+    return transformedPost;
   }
 }
 
@@ -160,27 +222,4 @@ export function mapPostTypeToCategory(
   };
 
   return categoryMap[type] || "all";
-}
-
-/**
- * Calculate time ago from ISO date string
- */
-function calculateTimeAgo(dateString: string): string {
-  try {
-    const now = new Date();
-    const postDate = new Date(dateString);
-    const diffInMs = now.getTime() - postDate.getTime();
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInMinutes < 1) return "Just now";
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-
-    return postDate.toLocaleDateString();
-  } catch {
-    return "Recently";
-  }
 }

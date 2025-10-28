@@ -16,8 +16,8 @@ export default function FeedsLayoutClient({
   return (
     <div className="flex min-h-screen bg-dashboard-primary">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <DashboardSidebar />
+      <div className="hidden md:block relative">
+        <DashboardSidebar isMobile={false} />
       </div>
 
       {/* Mobile Drawer Overlay */}

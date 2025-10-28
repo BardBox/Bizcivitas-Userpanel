@@ -1,21 +1,28 @@
 "use client";
 
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
 import { Heart, MessageSquare, Share2, ArrowLeft, Send } from "lucide-react";
 import { useState } from "react";
 import type { RootState } from "../../../../../store/store";
+import { bizpulseApi } from "../../../../../src/services/bizpulseApi";
+import { updatePost } from "../../../../../store/postsSlice";
+import { transformBizPulsePostToMock } from "../../../../../src/utils/bizpulseTransformers";
+import toast from "react-hot-toast";
 
 export default function BizPulseDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const dispatch = useDispatch();
   const postId = params?.id as string;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const post = useSelector((state: RootState) =>
     state.posts.posts.find((p) => p.id === postId)
   );
 
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [newComment, setNewComment] = useState("");
 
   if (!post) {
@@ -42,14 +49,52 @@ export default function BizPulseDetailPage() {
       .slice(0, 2);
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
+  const [isLiking, setIsLiking] = useState(false);
+
+  const handleLike = async () => {
+    if (isLiking) return;
+
+    setIsLiking(true);
+    try {
+      const updatedPost = await bizpulseApi.likeWallFeed(postId);
+      if (updatedPost.success) {
+        const transformedPost = transformBizPulsePostToMock(updatedPost.data);
+        dispatch(updatePost(transformedPost));
+        setIsLiked(!isLiked);
+      }
+    } catch (error) {
+      console.error("Failed to like post:", error);
+      toast.error("Failed to update like status");
+    } finally {
+      setIsLiking(false);
+    }
   };
 
-  const handleCommentSubmit = () => {
-    if (newComment.trim()) {
-      // Handle comment submission
-      setNewComment("");
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await bizpulseApi.addComment(postId, newComment.trim());
+
+      // Refresh the post to get updated comments
+      const updatedPost = await bizpulseApi.fetchWallFeedById(postId);
+      if (updatedPost.success) {
+        const transformedPost = transformBizPulsePostToMock(updatedPost.data);
+        dispatch(updatePost(transformedPost));
+        setNewComment("");
+        toast.success("Comment added successfully");
+      }
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to add comment"
+      );
+      toast.error("Failed to add comment. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -110,10 +155,22 @@ export default function BizPulseDetailPage() {
                 <MessageSquare className="w-4 h-4" />
                 <span>{post.stats.comments}</span>
               </div>
-              <div className="flex items-center space-x-1 text-sm text-gray-500">
-                <Heart className="w-4 h-4" />
-                <span>{post.stats.likes + (isLiked ? 1 : 0)}</span>
-              </div>
+              <button
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center space-x-1 text-sm ${
+                  isLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+                } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isLiking ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Heart
+                    className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`}
+                  />
+                )}
+                <span>{post.stats.likes}</span>
+              </button>
             </div>
           </div>
 
@@ -129,17 +186,29 @@ export default function BizPulseDetailPage() {
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Write a message..."
-                    className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
+                    disabled={isSubmitting}
+                    className={`w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12 ${
+                      error ? "border-red-300" : "border-gray-300"
+                    } ${isSubmitting ? "bg-gray-50" : ""}`}
                     rows={3}
                   />
                   <button
                     onClick={handleCommentSubmit}
-                    disabled={!newComment.trim()}
-                    className="absolute bottom-3 right-3 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    disabled={!newComment.trim() || isSubmitting}
+                    className={`absolute bottom-3 right-3 p-2 rounded-lg transition-colors ${
+                      isSubmitting
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <Send className="w-4 h-4" />
+                    {isSubmitting ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
+                {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
               </div>
             </div>
           </div>

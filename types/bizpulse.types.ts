@@ -149,6 +149,10 @@ export interface BizPulsePost {
     username: string;
     avatar: string | null;
   };
+  comments?: BizPulseComment[];
+  likeCount?: number;
+  commentCount?: number;
+  isLiked?: boolean;
 }
 
 /**
@@ -351,7 +355,7 @@ export interface BizPulseMockPost {
     }>;
   };
   // Original post type to differentiate
-  postType?: 'poll' | 'regular';
+  postType?: "poll" | "regular";
   // User interaction state
   isLiked?: boolean;
   currentUserId?: string;

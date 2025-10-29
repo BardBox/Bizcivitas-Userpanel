@@ -10,6 +10,7 @@ import { bizpulseApi } from "../../../../../src/services/bizpulseApi";
 import { updatePost } from "../../../../../store/postsSlice";
 import { transformBizPulsePostToMock } from "../../../../../src/utils/bizpulseTransformers";
 import toast from "react-hot-toast";
+import Avatar from "@/components/ui/Avatar";
 
 export default function BizPulseDetailPage() {
   const params = useParams();
@@ -48,6 +49,20 @@ export default function BizPulseDetailPage() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Helper function to get full avatar URL
+  const getAvatarUrl = (avatarPath?: string | null) => {
+    if (!avatarPath) return undefined;
+
+    // If it's already a full URL (starts with http), return as is
+    if (avatarPath.startsWith("http")) {
+      return avatarPath;
+    }
+
+    // Otherwise, construct full URL with backend base URL
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    return `${baseUrl}/image/${avatarPath}`;
   };
 
   const [isLiking, setIsLiking] = useState(false);
@@ -122,7 +137,7 @@ export default function BizPulseDetailPage() {
               <img
                 src={post.image}
                 alt={post.title}
-                className="w-full h-64 md:h-80 lg:h-96 object-cover rounded-xl shadow-sm"
+                className="w-full  object-cover rounded-xl shadow-sm"
               />
             </div>
           </div>
@@ -178,9 +193,13 @@ export default function BizPulseDetailPage() {
           {/* Comment Form */}
           <div className="py-6">
             <div className="flex space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                YJ
-              </div>
+              <Avatar
+                src={undefined}
+                alt="Current User"
+                size="sm"
+                fallbackText="YJ"
+                showMembershipBorder={false}
+              />
               <div className="flex-1">
                 <div className="relative">
                   <textarea
@@ -230,24 +249,21 @@ export default function BizPulseDetailPage() {
                 post.comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-4">
                     <Link
-                      href={`/feeds/connections/profile/${comment.author.id}`}
+                      href={`/feeds/connections/${comment.author.id}?from=connect-members`}
                     >
-                      {comment.author.avatar ? (
-                        <img
-                          src={comment.author.avatar}
-                          alt={comment.author.name}
-                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                          {getInitials(comment.author.name)}
-                        </div>
-                      )}
+                      <Avatar
+                        src={getAvatarUrl(comment.author.avatar)}
+                        alt={comment.author.name}
+                        size="sm"
+                        fallbackText={comment.author.name}
+                        showMembershipBorder={false}
+                        className="cursor-pointer"
+                      />
                     </Link>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <Link
-                          href={`/feeds/connections/profile/${comment.author.id}`}
+                          href={`/feeds/connections/${comment.author.id}?from=connect-members`}
                           className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
                         >
                           {comment.author.name}

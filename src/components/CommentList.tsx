@@ -2,9 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { format } from "date-fns";
 import LikeButton from "./LikeButton";
 import { MoreHorizontal, Trash2 } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 
 interface Comment {
   _id: string;
@@ -38,19 +40,35 @@ export default function CommentList({
   onDeleteComment,
   loading = {},
 }: CommentListProps) {
+  // Helper function to get full avatar URL
+  const getAvatarUrl = (avatarPath?: string | null) => {
+    if (!avatarPath) return undefined;
+
+    // If it's already a full URL (starts with http), return as is
+    if (avatarPath.startsWith("http")) {
+      return avatarPath;
+    }
+
+    // Otherwise, construct full URL with backend base URL
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    return `${baseUrl}/image/${avatarPath}`;
+  };
+
   return (
     <div className="space-y-4">
       {comments.map((comment) => (
         <div key={comment._id} className="flex gap-4">
           {/* User Avatar */}
-          <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-            <Image
-              src={comment.userId.avatar || "/default-avatar.png"}
+          <Link href={`/feeds/connections/${comment.userId._id}?from=connect-members`}>
+            <Avatar
+              src={getAvatarUrl(comment.userId.avatar)}
               alt={`${comment.userId.fname} ${comment.userId.lname}`}
-              fill
-              className="object-cover"
+              size="sm"
+              fallbackText={`${comment.userId.fname} ${comment.userId.lname}`}
+              showMembershipBorder={false}
+              className="cursor-pointer"
             />
-          </div>
+          </Link>
 
           {/* Comment Content */}
           <div className="flex-1">

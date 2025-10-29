@@ -1,29 +1,49 @@
 "use client";
 
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TabNavigation from "@/components/Dashboard/TabNavigation";
 import SearchBar from "@/components/Dashboard/SearchBar";
 import BizHubPostCard from "@/components/Dashboard/Bizhub/BizHubPostCard";
 import Link from "next/link";
-import { RootState } from "../../../../store";
-import { filterPosts } from "../../../../store/postsSlice";
+import { bizhubApi } from "@/services/bizhubApi";
+import { transformBizHubPostToMock } from "@/utils/bizhubTransformers";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../../store/store";
 
 export default function BizHubPage() {
-  const dispatch = useDispatch();
-  const { filteredPosts, loading, error } = useSelector(
-    (state: RootState) => state.posts
-  );
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<string>("all");
+  // BizHub has no polls; no userId needed here
+
+  const loadPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const raw = await bizhubApi.fetchPosts();
+      const transformed = raw.map((p: any) => transformBizHubPostToMock(p));
+      setPosts(transformed);
+    } catch (e: any) {
+      setError(e.message || "Failed to load BizHub posts");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Initialize filtered posts on component mount
-    dispatch(filterPosts());
-  }, [dispatch]);
+    loadPosts();
+  }, [loadPosts]);
+
+  const filtered = useMemo(() => {
+    if (activeType === "all") return posts;
+    return posts.filter((p) => (p.rawType || p.type || "").toLowerCase() === activeType);
+  }, [posts, activeType]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Biz Pulse</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Biz Hub</h1>
         <div className="flex items-center gap-2">
           <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
             <svg
@@ -77,6 +97,29 @@ export default function BizHubPage() {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <TabNavigation />
         <div className="p-2 md:p-6">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { key: "all", label: "All" },
+              { key: "general-chatter", label: "General Chatter" },
+              { key: "referral-exchange", label: "Referral Exchanges" },
+              { key: "business-deep-dive", label: "Business Deep Dive" },
+              { key: "travel-talks", label: "Travel Talks" },
+              { key: "biz-learnings", label: "Biz Learnings" },
+              { key: "collab-corner", label: "Collab Corner" },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setActiveType(key)}
+                className={`px-3 py-1 rounded-full text-sm border ${
+                  activeType === key
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-700 border-gray-300"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="space-y-4">
             {loading && (
               <div className="text-center py-8">
@@ -89,30 +132,31 @@ export default function BizHubPage() {
                 <p className="text-red-500">{error}</p>
               </div>
             )}
-            {!loading && !error && filteredPosts.length === 0 && (
+            {!loading && !error && filtered.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-gray-500">No posts found.</p>
               </div>
             )}
             {!loading &&
               !error &&
-              filteredPosts.map((post) => (
-                <Link
-                  href={`/feeds/biz-hub/${post.id}`}
-                  className="block"
-                  key={post.id}
-                >
-                  <BizHubPostCard
-                    avatarUrl={post.author.avatar || "/avatars/default.jpg"}
-                    name={post.author.name}
-                    profession={post.author.title}
-                    content={post.content}
-                    category={post.category}
-                    timeAgo={post.timeAgo}
-                    comments={post.stats.comments}
-                    likes={post.stats.likes}
-                  />
-                </Link>
+              filtered.map((post) => (
+                  <Link
+                    href={`/feeds/biz-hub/${post.id}`}
+                    className="block"
+                    key={post.id}
+                  >
+                    <BizHubPostCard
+                      avatarUrl={post.author?.avatar || "/avatars/default.jpg"}
+                      name={post.author?.name}
+                      profession={post.author?.title}
+                      imageUrl={post.image}
+                      content={post.content}
+                      category={post.category}
+                      timeAgo={post.timeAgo}
+                      comments={post.stats?.comments}
+                      likes={post.stats?.likes}
+                    />
+                  </Link>
               ))}
           </div>
         </div>

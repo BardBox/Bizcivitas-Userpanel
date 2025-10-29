@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import { Heart, MessageSquare, Share2, MoreHorizontal } from "lucide-react";
-import Avatar from "@/components/ui/Avatar";
+import { getAbsoluteImageUrl } from "@/utils/imageUtils";
+import { Heart, MessageSquare } from "lucide-react";
+import Link from "next/link";
 
 interface PostCardProps {
   title: string;
   content: string;
+  id: string;
+  category?: string;
   author?: {
     name: string;
     title: string;
@@ -25,188 +27,109 @@ interface PostCardProps {
 export default function PostCard({
   title,
   content,
-  author = {
-    name: "John Smith",
-    title: "Business Professional",
-  },
+  id,
+  category,
+  author,
   image,
-  stats = {
-    likes: 42,
-    comments: 8,
-    shares: 5,
-  },
-  timeAgo = "2 hours ago",
+  stats = { likes: 0, comments: 0, shares: 0 },
+  timeAgo,
 }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(stats.likes);
-  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+  // Determine if this is a BizPulse post (has category) vs BizHub post
+  const isBizPulse = !!category;
+  const detailUrl = isBizPulse ? `/feeds/biz-pulse/${id}` : `/feeds/biz-hub/${id}`;
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+  const getCategoryLabel = (cat?: string) => {
+    if (!cat) return "";
+    return cat
+      .replace("-", " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const handleCommentClick = () => {
-    setIsCommentsExpanded(!isCommentsExpanded);
-  };
-
-  // Render rich text content
-  const renderContent = (content: string) => {
-    return (
-      <div className="prose prose-sm max-w-none text-gray-800">
-        <p>{content}</p>
-      </div>
-    );
+  const getCategoryColor = (cat?: string) => {
+    const colors: Record<string, string> = {
+      "travel-stories": "bg-blue-100 text-blue-800",
+      "light-pulse": "bg-yellow-100 text-yellow-800",
+      "spotlight-stories": "bg-purple-100 text-purple-800",
+      "pulse-polls": "bg-green-100 text-green-800",
+      "business-boosters": "bg-indigo-100 text-indigo-800",
+      "founders-desk": "bg-pink-100 text-pink-800",
+    };
+    return colors[cat || ""] || "bg-gray-100 text-gray-800";
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-4">
-      {/* Post Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <Avatar
-            src={author.avatar}
-            alt={author.name}
-            size="lg"
-            fallbackText={author.name}
-            showMembershipBorder={false}
-            className=" flex-shrink-0"
-          />
-          <div className="flex flex-col justify-center min-h-[40px] sm:min-h-[48px] flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 leading-tight text-sm sm:text-base truncate">
-              {author.name}
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-500 leading-tight truncate">
-              {author.title}
-            </p>
-            <p className="text-xs text-gray-400 leading-tight">{timeAgo}</p>
-          </div>
+    <Link href={detailUrl} className="block">
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden mb-4 hover:shadow-md transition-shadow cursor-pointer">
+        <div className="p-4 sm:p-5">
+          {/* Header: Author + time */}
+          {author && (
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center">
+                {author.avatar ? (
+                  <Image
+                    src={getAbsoluteImageUrl(author.avatar)}
+                    alt={author.name}
+                    width={28}
+                    height={28}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gray-200" />
+                )}
+                <div className="ml-2">
+                  <div className="text-sm font-medium text-gray-900 leading-4">{author.name}</div>
+                  {author.title && (
+                    <div className="text-[11px] text-gray-500 leading-4">{author.title}</div>
+                  )}
+                </div>
+              </div>
+              {timeAgo && <span className="text-[11px] text-gray-500">{timeAgo}</span>}
+            </div>
+          )}
+          {/* Category */}
+          {category && (
+            <div className="mb-3">
+              <span
+                className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getCategoryColor(category)}`}
+              >
+                {getCategoryLabel(category)}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-          <button className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100">
-            <MoreHorizontal size={16} className="sm:w-[18px] sm:h-[18px]" />
-          </button>
-        </div>
-      </div>
 
-      {/* Post Content */}
-      <div className="mt-3 sm:mt-4">
-        <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 leading-tight">
-          {title}
-        </h4>
-        <div className="text-sm sm:text-base">{renderContent(content)}</div>
+        {/* Image */}
         {image && (
-          <div className="mt-3 flex justify-center">
+          <div className="w-full h-48 sm:h-64 relative overflow-hidden bg-gray-200">
             <Image
               src={image}
-              alt="Post content"
-              width={600}
-              height={400}
-              priority={title.includes("Post 1")} // Add priority for the first post
-              className="rounded-lg object-cover max-h-64 sm:max-h-96 w-full"
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
         )}
-      </div>
 
-      {/* Post Stats */}
-      <div className="mt-3 sm:mt-4 flex items-center text-xs sm:text-sm text-gray-500 space-x-3 sm:space-x-4">
-        <span>{likeCount} likes</span>
-        <span>{stats.comments} comments</span>
-        <span>{stats.shares} shares</span>
-      </div>
+        <div className="p-4 sm:p-5 pt-4">
+          {/* Title */}
+          <h4 className="text-[15px] sm:text-base font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
+            {title}
+          </h4>
 
-      {/* Post Actions */}
-      <div className="mt-3 sm:mt-4 flex justify-between border-t border-gray-200 pt-3">
-        <button
-          onClick={handleLike}
-          className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md hover:bg-gray-50 transition-colors text-xs sm:text-sm ${
-            isLiked ? "text-blue-500" : "text-gray-500"
-          }`}
-        >
-          <Heart
-            size={16}
-            className="sm:w-[18px] sm:h-[18px]"
-            fill={isLiked ? "currentColor" : "none"}
-          />
-          <span className="hidden sm:inline">Like</span>
-        </button>
-        <button
-          onClick={handleCommentClick}
-          className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md hover:bg-gray-50 transition-colors text-xs sm:text-sm ${
-            isCommentsExpanded ? "text-blue-500" : "text-gray-500"
-          }`}
-        >
-          <MessageSquare size={16} className="sm:w-[18px] sm:h-[18px]" />
-          <span className="hidden sm:inline">Comment</span>
-        </button>
-        <button className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500 text-xs sm:text-sm">
-          <Share2 size={16} className="sm:w-[18px] sm:h-[18px]" />
-          <span className="hidden sm:inline">Share</span>
-        </button>
-      </div>
-
-      {/* Comment Section Placeholder */}
-      {isCommentsExpanded && (
-        <div className="mt-3 sm:mt-4 border-t border-gray-200 pt-3 sm:pt-4">
-          <div className="space-y-2 sm:space-y-3">
-            {/* Sample Comments */}
-            <div className="flex space-x-2 sm:space-x-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                AB
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="bg-gray-50 rounded-lg p-2 sm:p-3">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900">
-                    Alice Brown
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-700">
-                    Great insights! This is very helpful for our business
-                    strategy.
-                  </p>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
-              </div>
+          {/* Stats */}
+          <div className="flex items-center text-xs text-gray-500 space-x-4 pt-2 border-t border-gray-100">
+            <div className="flex items-center space-x-1">
+              <Heart size={14} className="text-gray-400" />
+              <span>{stats.likes || 0}</span>
             </div>
-
-            <div className="flex space-x-2 sm:space-x-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                MJ
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="bg-gray-50 rounded-lg p-2 sm:p-3">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900">
-                    Mike Johnson
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-700">
-                    Thanks for sharing this valuable information!
-                  </p>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">1 hour ago</p>
-              </div>
-            </div>
-
-            {/* Comment Input */}
-            <div className="flex space-x-2 sm:space-x-3 mt-3 sm:mt-4">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                YJ
-              </div>
-              <div className="flex-1 min-w-0">
-                <textarea
-                  placeholder="Write a comment..."
-                  className="w-full p-2 sm:p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-                  rows={2}
-                />
-                <div className="flex justify-end mt-2">
-                  <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm rounded-md hover:bg-blue-600 transition-colors">
-                    Post Comment
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center space-x-1">
+              <MessageSquare size={14} className="text-gray-400" />
+              <span>{stats.comments || 0}</span>
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    </Link>
   );
 }

@@ -11,6 +11,7 @@ interface BizHubPostCardProps {
   timeAgo: string;
   comments: number;
   likes: number;
+  imageUrl?: string;
 }
 
 // Utility function to generate initials from name
@@ -49,16 +50,18 @@ const BizHubPostCard: React.FC<BizHubPostCardProps> = ({
   timeAgo,
   comments,
   likes,
+  imageUrl,
 }) => {
   const [imageError, setImageError] = useState(false);
   const initials = getInitials(name);
   const avatarColor = getAvatarColor(name);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col gap-4">
-      {/* Top Row: Avatar, Name, Profession */}
-      <div className="flex items-center gap-4">
-        <div className="relative w-12 h-12">
+    <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col gap-3">
+      {/* Header: Avatar, Name, Profession */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative w-8 h-8">
           {!imageError &&
           avatarUrl &&
           getAbsoluteImageUrl(avatarUrl) &&
@@ -66,41 +69,58 @@ const BizHubPostCard: React.FC<BizHubPostCardProps> = ({
             <Image
               src={getAbsoluteImageUrl(avatarUrl)!}
               alt={name}
-              width={48}
-              height={48}
-              className="w-12 h-12 rounded-full object-cover border"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full object-cover border"
               onError={() => setImageError(true)}
             />
           ) : (
             <div
-              className={`w-12 h-12 rounded-full border flex items-center justify-center text-white font-semibold text-sm ${avatarColor}`}
+              className={`w-8 h-8 rounded-full border flex items-center justify-center text-white font-semibold text-xs ${avatarColor}`}
             >
               {initials}
             </div>
           )}
+          </div>
+          <div>
+            <div className="font-medium text-gray-900 text-sm leading-4">{name}</div>
+            <div className="text-xs text-gray-400 leading-4">{profession}</div>
+          </div>
         </div>
-        <div>
-          <div className="font-semibold text-gray-900 text-base">{name}</div>
-          <div className="text-xs text-gray-400">{profession}</div>
-        </div>
+        <span className="text-[10px] text-gray-400 ml-2">{timeAgo}</span>
       </div>
 
-      {/* Post Content */}
-      <div className="text-lg text-gray-900 font-medium mb-2">{content}</div>
+      {/* Image (if any) */}
+      {imageUrl && (
+        <div className="w-full">
+          <Image
+            src={getAbsoluteImageUrl(imageUrl)}
+            alt={name}
+            width={900}
+            height={506}
+            className="w-full h-auto rounded-lg object-cover"
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      {content && (
+        <div className="text-sm text-gray-900 font-medium mb-1">{content}</div>
+      )}
 
       {/* Divider */}
       <hr className="my-2" />
 
       {/* Bottom Row: Category, Time, Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-3">
           <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
             {category}
           </span>
-          <span className="text-xs text-gray-500">• {timeAgo}</span>
+          {/* time shown in header */}
         </div>
         <div className="flex items-center gap-6">
-          <span className="flex items-center gap-1 text-gray-400 text-sm">
+          <span className="flex items-center gap-1 text-gray-400 text-xs">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -117,7 +137,7 @@ const BizHubPostCard: React.FC<BizHubPostCardProps> = ({
             </svg>
             {comments}
           </span>
-          <span className="flex items-center gap-1 text-gray-400 text-sm">
+          <span className="flex items-center gap-1 text-gray-400 text-xs">
             <svg
               className="w-5 h-5"
               fill="none"

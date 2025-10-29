@@ -19,6 +19,7 @@ export default function BizPulseDetailPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const postId = params?.id as string;
+  const enableCommentReporting = false; // temporarily disable reporting UI
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +37,8 @@ export default function BizPulseDetailPage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<string>("");
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -165,7 +168,7 @@ export default function BizPulseDetailPage() {
         if (!transformedPost.image && post.image) {
           transformedPost.image = post.image;
         }
-
+        
         dispatch(updatePost(transformedPost));
       }
     } catch (error) {
@@ -266,32 +269,35 @@ export default function BizPulseDetailPage() {
 
   const handleReportComment = async (reason: string) => {
     if (!reportingCommentId) return;
+    const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(reportingCommentId);
+    if (!isValidObjectId) {
+      toast.error("Cannot report this comment until it’s synced. Please refresh.");
+      setReportingCommentId(null);
+      setIsReportModalOpen(false);
+      return;
+    }
 
     try {
+      console.debug("[BizPulseDetailPage] Reporting comment:", {
+        commentId: reportingCommentId,
+        postId,
+        reason,
+      });
       const result = await reportApi.reportComment({
         commentId: reportingCommentId,
+        postId: postId,
         reason: reason as any,
       });
 
       if (result.success) {
+        console.debug("[BizPulseDetailPage] Report success:", result);
         toast.success("Comment reported successfully. It has been hidden from your view.");
-        // Optionally remove the comment from the UI for this user
-        if (post) {
-          const updatedPost = {
-            ...post,
-            comments: post.comments?.filter(c => c.id !== reportingCommentId) || [],
-            stats: {
-              ...post.stats,
-              comments: Math.max(0, post.stats.comments - 1),
-            },
-          };
-          dispatch(updatePost(updatedPost));
-        }
       } else {
+        console.error("[BizPulseDetailPage] Report failed:", result.error);
         toast.error(result.error || "Failed to report comment");
       }
     } catch (error) {
-      console.error("Error reporting comment:", error);
+      console.error("[BizPulseDetailPage] Error reporting comment:", error);
       toast.error("Failed to report comment");
     } finally {
       setReportingCommentId(null);
@@ -300,6 +306,11 @@ export default function BizPulseDetailPage() {
   };
 
   const handleOpenReportModal = (commentId: string) => {
+    const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(commentId);
+    if (!isValidObjectId) {
+      toast.error("Cannot report this comment until it’s synced. Please refresh.");
+      return;
+    }
     setReportingCommentId(commentId);
     setIsReportModalOpen(true);
     setOpenMenuId(null);
@@ -483,8 +494,65 @@ export default function BizPulseDetailPage() {
                               </span>
                             </div>
 
-                            {/* Three-dot menu - only show for other users' comments */}
-                            {!isCurrentUserComment && (
+                            {/* Own comment actions: Edit/Delete */}
+                            {isCurrentUserComment && (
+                              <div className="relative ">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === comment.id ? null : comment.id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                                >
+                                  <MoreVertical className="w-4 h-4 text-gray-600" />
+                                </button>
+
+                                {openMenuId === comment.id && (
+                                  <div
+                                    className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        setIsEditingCommentId(comment.id);
+                                        setEditingContent(comment.content);
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                                    >
+                                      Edit Comment
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        setOpenMenuId(null);
+                                        try {
+                                          await bizpulseApi.deleteComment(postId, comment.id);
+                                          const refreshed = await bizpulseApi.fetchWallFeedById(postId);
+                                          if (refreshed.success && refreshed.data) {
+                                            const postData = (refreshed.data as any).wallFeed || refreshed.data;
+                                            const transformedPost = transformBizPulsePostToMock(postData);
+                                            if (!transformedPost.image && post.image) {
+                                              transformedPost.image = post.image;
+                                            }
+                                            dispatch(updatePost(transformedPost));
+                                            toast.success("Comment deleted");
+                                          }
+                                        } catch (err) {
+                                          console.error("Failed to delete comment", err);
+                                          toast.error("Failed to delete comment");
+                                        }
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                                    >
+                                      Delete Comment
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Three-dot menu - temporarily disabled for reporting others */}
+                            {!isCurrentUserComment && enableCommentReporting && (
                               <div className="relative ">
                                 <button
                                   onClick={(e) => {
@@ -497,7 +565,7 @@ export default function BizPulseDetailPage() {
                                 </button>
 
                                 {/* Dropdown menu */}
-                                {openMenuId === comment.id && (
+                                {openMenuId === comment.id && enableCommentReporting && (
                                   <div
                                     className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
                                     onClick={(e) => e.stopPropagation()}
@@ -514,7 +582,55 @@ export default function BizPulseDetailPage() {
                               </div>
                             )}
                           </div>
-                          <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
+                          {isEditingCommentId === comment.id ? (
+                            <div className="mt-2 space-y-2">
+                              <textarea
+                                value={editingContent}
+                                onChange={(e) => setEditingContent(e.target.value)}
+                                className="w-full border rounded-lg p-2 text-sm"
+                                rows={3}
+                              />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await bizpulseApi.editComment(postId, comment.id, editingContent.trim());
+                                      const refreshed = await bizpulseApi.fetchWallFeedById(postId);
+                                      if (refreshed.success && refreshed.data) {
+                                        const postData = (refreshed.data as any).wallFeed || refreshed.data;
+                                        const transformedPost = transformBizPulsePostToMock(postData);
+                                        if (!transformedPost.image && post.image) {
+                                          transformedPost.image = post.image;
+                                        }
+                                        dispatch(updatePost(transformedPost));
+                                        toast.success("Comment updated");
+                                      }
+                                    } catch (err) {
+                                      console.error("Failed to update comment", err);
+                                      toast.error("Failed to update comment");
+                                    } finally {
+                                      setIsEditingCommentId(null);
+                                      setEditingContent("");
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsEditingCommentId(null);
+                                    setEditingContent("");
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-medium text-gray-700 border rounded-lg hover:bg-gray-50"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
+                          )}
                         </div>
                       </div>
                     );

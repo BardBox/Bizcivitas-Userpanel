@@ -1,51 +1,17 @@
 "use client";
 
 import { useState, useCallback, useEffect, memo } from "react";
-import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../store/store";
+import PollCard from "@/components/Dashboard/PollCard";
 import InfiniteScroll from "react-infinite-scroll-component";
 import PostCard from "@/components/Dashboard/PostCard";
-import WebinarSection from "@/components/Dashboard/WebinarSection";
 import FloatingDrawer from "@/components/Dashboard/FloatingDrawer";
+import { bizpulseApi } from "../../services/bizpulseApi";
+import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
+import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
 
-// --- Utilities ---
-const authors = [
-  { name: "Sarah Johnson", title: "Marketing Director" },
-  { name: "Michael Chen", title: "Tech Entrepreneur" },
-  { name: "Emily Davis", title: "Business Consultant" },
-  { name: "David Wilson", title: "Investment Analyst" },
-  { name: "Lisa Rodriguez", title: "Startup Founder" },
-];
-
-const postImages = [
-  "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=entropy&auto=format&q=75",
-  "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=400&fit=crop&crop=entropy&auto=format&q=75",
-  "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=400&fit=crop&crop=entropy&auto=format&q=75",
-  "https://images.unsplash.com/photo-1553484771-371a605b060b?w=800&h=400&fit=crop&crop=entropy&auto=format&q=75",
-];
-
-const timeOptions = [
-  "1 hour ago",
-  "2 hours ago",
-  "3 hours ago",
-  "5 hours ago",
-  "8 hours ago",
-];
-
-function generatePost(id: number) {
-  return {
-    id,
-    title: `Business Post ${id} - Egestas libero nulla facilisi ut ac diam rhoncus feugiat`,
-    content: `Post ${id}: Neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit...`,
-    author: authors[id % authors.length],
-    image: id <= postImages.length ? postImages[id - 1] : undefined,
-    stats: {
-      likes: [25, 42, 38, 67, 23, 91, 15, 56, 73, 34][id % 10],
-      comments: [3, 8, 5, 12, 7, 19, 2, 11, 16, 4][id % 10],
-      shares: [1, 5, 3, 9, 4, 14, 2, 7, 11, 6][id % 10],
-    },
-    timeAgo: timeOptions[id % timeOptions.length],
-  };
-}
+// removed unused dummy utilities
 
 // --- Component ---
 export default function DashboardPage() {
@@ -53,10 +19,11 @@ export default function DashboardPage() {
     console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
   }
 
-  const [posts, setPosts] = useState(() =>
-    Array.from({ length: 5 }, (_, i) => generatePost(i + 1))
-  );
-  const [hasMore, setHasMore] = useState(true);
+  const [posts, setPosts] = useState<any[]>([]);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const currentUserId = user?._id || user?.id || "";
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -66,15 +33,34 @@ export default function DashboardPage() {
     return () => window.removeEventListener("resize", updateDrawer);
   }, []);
 
-  const fetchMorePosts = useCallback(() => {
-    setTimeout(() => {
-      const newPosts = Array.from({ length: 3 }, (_, i) =>
-        generatePost(posts.length + i + 1)
+  const fetchDailyFeed = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [dailyFeeds, bizhubPosts] = await Promise.all([
+        bizpulseApi.fetchDailyFeeds(),
+        bizpulseApi.fetchBizHubPosts(),
+      ]);
+
+      const transformedDaily = dailyFeeds.map((wf: any) =>
+        transformWallFeedPostToMock(wf)
       );
-      setPosts((prev) => [...prev, ...newPosts]);
-      if (posts.length >= 50) setHasMore(false);
-    }, 1000);
-  }, [posts.length]);
+      const transformedBizhubDaily = bizhubPosts
+        .filter((p: any) => p.isDailyFeed === true)
+        .map((p: any) => transformBizHubPostToMock(p));
+
+      const merged = [...transformedDaily, ...transformedBizhubDaily];
+      setPosts(merged);
+      setHasMore(false);
+    } catch (e) {
+      console.error("Failed to load daily feed", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDailyFeed();
+  }, [fetchDailyFeed]);
 
   return (
     <div className="relative min-h-screen ">
@@ -88,11 +74,13 @@ export default function DashboardPage() {
         <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-6">
           <InfiniteScroll
             dataLength={posts.length}
-            next={fetchMorePosts}
+            next={() => {}}
             hasMore={hasMore}
             loader={
               <div className="text-center py-8 flex justify-center items-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
+                {loading && (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
+                )}
               </div>
             }
             endMessage={
@@ -102,12 +90,56 @@ export default function DashboardPage() {
             }
             style={{ overflow: "visible" }}
           >
-            {posts.map((post, index) => (
-              <div key={post.id}>
-                <PostCard {...post} />
-                {index === 2 && <WebinarSection />}
-              </div>
-            ))}
+            {posts.map((post) => {
+              const isPoll = post.category === "pulse-polls" || (post.poll && post.postType === "poll");
+              if (isPoll && post.poll) {
+                const wallFeedPost = {
+                  _id: post.id,
+                  type: "poll",
+                  userId: {
+                    _id: currentUserId,
+                    fname: post.author.name?.split(" ")[0] || "",
+                    lname: post.author.name?.split(" ")[1] || "",
+                    avatar: post.author.avatar || undefined,
+                    username: "",
+                  },
+                  poll: post.poll,
+                  title: post.title,
+                  description: post.content,
+                  images: post.image ? [post.image] : undefined,
+                  badge: "Biz pulse",
+                  visibility: "public",
+                  likes: Array(post.stats?.likes || 0).fill({ userId: "" }),
+                  likeCount: post.stats?.likes || 0,
+                  isLiked: post.isLiked || false,
+                  comments: [],
+                  commentCount: post.stats?.comments || 0,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  timeAgo: post.timeAgo,
+                } as any;
+
+                return (
+                  <div key={post.id}>
+                    <PollCard
+                      post={wallFeedPost}
+                      currentUserId={currentUserId}
+                      onVoteSuccess={(updated) => {
+                        const updatedMock = transformWallFeedPostToMock(updated as any);
+                        setPosts((prev) =>
+                          prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                        );
+                      }}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <div key={post.id}>
+                  <PostCard {...post} />
+                </div>
+              );
+            })}
           </InfiniteScroll>
         </div>
       </div>

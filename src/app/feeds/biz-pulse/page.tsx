@@ -23,6 +23,7 @@ export default function BizPulsePage() {
   const { activeCategory, searchQuery, loading, error, posts } = useSelector(
     (state: RootState) => state.posts
   );
+  const showNotificationBanner = false; // temporarily hide the notifications banner
 
   // ✅ PERFORMANCE FIX: Memoize fetch function to prevent unnecessary effect triggers
   const handleFetchPosts = useCallback(() => {
@@ -131,8 +132,8 @@ export default function BizPulsePage() {
         </div>
       </div>
 
-      {/* Notification Prompt Banner */}
-      <NotificationPromptBanner />
+      {/* Notification Prompt Banner (disabled) */}
+      {showNotificationBanner && <NotificationPromptBanner />}
 
       {/* Search Bar */}
       <SearchBar />

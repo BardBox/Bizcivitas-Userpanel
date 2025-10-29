@@ -21,6 +21,12 @@ const makeRequest = async (
   url: string,
   options: RequestInit = {}
 ): Promise<any> => {
+  // Debug: log outgoing request (without sensitive headers)
+  try {
+    const safeBody = typeof (options as any).body === "string" ? (options as any).body : undefined;
+    console.debug("[reportApi] Request:", { url, method: options.method || "GET", body: safeBody });
+  } catch {}
+
   let token = getAccessToken();
 
   let headers: Record<string, string> = {
@@ -45,8 +51,16 @@ const makeRequest = async (
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    // Debug: log raw error text for easier diagnosis
+    const rawText = await response.text().catch(() => "<no-text>");
+    try {
+      const parsed = JSON.parse(rawText);
+      console.error("[reportApi] Response Error:", { url, status: response.status, body: parsed });
+      throw new Error(parsed.error || `HTTP error! status: ${response.status}`);
+    } catch {
+      console.error("[reportApi] Response Error (non-JSON):", { url, status: response.status, body: rawText });
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   }
 
   return response.json();
@@ -58,20 +72,40 @@ export const reportApi = {
    */
   reportComment: async (payload: ReportCommentPayload) => {
     try {
+      console.debug("[reportApi] reportComment payload:", payload);
       const data = await makeRequest(`${BASE_URL}/report`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
+      console.debug("[reportApi] reportComment success:", data);
       return {
         success: true,
         data,
         message: "Comment reported successfully",
       };
     } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || "Failed to report comment",
-      };
+      console.error("[reportApi] reportComment failed:", error?.message || error);
+      // Retry once without postId, so backend searches by commentId across Post/WallFeed
+      try {
+        const retryPayload = { commentId: payload.commentId, reason: payload.reason } as ReportCommentPayload;
+        console.debug("[reportApi] reportComment retry without postId:", retryPayload);
+        const data = await makeRequest(`${BASE_URL}/report`, {
+          method: "POST",
+          body: JSON.stringify(retryPayload),
+        });
+        console.debug("[reportApi] reportComment retry success:", data);
+        return {
+          success: true,
+          data,
+          message: "Comment reported successfully",
+        };
+      } catch (retryError: any) {
+        console.error("[reportApi] reportComment retry failed:", retryError?.message || retryError);
+        return {
+          success: false,
+          error: retryError.message || error.message || "Failed to report comment",
+        };
+      }
     }
   },
 

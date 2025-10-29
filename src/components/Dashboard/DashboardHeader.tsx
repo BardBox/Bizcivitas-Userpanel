@@ -9,6 +9,7 @@ import { useLogoutMutation } from "@/store/api";
 
 export default function DashboardHeader() {
   const [searchQuery, setSearchQuery] = useState("");
+  const showNotificationIcon = false; // temporarily hide notifications icon
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
   const router = useRouter();
 
@@ -61,11 +62,12 @@ export default function DashboardHeader() {
           </div>
         </form>
         <div className="flex items-center ml-4">
-          {/* Notification Dropdown */}
-          <NotificationDropdown />
+          {/* Notification Dropdown (disabled) */}
+          {showNotificationIcon && <NotificationDropdown />}
 
           {/* Settings Gear Icon */}
-          <button className="text-white hover:bg-blue-600 rounded-lg transition-colors">
+        
+        {showNotificationIcon && <button className="text-white hover:bg-blue-600 rounded-lg transition-colors">
             <Image
               src="/dashboard/sidebaricons/settings.svg"
               width={24}
@@ -75,7 +77,7 @@ export default function DashboardHeader() {
               style={{ width: "40px", height: "40px" }}
             />
           </button>
-
+        } 
           {/* Logout Button */}
           <button
             className="ml-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"

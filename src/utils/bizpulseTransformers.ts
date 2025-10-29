@@ -88,6 +88,10 @@ export function transformBizPulsePostToMock(
     type: "avatar" | "post" | "thumbnail" = "post"
   ): string | undefined => {
     if (!path) return undefined;
+    // If already absolute URL, return as-is
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
     const sizes = {
       avatar: "width=32&height=32",
       post: "width=600&height=400",
@@ -274,3 +278,8 @@ export function mapPostTypeToCategory(
 
   return categoryMap[type] || "all";
 }
+
+/**
+ * Transform BizHub Post (from /post endpoint) to BizPulseMockPost format
+ */
+// BizHub-related transformers moved to utils/bizhubTransformers.ts

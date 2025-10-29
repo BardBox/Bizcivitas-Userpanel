@@ -69,6 +69,41 @@ class BizPulseApiService {
   }
 
   /**
+   * Fetch only DailyFeed wallfeeds (client-side filter on isDailyFeed)
+   */
+  async fetchDailyFeeds(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<WallFeedPost[]> {
+    const response = await this.fetchWallFeeds(params);
+    const wallFeeds = (response?.data?.wallFeeds || []) as WallFeedPost[];
+    return wallFeeds.filter((wf: any) => wf.isDailyFeed === true);
+  }
+
+  /**
+   * Fetch BizHub posts (legacy posts collection)
+   * GET /api/post/
+   */
+  async fetchBizHubPosts(): Promise<any[]> {
+    const response = await fetch(`${this.baseUrl}/post/`, {
+      headers: this.getAuthHeaders(),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+      throw new Error(`Failed to fetch posts: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    // Expecting { success, data: { posts: [...] } }
+    return (json?.data?.posts || []) as any[];
+  }
+
+  /**
    * Fetch single wallfeed by ID
    * GET /api/wallfeed/:id
    */
@@ -255,6 +290,62 @@ class BizPulseApiService {
         throw new Error("Authentication required. Please log in again.");
       }
       throw new Error(`Failed to like comment: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete a comment from wallfeed
+   * DELETE /api/wallfeed/comment/:wallFeedId/:commentId
+   */
+  async deleteComment(
+    wallfeedId: string,
+    commentId: string
+  ): Promise<SingleWallFeedResponse> {
+    const response = await fetch(
+      `${this.baseUrl}/wallfeed/comment/${wallfeedId}/${commentId}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+      throw new Error(`Failed to delete comment: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Edit a comment on wallfeed
+   * PUT /api/wallfeed/comment/:wallFeedId/:commentId/edit
+   */
+  async editComment(
+    wallfeedId: string,
+    commentId: string,
+    content: string
+  ): Promise<SingleWallFeedResponse> {
+    const response = await fetch(
+      `${this.baseUrl}/wallfeed/comment/${wallfeedId}/${commentId}/edit`,
+      {
+        method: "PUT",
+        headers: this.getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({ content }),
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+      throw new Error(`Failed to edit comment: ${response.statusText}`);
     }
 
     return response.json();

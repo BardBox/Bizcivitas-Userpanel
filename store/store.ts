@@ -3,6 +3,7 @@ import membersReducer from "./membersSlice";
 import toastReducer from "./toastSlice";
 import postsReducer from "./postsSlice";
 import authReducer from "./authSlice";
+import bizhubReducer from "./bizhubSlice";
 import { baseApi } from "./api/baseApi";
 // Import latest events API
 import "./api/eventsApi.latest";
@@ -22,6 +23,7 @@ export const store = configureStore({
     toast: toastReducer,
     posts: postsReducer,
     auth: authReducer,
+    bizhub: bizhubReducer,
     // Add API reducer
     [baseApi.reducerPath]: baseApi.reducer,
   },

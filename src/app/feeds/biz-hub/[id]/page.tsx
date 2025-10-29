@@ -1,19 +1,29 @@
 "use client";
-import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../../../../store/store";
+import {
+  fetchBizHubPostById,
+  likeBizHubPost,
+  addBizHubComment,
+  editBizHubComment,
+  deleteBizHubComment,
+  likeBizHubComment,
+} from "../../../../../store/bizhubSlice";
+import { bizhubApi } from "@/services/bizhubApi";
 
-// Utility function to generate initials from name
+// Utility functions
 const getInitials = (name: string): string => {
   return name
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase())
-    .slice(0, 2) // Take first 2 initials
+    .slice(0, 2)
     .join("");
 };
 
-// Generate a consistent color based on name
 const getAvatarColor = (name: string): string => {
   const colors = [
     "bg-blue-500",
@@ -31,111 +41,452 @@ const getAvatarColor = (name: string): string => {
   return colors[index];
 };
 
-// Dummy data for demonstration. Replace with real data fetching.
-const dummyPosts = [
-  {
-    id: "1",
-    avatarUrl: "/avatars/avatar1.jpg",
-    name: "John Doe",
-    profession: "Software Engineer",
-    content: "This is a sample post content for John Doe.",
-    category: "Technology",
-    timeAgo: "2 hours ago",
-    comments: 5,
-    likes: 10,
-    imageUrl: "/handshake.jpg",
-    title: "Egestas libero nulla facilisis ac diam rhoncus feugiat.",
-    details: "Full post details for John Doe...",
-  },
-  {
-    id: "2",
-    avatarUrl: "/avatars/avatar2.jpg",
-    name: "Jane Smith",
-    profession: "Marketing Consultant",
-    content: "Jane's post content goes here.",
-    category: "Marketing",
-    timeAgo: "1 hour ago",
-    comments: 8,
-    likes: 15,
-    imageUrl: "/handshake.jpg",
-    title:
-      "Sed ullamcorper venenatis euismod orci id condimentum fermentum rhoncus sodales.",
-    details: "Full post details for Jane Smith...",
-  },
-  {
-    id: "3",
-    avatarUrl: "/avatars/avatar3.jpg",
-    name: "Alex Brown",
-    profession: "Product Manager",
-    content: "Alex's post content for BizHub.",
-    category: "Product",
-    timeAgo: "30 min ago",
-    comments: 2,
-    likes: 7,
-    imageUrl: "/handshake.jpg",
-    title: "Nibh sem tempus cras morbi sit suscipit.",
-    details: "Full post details for Alex Brown...",
-  },
-];
+const formatCategory = (type: string): string => {
+  return type
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 export default function BizHubPostDetail() {
   const params = useParams();
-  const post = dummyPosts.find((p) => p.id === params?.id);
-  const [imageError, setImageError] = useState(false);
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const postId = params?.id as string;
 
-  if (!post) {
-    return <div className="p-8 text-center text-gray-500">Post not found.</div>;
+  const { currentPost: post, loading, error } = useSelector(
+    (state: RootState) => state.bizhub
+  );
+  const userId = useSelector((state: RootState) => state.auth.user?._id);
+
+  const [commentText, setCommentText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [imageError, setImageError] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (postId) {
+      dispatch(fetchBizHubPostById(postId));
+    }
+  }, [dispatch, postId]);
+
+  const handleLike = () => {
+    if (postId) {
+      dispatch(likeBizHubPost(postId));
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentText.trim() || !postId) return;
+
+    try {
+      setSubmittingComment(true);
+      await dispatch(
+        addBizHubComment({ postId, content: commentText })
+      ).unwrap();
+      setCommentText("");
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleEditComment = async (commentId: string) => {
+    if (!editingCommentText.trim() || !postId) return;
+
+    try {
+      await dispatch(
+        editBizHubComment({
+          postId,
+          commentId,
+          content: editingCommentText,
+        })
+      ).unwrap();
+      setEditingCommentId(null);
+      setEditingCommentText("");
+    } catch (err) {
+      console.error("Failed to edit comment:", err);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!postId || !confirm("Are you sure you want to delete this comment?"))
+      return;
+
+    try {
+      await dispatch(deleteBizHubComment({ postId, commentId })).unwrap();
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+    }
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    if (!postId) return;
+
+    try {
+      await dispatch(likeBizHubComment({ postId, commentId })).unwrap();
+    } catch (err) {
+      console.error("Failed to like comment:", err);
+    }
+  };
+
+  const handleReportComment = async (commentId: string) => {
+    if (!postId) return;
+
+    const reason = prompt("Please provide a reason for reporting this comment:");
+    if (!reason || !reason.trim()) return;
+
+    try {
+      setReportingCommentId(commentId);
+      await bizhubApi.reportComment(postId, commentId, reason.trim());
+      alert("Comment reported successfully. It will be hidden from your view.");
+      // Refresh post to hide reported comment
+      dispatch(fetchBizHubPostById(postId));
+    } catch (err: any) {
+      alert(err.message || "Failed to report comment");
+      console.error("Failed to report comment:", err);
+    } finally {
+      setReportingCommentId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
-  const initials = getInitials(post.name);
-  const avatarColor = getAvatarColor(post.name);
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={() => router.back()}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        Post not found.
+        <button
+          onClick={() => router.back()}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg block mx-auto"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // Safe access to user data with fallbacks
+  const userName = post.userId?.name || post.user?.name || "Unknown User";
+  const userAvatar = post.userId?.avatar || post.user?.avatar || "";
+  const userClassification = post.userId?.classification || post.user?.classification || "Member";
+
+  const initials = getInitials(userName);
+  const avatarColor = getAvatarColor(userName);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="relative w-12 h-12">
-            {!imageError &&
-            post.avatarUrl &&
-            getAbsoluteImageUrl(post.avatarUrl) &&
-            post.avatarUrl !== "/avatars/default.jpg" ? (
-              <Image
-                src={getAbsoluteImageUrl(post.avatarUrl)!}
-                alt={post.name}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full object-cover border"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div
-                className={`w-12 h-12 rounded-full border flex items-center justify-center text-white font-semibold text-sm ${avatarColor}`}
-              >
-                {initials}
-              </div>
-            )}
-          </div>
-          <div>
-            <div className="font-semibold text-gray-900 text-base">
-              {post.name}
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      {/* Post Card */}
+      <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        {/* Author Info */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative w-12 h-12">
+              {!imageError &&
+              userAvatar &&
+              getAbsoluteImageUrl(userAvatar) ? (
+                <Image
+                  src={getAbsoluteImageUrl(userAvatar)!}
+                  alt={userName}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full object-cover border"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center text-white font-semibold ${avatarColor}`}
+                >
+                  {initials}
+                </div>
+              )}
             </div>
-            <div className="text-xs text-gray-400">{post.profession}</div>
+            <div>
+              <div className="font-semibold text-gray-900">
+                {userName}
+              </div>
+              <div className="text-sm text-gray-500">
+                {userClassification}
+              </div>
+            </div>
           </div>
+          <span className="text-sm text-gray-400">{post.timeAgo}</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{post.title}</h1>
-        <img
-          src={post.imageUrl}
-          alt="Post"
-          className="w-full rounded-lg mb-4 object-cover"
-        />
-        <div className="text-gray-700 text-base mb-4">{post.details}</div>
-        <div className="flex items-center gap-3 text-xs text-gray-500">
-          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
-            {post.category}
+
+        {/* Category Badge */}
+        <span className="inline-block bg-gray-900 text-white px-3 py-1 rounded-full text-xs font-medium">
+          {formatCategory(post.type)}
+        </span>
+
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-gray-900">{post.title}</h1>
+
+        {/* Images */}
+        {post.mediaUrls && post.mediaUrls.length > 0 && (
+          <div className="space-y-4">
+            {post.mediaUrls.map((url, index) => (
+              <Image
+                key={index}
+                src={getAbsoluteImageUrl(url) || "/placeholder.jpg"}
+                alt={`Image ${index + 1}`}
+                width={800}
+                height={450}
+                className="w-full h-auto rounded-lg object-cover"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Description */}
+        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+          {post.description}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-6 pt-4 border-t">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-2 transition-colors ${
+              post.isLiked
+                ? "text-blue-600"
+                : "text-gray-500 hover:text-blue-600"
+            }`}
+          >
+            <svg
+              className="w-6 h-6"
+              fill={post.isLiked ? "currentColor" : "none"}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            <span className="font-medium">{post.likeCount || 0} Likes</span>
+          </button>
+          <span className="flex items-center gap-2 text-gray-500">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <span className="font-medium">
+              {post.commentCount || 0} Comments
+            </span>
           </span>
-          <span>• {post.timeAgo}</span>
-          <span>💬 {post.comments}</span>
-          <span>👍 {post.likes}</span>
+        </div>
+      </div>
+
+      {/* Comments Section */}
+      <div className="bg-white rounded-lg shadow p-6 space-y-6">
+        <h2 className="text-xl font-bold text-gray-900">Comments</h2>
+
+        {/* Add Comment */}
+        <div className="flex gap-3">
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Write a comment..."
+            rows={3}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+          <button
+            onClick={handleAddComment}
+            disabled={!commentText.trim() || submittingComment}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed h-fit"
+          >
+            {submittingComment ? "Posting..." : "Post"}
+          </button>
+        </div>
+
+        {/* Comments List */}
+        <div className="space-y-4">
+          {post.comments && post.comments.length > 0 ? (
+            post.comments.map((comment: any) => {
+              // Construct name from fname and lname (backend returns these separately)
+              const commentAuthorName = comment.userId?.fname && comment.userId?.lname
+                ? `${comment.userId.fname} ${comment.userId.lname}`
+                : "Unknown";
+
+              const commentAuthorInitials = getInitials(commentAuthorName);
+              const commentAvatarColor = getAvatarColor(commentAuthorName);
+              const isCommentOwner = comment.userId?._id === userId;
+              const isCommentLiked = comment.likes?.some(
+                (like: any) => like.userId === userId
+              );
+
+              return (
+                <div
+                  key={comment._id}
+                  className="flex gap-3 p-4 bg-gray-50 rounded-lg"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 ${commentAvatarColor}`}
+                  >
+                    {commentAuthorInitials}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {commentAuthorName}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {new Date(comment.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      {isCommentOwner && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(comment._id);
+                              setEditingCommentText(comment.content);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 p-1"
+                            title="Edit comment"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(comment._id)}
+                            className="text-red-600 hover:text-red-700 p-1"
+                            title="Delete comment"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {editingCommentId === comment._id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={editingCommentText}
+                          onChange={(e) =>
+                            setEditingCommentText(e.target.value)
+                          }
+                          rows={2}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditComment(comment._id)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(null);
+                              setEditingCommentText("");
+                            }}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-gray-700">{comment.content}</p>
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={() => handleLikeComment(comment._id)}
+                            className={`flex items-center gap-1 text-sm ${
+                              isCommentLiked
+                                ? "text-blue-600"
+                                : "text-gray-500 hover:text-blue-600"
+                            }`}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill={isCommentLiked ? "currentColor" : "none"}
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
+                              />
+                            </svg>
+                            {comment.likes?.length || 0}
+                          </button>
+
+                          {!isCommentOwner && (
+                            <button
+                              onClick={() => handleReportComment(comment._id)}
+                              disabled={reportingCommentId === comment._id}
+                              className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50"
+                              title="Report comment"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
+                                />
+                              </svg>
+                              {reportingCommentId === comment._id ? "Reporting..." : "Report"}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-gray-500 py-8">
+              No comments yet. Be the first to comment!
+            </p>
+          )}
         </div>
       </div>
     </div>

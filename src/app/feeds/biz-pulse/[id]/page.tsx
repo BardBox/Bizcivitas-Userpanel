@@ -2,7 +2,7 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
-import { Heart, MessageSquare, Share2, ArrowLeft } from "lucide-react";
+import { Heart, MessageSquare, Share2, ArrowLeft, MoreVertical, Flag } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import type { RootState } from "../../../../../store/store";
@@ -11,6 +11,8 @@ import { updatePost } from "../../../../../store/postsSlice";
 import { transformBizPulsePostToMock } from "../../../../../src/utils/bizpulseTransformers";
 import toast from "react-hot-toast";
 import Avatar from "@/components/ui/Avatar";
+import ReportModal from "@/components/modals/ReportModal";
+import { reportApi } from "../../../../../src/services/reportApi";
 
 export default function BizPulseDetailPage() {
   const params = useParams();
@@ -31,6 +33,19 @@ export default function BizPulseDetailPage() {
 
   const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [newComment, setNewComment] = useState("");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openMenuId) setOpenMenuId(null);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   // Fetch post data if not in Redux (on page refresh)
   useEffect(() => {
@@ -122,7 +137,22 @@ export default function BizPulseDetailPage() {
   };
 
   const handleLike = async () => {
-    if (isLiking) return;
+    if (isLiking || !post) return;
+
+    // Optimistic update - immediately update UI
+    const currentLikeStatus = isLiked;
+    setIsLiked(!isLiked);
+
+    // Update the post in Redux with optimistic like count
+    const optimisticPost = {
+      ...post,
+      isLiked: !currentLikeStatus,
+      stats: {
+        ...post.stats,
+        likes: currentLikeStatus ? post.stats.likes - 1 : post.stats.likes + 1,
+      },
+    };
+    dispatch(updatePost(optimisticPost));
 
     setIsLiking(true);
     try {
@@ -130,12 +160,21 @@ export default function BizPulseDetailPage() {
       if (updatedPost.success && updatedPost.data) {
         const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
         const transformedPost = transformBizPulsePostToMock(postData);
+
+        // Preserve the image from the current post if the API doesn't return it
+        if (!transformedPost.image && post.image) {
+          transformedPost.image = post.image;
+        }
+
         dispatch(updatePost(transformedPost));
-        setIsLiked(!isLiked);
       }
     } catch (error) {
       console.error("Failed to like post:", error);
       toast.error("Failed to update like status");
+
+      // Revert optimistic update on error
+      setIsLiked(currentLikeStatus);
+      dispatch(updatePost(post));
     } finally {
       setIsLiking(false);
     }
@@ -197,6 +236,12 @@ export default function BizPulseDetailPage() {
       if (updatedPost.success && updatedPost.data) {
         const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
         const transformedPost = transformBizPulsePostToMock(postData);
+
+        // Preserve the image from the current post if the API doesn't return it
+        if (!transformedPost.image && post.image) {
+          transformedPost.image = post.image;
+        }
+
         dispatch(updatePost(transformedPost));
         toast.success("Comment posted!");
       }
@@ -217,6 +262,47 @@ export default function BizPulseDetailPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReportComment = async (reason: string) => {
+    if (!reportingCommentId) return;
+
+    try {
+      const result = await reportApi.reportComment({
+        commentId: reportingCommentId,
+        reason: reason as any,
+      });
+
+      if (result.success) {
+        toast.success("Comment reported successfully. It has been hidden from your view.");
+        // Optionally remove the comment from the UI for this user
+        if (post) {
+          const updatedPost = {
+            ...post,
+            comments: post.comments?.filter(c => c.id !== reportingCommentId) || [],
+            stats: {
+              ...post.stats,
+              comments: Math.max(0, post.stats.comments - 1),
+            },
+          };
+          dispatch(updatePost(updatedPost));
+        }
+      } else {
+        toast.error(result.error || "Failed to report comment");
+      }
+    } catch (error) {
+      console.error("Error reporting comment:", error);
+      toast.error("Failed to report comment");
+    } finally {
+      setReportingCommentId(null);
+      setIsReportModalOpen(false);
+    }
+  };
+
+  const handleOpenReportModal = (commentId: string) => {
+    setReportingCommentId(commentId);
+    setIsReportModalOpen(true);
+    setOpenMenuId(null);
   };
 
   return (
@@ -372,7 +458,7 @@ export default function BizPulseDetailPage() {
                       : `/feeds/connections/${comment.author.id}?from=connect-members`;
 
                     return (
-                      <div key={comment.id} className="flex space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                      <div key={comment.id} className="flex space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
                         <Link href={commentProfileUrl}>
                           <Avatar
                             src={getAvatarUrl(comment.author.avatar)}
@@ -384,16 +470,49 @@ export default function BizPulseDetailPage() {
                           />
                         </Link>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Link
-                              href={commentProfileUrl}
-                              className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                            >
-                              {comment.author.name}
-                            </Link>
-                            <span className="text-xs text-gray-500">
-                              • {comment.timeAgo}
-                            </span>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-2">
+                              <Link
+                                href={commentProfileUrl}
+                                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                              >
+                                {comment.author.name}
+                              </Link>
+                              <span className="text-xs text-gray-500">
+                                • {comment.timeAgo}
+                              </span>
+                            </div>
+
+                            {/* Three-dot menu - only show for other users' comments */}
+                            {!isCurrentUserComment && (
+                              <div className="relative ">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === comment.id ? null : comment.id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                                >
+                                  <MoreVertical className="w-4 h-4 text-gray-600" />
+                                </button>
+
+                                {/* Dropdown menu */}
+                                {openMenuId === comment.id && (
+                                  <div
+                                    className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      onClick={() => handleOpenReportModal(comment.id)}
+                                      className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                      <Flag className="w-4 h-4" />
+                                      <span>Report Comment</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
                         </div>
@@ -411,6 +530,17 @@ export default function BizPulseDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => {
+          setIsReportModalOpen(false);
+          setReportingCommentId(null);
+        }}
+        onSubmit={handleReportComment}
+        type="comment"
+      />
     </div>
   );
 }

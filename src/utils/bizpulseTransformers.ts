@@ -135,17 +135,29 @@ export function transformBizPulsePostToMock(
       image: (() => {
         // Try to get image from images array
         if (Array.isArray(post.images) && post.images.length > 0) {
-          return getImageUrl(post.images[0], "post");
+          const imageUrl = getImageUrl(post.images[0], "post");
+          console.log("Image from post.images[0]:", post.images[0], "-> URL:", imageUrl);
+          return imageUrl;
         }
         // Try to get from article image
         if (post.article?.image) {
-          return getImageUrl(post.article.image, "post");
+          const imageUrl = getImageUrl(post.article.image, "post");
+          console.log("Image from post.article.image:", post.article.image, "-> URL:", imageUrl);
+          return imageUrl;
         }
+        // Try to get from direct image field
+        if ((post as any).image) {
+          const imageUrl = getImageUrl((post as any).image, "post");
+          console.log("Image from post.image:", (post as any).image, "-> URL:", imageUrl);
+          return imageUrl;
+        }
+        console.log("No image found in post. images:", post.images, "article:", post.article);
         return undefined;
       })(),
       stats: {
         likes: post.likeCount || 0,
-        comments: post.commentCount || 0,
+        // Use actual comments array length if available, otherwise fall back to commentCount
+        comments: (post.comments && post.comments.length) || post.commentCount || 0,
         shares: 0,
         views: 0,
       },
@@ -195,7 +207,8 @@ export function transformBizPulsePostToMock(
           : undefined,
       stats: {
         likes: 0,
-        comments: 0,
+        // Use actual comments array length if available
+        comments: (post.comments && post.comments.length) || 0,
         shares: 0,
         views: 0,
       },

@@ -372,10 +372,7 @@ export default function PollCard({
               />
               {post.likeCount > 0 && <span>{post.likeCount}</span>}
             </button>
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <MessageSquare className="w-4 h-4" />
-              {post.commentCount > 0 && <span>{post.commentCount}</span>}
-            </div>
+           
           </div>
         </div>
       </div>

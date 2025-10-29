@@ -198,12 +198,7 @@ export default function BizPulseCard({
           <div className="flex items-center justify-between">
             {/* Stats */}
             <div className="flex items-center space-x-4 text-xs text-gray-500">
-              {stats.views && stats.views > 0 && (
-                <div className="flex items-center space-x-1">
-                  <Eye className="w-3 h-3" />
-                  <span>{stats.views}</span>
-                </div>
-              )}
+              
               <div className="flex items-center space-x-1">
                 <Heart className="w-3 h-3" />
                 {stats.likes > 0 && <span>{stats.likes}</span>}

@@ -3,6 +3,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
 import { Heart, MessageSquare, Share2, ArrowLeft, Send } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import type { RootState } from "../../../../../store/store";
 import { bizpulseApi } from "../../../../../src/services/bizpulseApi";
@@ -228,25 +229,34 @@ export default function BizPulseDetailPage() {
               {post.comments && post.comments.length > 0 ? (
                 post.comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                      {getInitials(comment.author.name)}
-                    </div>
+                    <Link
+                      href={`/feeds/connections/profile/${comment.author.id}`}
+                    >
+                      {comment.author.avatar ? (
+                        <img
+                          src={comment.author.avatar}
+                          alt={comment.author.name}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                          {getInitials(comment.author.name)}
+                        </div>
+                      )}
+                    </Link>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <span className="font-medium text-gray-900">
+                        <Link
+                          href={`/feeds/connections/profile/${comment.author.id}`}
+                          className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                        >
                           {comment.author.name}
-                        </span>
+                        </Link>
                         <span className="text-sm text-gray-500">
                           {comment.timeAgo}
                         </span>
                       </div>
                       <p className="text-gray-700 mb-4">{comment.content}</p>
-                      <div className="flex items-center space-x-4">
-                        <button className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700">
-                          <Heart className="w-4 h-4" />
-                          <span>{comment.likes}</span>
-                        </button>
-                      </div>
                     </div>
                   </div>
                 ))

@@ -10,6 +10,7 @@ interface TransformedComment {
   id: string;
   content: string;
   author: {
+    id: string;
     name: string;
     avatar: string | null;
   };
@@ -43,18 +44,24 @@ function calculateTimeAgo(dateString: string): string {
 /**
  * Transform a comment to the frontend format
  */
-const transformCommentToMock = (comment: any): TransformedComment => ({
+const transformCommentToMock = (
+  comment: any,
+  baseUrl: string
+): TransformedComment => ({
   id: comment._id || "",
   content: comment.content || "",
   author: {
+    id: comment.userId?._id || "",
     name: comment.userId
       ? `${comment.userId.fname || ""} ${comment.userId.lname || ""}`.trim() ||
         "Unknown User"
       : "Unknown User",
-    avatar: comment.userId?.avatar || null,
+    avatar: comment.userId?.avatar
+      ? `${baseUrl}/image/${comment.userId.avatar}?width=32&height=32&format=webp`
+      : null,
   },
   timeAgo: comment.createdAt ? calculateTimeAgo(comment.createdAt) : "Recently",
-  likes: comment.likeCount || comment.likes?.length || 0,
+  likes: 0, // Removing like functionality
 });
 
 /**
@@ -72,10 +79,18 @@ export function transformBizPulsePostToMock(
     );
   }
 
-  // Helper to safely construct image URLs
-  const getImageUrl = (path?: string): string | undefined => {
+  // Helper to safely construct image URLs with size optimization
+  const getImageUrl = (
+    path?: string,
+    type: "avatar" | "post" | "thumbnail" = "post"
+  ): string | undefined => {
     if (!path) return undefined;
-    return `${BASE_URL}/image/${path}`;
+    const sizes = {
+      avatar: "width=32&height=32",
+      post: "width=600&height=400",
+      thumbnail: "width=150&height=150",
+    };
+    return `${BASE_URL}/image/${path}?${sizes[type]}&format=webp`;
   };
 
   const isWallFeedPost = (p: any): p is WallFeedPost => {
@@ -110,16 +125,18 @@ export function transformBizPulsePostToMock(
           ? `${post.userId.fname} ${post.userId.lname}`
           : "BizCivitas Admin",
         title: post.userId?.role || "Member",
-        avatar: post.userId?.avatar || null,
+        avatar: post.userId?.avatar
+          ? getImageUrl(post.userId.avatar, "avatar")
+          : null,
       },
       image: (() => {
         // Try to get image from images array
         if (Array.isArray(post.images) && post.images.length > 0) {
-          return getImageUrl(post.images[0]);
+          return getImageUrl(post.images[0], "post");
         }
         // Try to get from article image
         if (post.article?.image) {
-          return getImageUrl(post.article.image);
+          return getImageUrl(post.article.image, "post");
         }
         return undefined;
       })(),
@@ -140,7 +157,9 @@ export function transformBizPulsePostToMock(
     } as BizPulseMockPost;
 
     if (post.comments && post.comments.length > 0) {
-      transformedPost.comments = post.comments.map(transformCommentToMock);
+      transformedPost.comments = post.comments.map((comment) =>
+        transformCommentToMock(comment, BASE_URL)
+      );
     }
 
     return transformedPost;
@@ -162,7 +181,7 @@ export function transformBizPulsePostToMock(
       },
       image:
         Array.isArray(post.images) && post.images.length > 0
-          ? getImageUrl(post.images[0])
+          ? getImageUrl(post.images[0], "post")
           : undefined,
       stats: {
         likes: 0,
@@ -176,7 +195,9 @@ export function transformBizPulsePostToMock(
     } as BizPulseMockPost;
 
     if (post.comments && post.comments.length > 0) {
-      transformedPost.comments = post.comments.map(transformCommentToMock);
+      transformedPost.comments = post.comments.map((comment) =>
+        transformCommentToMock(comment, BASE_URL)
+      );
     }
 
     return transformedPost;

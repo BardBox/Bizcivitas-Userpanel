@@ -332,11 +332,12 @@ export interface BizPulseMockPost {
     id: string;
     content: string;
     author: {
+      id: string;
       name: string;
       avatar?: string | null;
     };
     timeAgo: string;
-    likes: number;
+    likes?: number;
   }>;
   // Poll data (for pulse-polls type)
   poll?: {

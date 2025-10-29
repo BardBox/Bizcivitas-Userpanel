@@ -71,6 +71,9 @@ const transformCommentToMock = (
 export function transformBizPulsePostToMock(
   post: WallFeedPost | BizPulsePost
 ): BizPulseMockPost {
+  // Debug: log the incoming post structure
+  console.log("Transform input post:", post);
+
   // Base URL for images - fail fast if env var is missing
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   if (!BASE_URL) {
@@ -112,7 +115,7 @@ export function transformBizPulsePostToMock(
 
   if (isWallFeedPost(post)) {
     const transformedPost = {
-      id: post._id,
+      id: post._id || (post as any).id || String(Date.now()),
       title: post.title || "Untitled Post",
       content: Array.isArray(post.description)
         ? post.description
@@ -157,7 +160,14 @@ export function transformBizPulsePostToMock(
     } as BizPulseMockPost;
 
     if (post.comments && post.comments.length > 0) {
-      transformedPost.comments = post.comments.map((comment) =>
+      // Sort comments by createdAt date (most recent first)
+      const sortedComments = [...post.comments].sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      transformedPost.comments = sortedComments.map((comment) =>
         transformCommentToMock(comment, BASE_URL)
       );
     }
@@ -166,7 +176,7 @@ export function transformBizPulsePostToMock(
   } else {
     // Handle BizPulsePost type
     const transformedPost = {
-      id: post._id,
+      id: post._id || (post as any).id || String(Date.now()),
       title: post.title || "Untitled Post",
       content: Array.isArray(post.description)
         ? post.description
@@ -195,7 +205,14 @@ export function transformBizPulsePostToMock(
     } as BizPulseMockPost;
 
     if (post.comments && post.comments.length > 0) {
-      transformedPost.comments = post.comments.map((comment) =>
+      // Sort comments by createdAt date (most recent first)
+      const sortedComments = [...post.comments].sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      transformedPost.comments = sortedComments.map((comment) =>
         transformCommentToMock(comment, BASE_URL)
       );
     }

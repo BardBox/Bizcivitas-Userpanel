@@ -135,8 +135,11 @@ const postsSlice = createSlice({
       );
       if (existingIndex >= 0) {
         state.posts[existingIndex] = action.payload;
-        postsSlice.caseReducers.filterPosts(state);
+      } else {
+        // Add new post if it doesn't exist
+        state.posts.push(action.payload);
       }
+      postsSlice.caseReducers.filterPosts(state);
     },
   },
   extraReducers: (builder) => {

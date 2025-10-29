@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { ConnectionRequestItem } from "../../../../../types";
 import Avatar from "@/components/ui/Avatar";
@@ -33,9 +34,11 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
   // User Info Component
   const UserInfo = () => (
     <div className="flex-1 min-w-0 px-4">
-      <h3 className="font-bold text-blue-600 text-lg truncate mb-1 hover:text-blue-700 transition-colors">
-        {userName}
-      </h3>
+      <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`}>
+        <h3 className="font-bold text-blue-600 text-lg truncate mb-1 hover:text-blue-700 transition-colors cursor-pointer">
+          {userName}
+        </h3>
+      </Link>
       {jobTitle && (
         <p className="text-sm text-gray-600 font-medium truncate mb-1">
           {jobTitle}
@@ -55,15 +58,16 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
       {request.type === "received" ? (
         // RECEIVED REQUEST LAYOUT: Avatar - Info - Actions
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
             <Avatar
               src={displayUser.avatar}
               alt={userName}
               size="xl"
               fallbackText={userName}
               showMembershipBorder={false}
+              className="cursor-pointer"
             />
-          </div>
+          </Link>
           <UserInfo />
           <div className="flex-shrink-0 flex gap-3">
             {/* Accept Button */}
@@ -104,15 +108,16 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
             </button>
           </div>
           <UserInfo />
-          <div className="flex-shrink-0">
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
             <Avatar
               src={displayUser.avatar}
               alt={userName}
               size="xl"
               fallbackText={userName}
               showMembershipBorder={false}
+              className="cursor-pointer"
             />
-          </div>
+          </Link>
         </div>
       )}
     </div>

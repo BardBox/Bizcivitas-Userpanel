@@ -56,28 +56,37 @@ export default function CommentList({
 
   return (
     <div className="space-y-4">
-      {comments.map((comment) => (
-        <div key={comment._id} className="flex gap-4">
-          {/* User Avatar */}
-          <Link href={`/feeds/connections/${comment.userId._id}?from=connect-members`}>
-            <Avatar
-              src={getAvatarUrl(comment.userId.avatar)}
-              alt={`${comment.userId.fname} ${comment.userId.lname}`}
-              size="sm"
-              fallbackText={`${comment.userId.fname} ${comment.userId.lname}`}
-              showMembershipBorder={false}
-              className="cursor-pointer"
-            />
-          </Link>
+      {comments.map((comment) => {
+        // Check if this comment is from the current user
+        const isCurrentUser = comment.userId._id === currentUserId;
+        const profileUrl = isCurrentUser
+          ? '/feeds/myprofile'
+          : `/feeds/connections/${comment.userId._id}?from=connect-members`;
 
-          {/* Comment Content */}
-          <div className="flex-1">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-semibold">
-                    {comment.userId.fname} {comment.userId.lname}
-                  </h4>
+        return (
+          <div key={comment._id} className="flex gap-4">
+            {/* User Avatar */}
+            <Link href={profileUrl}>
+              <Avatar
+                src={getAvatarUrl(comment.userId.avatar)}
+                alt={`${comment.userId.fname} ${comment.userId.lname}`}
+                size="sm"
+                fallbackText={`${comment.userId.fname} ${comment.userId.lname}`}
+                showMembershipBorder={false}
+                className="cursor-pointer"
+              />
+            </Link>
+
+            {/* Comment Content */}
+            <div className="flex-1">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Link href={profileUrl}>
+                      <h4 className="font-semibold hover:text-blue-600 cursor-pointer">
+                        {comment.userId.fname} {comment.userId.lname}
+                      </h4>
+                    </Link>
                   <p className="text-sm text-gray-500">
                     {format(
                       new Date(comment.createdAt),
@@ -131,7 +140,8 @@ export default function CommentList({
             </div>
           </div>
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 }

@@ -88,9 +88,20 @@ export function transformBizPulsePostToMock(
     type: "avatar" | "post" | "thumbnail" = "post"
   ): string | undefined => {
     if (!path) return undefined;
-    // If already absolute URL, return as-is
+    // Check if it's an absolute URL
     if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
+      // For external URLs, check if they're from allowed domains
+      try {
+        const url = new URL(path);
+        const allowedDomains = ["backend.bizcivitas.com", "images.unsplash.com"];
+        if (allowedDomains.includes(url.hostname)) {
+          return path;
+        }
+        // For other external URLs, return undefined to use fallback
+        return undefined;
+      } catch {
+        return undefined;
+      }
     }
     const sizes = {
       avatar: "width=32&height=32",
@@ -180,6 +191,7 @@ export function transformBizPulsePostToMock(
       isLiked: post.isLiked || false,
       poll: post.poll,
       postType: post.poll ? "poll" : "regular",
+      sourceType: "bizpulse", // Mark this as a BizPulse post
     } as BizPulseMockPost;
 
     if (post.comments && post.comments.length > 0) {
@@ -226,6 +238,7 @@ export function transformBizPulsePostToMock(
       timeAgo: post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently",
       category: normalizeCategory(post.type || "all"),
       tags: [],
+      sourceType: "bizpulse", // Mark this as a BizPulse post
     } as BizPulseMockPost;
 
     if (post.comments && post.comments.length > 0) {

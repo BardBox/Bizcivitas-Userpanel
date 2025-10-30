@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,6 +23,7 @@ import TipTapEditor from "@/components/TipTapEditor";
 import HtmlContent from "@/components/HtmlContent";
 import DeleteConfirmModal from "@/components/modals/DeleteConfirmModal";
 import ImageCarousel from "@/components/ImageCarousel";
+import Avatar from "@/components/ui/Avatar";
 
 // Utility functions
 const getInitials = (name: string): string => {
@@ -70,7 +72,6 @@ export default function BizHubPostDetail() {
   const [commentText, setCommentText] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
-  const [imageError, setImageError] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -252,9 +253,15 @@ export default function BizHubPostDetail() {
   const userName = post.userId?.name || post.user?.name || "Unknown User";
   const userAvatar = post.userId?.avatar || post.user?.avatar || "";
   const userClassification = post.userId?.classification || post.user?.classification || "Member";
+  const postAuthorId = post.userId?._id || post.user?._id;
 
   const initials = getInitials(userName);
   const avatarColor = getAvatarColor(userName);
+
+  // Determine profile URL for post author
+  const authorProfileUrl = isPostOwner
+    ? "/feeds/myprofile"
+    : `/feeds/connections/${postAuthorId}?from=connect-members`;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -263,30 +270,23 @@ export default function BizHubPostDetail() {
         {/* Author Info */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12">
-              {!imageError &&
-              userAvatar &&
-              getAbsoluteImageUrl(userAvatar) ? (
-                <Image
-                  src={getAbsoluteImageUrl(userAvatar)!}
-                  alt={userName}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-full object-cover border"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center text-white font-semibold ${avatarColor}`}
-                >
-                  {initials}
-                </div>
-              )}
-            </div>
+            <Link href={authorProfileUrl}>
+              <Avatar
+                src={userAvatar}
+                alt={userName}
+                size="md"
+                fallbackText={userName}
+                showMembershipBorder={false}
+                className="cursor-pointer"
+              />
+            </Link>
             <div>
-              <div className="font-semibold text-gray-900">
+              <Link
+                href={authorProfileUrl}
+                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+              >
                 {userName}
-              </div>
+              </Link>
               <div className="text-sm text-gray-500">
                 {userClassification}
               </div>
@@ -474,29 +474,42 @@ export default function BizHubPostDetail() {
                 ? `${comment.userId.fname} ${comment.userId.lname}`
                 : comment.user?.name || "Unknown";
 
-              const commentAuthorInitials = getInitials(commentAuthorName);
-              const commentAvatarColor = getAvatarColor(commentAuthorName);
-              const isCommentOwner = comment.userId?._id === userId || comment.user?._id === userId;
+              const commentAuthorId = comment.userId?._id || comment.user?._id;
+              const commentAuthorAvatar = comment.userId?.avatar || comment.user?.avatar;
+              const isCommentOwner = commentAuthorId === userId;
               const isCommentLiked = comment.likes?.some(
                 (like: any) => like.userId === userId
               );
 
+              // Determine profile URL
+              const commentProfileUrl = isCommentOwner
+                ? "/feeds/myprofile"
+                : `/feeds/connections/${commentAuthorId}?from=connect-members`;
+
               return (
                 <div
                   key={comment._id}
-                  className="flex gap-3 p-4 bg-gray-50 rounded-lg"
+                  className="flex gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 ${commentAvatarColor}`}
-                  >
-                    {commentAuthorInitials}
-                  </div>
+                  <Link href={commentProfileUrl}>
+                    <Avatar
+                      src={commentAuthorAvatar}
+                      alt={commentAuthorName}
+                      size="sm"
+                      fallbackText={commentAuthorName}
+                      showMembershipBorder={false}
+                      className="cursor-pointer"
+                    />
+                  </Link>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <Link
+                          href={commentProfileUrl}
+                          className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                        >
                           {commentAuthorName}
-                        </div>
+                        </Link>
                         <div className="text-xs text-gray-400">
                           {new Date(comment.createdAt).toLocaleDateString()}
                         </div>

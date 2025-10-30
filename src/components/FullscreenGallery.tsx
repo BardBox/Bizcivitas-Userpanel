@@ -132,7 +132,8 @@ export default function FullscreenGallery({
               isZoomed
                 ? "w-auto h-auto max-w-none cursor-grab active:cursor-grabbing"
                 : "max-w-full max-h-[85vh] w-auto h-auto"
-            }`}
+    
+              }`}
           style={isZoomed ? { imageRendering: "crisp-edges" } : {}}
 
             draggable={false}

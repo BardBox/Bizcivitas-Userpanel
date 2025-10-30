@@ -30,20 +30,20 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
     return (
       <>
         <div
-          className="relative w-full rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+          className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100"
           onClick={() => setIsGalleryOpen(true)}
         >
           <Image
             src={images[0]}
             alt={alt}
-            width={800}
-            height={450}
-            className="w-full h-auto object-cover"
+            fill
+            className="object-contain"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             priority
           />
           {/* Zoom hint overlay */}
           <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-            <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-800">
+            <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-800 pointer-events-none">
               Click to view fullscreen
             </div>
           </div>

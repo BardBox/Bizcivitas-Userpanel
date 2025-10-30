@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Heart, MessageSquare } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +13,7 @@ interface PostCardProps {
   author?: {
     name: string;
     title: string;
+    avatar?: string | null;
   };
   image?: string;
   stats?: {
@@ -20,6 +22,7 @@ interface PostCardProps {
     shares: number;
   };
   timeAgo?: string;
+  sourceType?: string; // 'bizhub' or 'bizpulse'
 }
 
 export default function PostCard({
@@ -31,8 +34,12 @@ export default function PostCard({
   image,
   stats = { likes: 0, comments: 0, shares: 0 },
   timeAgo,
+  sourceType,
 }: PostCardProps) {
-  const isBizPulse = !!category;
+  const [avatarError, setAvatarError] = useState(false);
+
+  // Determine if this is a BizPulse post based on sourceType or category
+  const isBizPulse = sourceType === "bizpulse" || (sourceType !== "bizhub" && !!category);
   const detailUrl = isBizPulse ? `/feeds/biz-pulse/${id}` : `/feeds/biz-hub/${id}`;
 
   const getCategoryLabel = (cat?: string) => {
@@ -62,14 +69,17 @@ export default function PostCard({
           {author && (
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                {/* Always use favicon as avatar */}
-                <Image
-                  src="/favicon.ico"
-                  alt="Site Icon"
-                  width={28}
-                  height={28}
-                  className="rounded-full object-cover"
-                />
+                {/* Display user avatar or fallback to favicon */}
+                <div className="relative w-7 h-7 flex-shrink-0">
+                  <Image
+                    src={avatarError || !author.avatar ? "/favicon.ico" : author.avatar}
+                    alt={author.name}
+                    width={28}
+                    height={28}
+                    className="rounded-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                </div>
                 <div className="ml-2">
                   <div className="text-sm font-medium text-gray-900 leading-4">
                     {author.name}

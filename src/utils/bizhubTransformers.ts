@@ -31,8 +31,20 @@ export function transformBizHubPostToMock(post: any): BizPulseMockPost {
     type: "avatar" | "post" | "thumbnail" = "post"
   ): string | undefined => {
     if (!path) return undefined;
+    // Check if it's an absolute URL
     if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
+      // For external URLs, check if they're from allowed domains
+      try {
+        const url = new URL(path);
+        const allowedDomains = ["backend.bizcivitas.com", "images.unsplash.com"];
+        if (allowedDomains.includes(url.hostname)) {
+          return path;
+        }
+        // For other external URLs, proxy through backend to avoid Next.js image config issues
+        return undefined;
+      } catch {
+        return undefined;
+      }
     }
     const sizes = {
       avatar: "width=32&height=32",
@@ -81,7 +93,7 @@ export function transformBizHubPostToMock(post: any): BizPulseMockPost {
     author: {
       name: authorName,
       title: post.user?.role || post.user?.classification || "Member",
-      avatar: post.user?.avatar ? getImageUrl(post.user.avatar, "avatar") || null : "/favicon.ico",
+      avatar: post.user?.avatar ? getImageUrl(post.user.avatar, "avatar") || null : null,
     },
     image: imageFromMedia,
     stats: {
@@ -95,6 +107,7 @@ export function transformBizHubPostToMock(post: any): BizPulseMockPost {
     tags: [],
     isLiked: post.isLiked || false,
     postType: "regular",
+    sourceType: "bizhub", // Mark this as a BizHub post
   } as BizPulseMockPost;
 
   return base;

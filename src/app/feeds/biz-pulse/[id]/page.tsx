@@ -341,11 +341,11 @@ export default function BizPulseDetailPage() {
       alt={post.title}
     />
   ) : post.image ? (
-    <div className="w-full h-96 relative overflow-hidden">
+    <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
       <img
         src={post.image}
         alt={post.title}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
       />
     </div>
   ) : null}

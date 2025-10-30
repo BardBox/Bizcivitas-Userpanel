@@ -360,4 +360,6 @@ export interface BizPulseMockPost {
   // User interaction state
   isLiked?: boolean;
   currentUserId?: string;
+  // Source type to differentiate between BizHub and BizPulse posts
+  sourceType?: "bizhub" | "bizpulse";
 }

@@ -174,6 +174,33 @@ export const likeBizHubComment = createAsyncThunk(
   }
 );
 
+export const deleteBizHubPost = createAsyncThunk(
+  "bizhub/deletePost",
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      await bizhubApi.deletePost(postId);
+      return postId;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const editBizHubPost = createAsyncThunk(
+  "bizhub/editPost",
+  async (
+    { postId, data }: { postId: string; data: { title?: string; description?: string; type?: string } },
+    { rejectWithValue }
+  ) => {
+    try {
+      const updatedPost = await bizhubApi.editPost(postId, data);
+      return updatedPost;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const bizhubSlice = createSlice({
   name: "bizhub",
   initialState,
@@ -368,6 +395,36 @@ const bizhubSlice = createSlice({
           state.currentPost = action.payload;
         }
         bizhubSlice.caseReducers.filterPosts(state);
+      })
+      // Delete post
+      .addCase(deleteBizHubPost.fulfilled, (state, action) => {
+        const postId = action.payload;
+        state.posts = state.posts.filter((p) => p._id !== postId);
+        if (state.currentPost?._id === postId) {
+          state.currentPost = null;
+        }
+        bizhubSlice.caseReducers.filterPosts(state);
+      })
+      .addCase(deleteBizHubPost.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+      // Edit post
+      .addCase(editBizHubPost.fulfilled, (state, action) => {
+        if (!action.payload || !action.payload._id) return;
+
+        const existingIndex = state.posts.findIndex(
+          (p) => p._id === action.payload._id
+        );
+        if (existingIndex >= 0) {
+          state.posts[existingIndex] = action.payload;
+        }
+        if (state.currentPost?._id === action.payload._id) {
+          state.currentPost = action.payload;
+        }
+        bizhubSlice.caseReducers.filterPosts(state);
+      })
+      .addCase(editBizHubPost.rejected, (state, action) => {
+        state.error = action.payload as string;
       });
   },
 });

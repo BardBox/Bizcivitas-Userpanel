@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useRef, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../../../../store/store";
-import { createBizHubPost } from "../../../../../store/bizhubSlice";
+import { useState, useRef, FormEvent, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../../../../store/store";
+import { createBizHubPost, editBizHubPost, fetchBizHubPostById } from "../../../../../store/bizhubSlice";
 import Image from "next/image";
+import TipTapEditor from "@/components/TipTapEditor";
+import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 
 const categories = [
   { value: "general-chatter", label: "General Chatter" },
@@ -19,7 +21,11 @@ const categories = [
 export default function CreateBizHubPostPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
+  const editId = searchParams?.get("edit");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { currentPost } = useSelector((state: RootState) => state.bizhub);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -28,8 +34,34 @@ export default function CreateBizHubPostPage() {
   });
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingPost, setLoadingPost] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load post data if in edit mode
+  useEffect(() => {
+    if (editId) {
+      setLoadingPost(true);
+      dispatch(fetchBizHubPostById(editId))
+        .unwrap()
+        .then((post) => {
+          setFormData({
+            title: post.title || "",
+            description: post.description || "",
+            type: post.type || "",
+          });
+          if (post.mediaUrls && post.mediaUrls.length > 0) {
+            setExistingImageUrls(post.mediaUrls);
+          }
+          setLoadingPost(false);
+        })
+        .catch((err) => {
+          setError("Failed to load post data");
+          setLoadingPost(false);
+        });
+    }
+  }, [editId, dispatch]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -86,25 +118,41 @@ export default function CreateBizHubPostPage() {
     try {
       setLoading(true);
 
-      // Create FormData
-      const data = new FormData();
-      data.append("title", formData.title);
-      data.append("description", formData.description);
-      data.append("type", formData.type);
-      data.append("visibility", "public");
+      if (editId) {
+        // Edit mode - use JSON, not FormData
+        await dispatch(
+          editBizHubPost({
+            postId: editId,
+            data: {
+              title: formData.title,
+              description: formData.description,
+              type: formData.type,
+            },
+          })
+        ).unwrap();
+        // Navigate back to detail page
+        router.push(`/feeds/biz-hub/${editId}`);
+      } else {
+        // Create mode - use FormData for images
+        const data = new FormData();
+        data.append("title", formData.title);
+        data.append("description", formData.description);
+        data.append("type", formData.type);
+        data.append("visibility", "public");
 
-      // Append images
-      selectedImages.forEach((image) => {
-        data.append("media", image);
-      });
+        // Append images
+        selectedImages.forEach((image) => {
+          data.append("media", image);
+        });
 
-      // Dispatch action
-      await dispatch(createBizHubPost(data)).unwrap();
+        // Dispatch action
+        await dispatch(createBizHubPost(data)).unwrap();
 
-      // Navigate back to BizHub
-      router.push("/feeds/biz-hub");
+        // Navigate back to BizHub
+        router.push("/feeds/biz-hub");
+      }
     } catch (err: any) {
-      setError(err.message || "Failed to create post");
+      setError(err.message || `Failed to ${editId ? "update" : "create"} post`);
     } finally {
       setLoading(false);
     }
@@ -114,7 +162,9 @@ export default function CreateBizHubPostPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Create Post</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {editId ? "Edit Post" : "Create Post"}
+        </h1>
         <button
           onClick={() => router.back()}
           className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -125,6 +175,32 @@ export default function CreateBizHubPostPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+        {/* Loading State */}
+        {loadingPost && (
+          <div className="flex items-center justify-center py-8">
+            <svg
+              className="animate-spin h-8 w-8 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -177,7 +253,7 @@ export default function CreateBizHubPostPage() {
           </select>
         </div>
 
-        {/* Description Textarea */}
+        {/* Description Rich Text Editor */}
         <div>
           <label
             htmlFor="description"
@@ -185,16 +261,17 @@ export default function CreateBizHubPostPage() {
           >
             Description <span className="text-red-500">*</span>
           </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Write your post content..."
-            rows={8}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+
+          <TipTapEditor
+            content={formData.description}
+            onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
+            placeholder="Write your post content... Use the toolbar to format text!"
             disabled={loading}
           />
+
+          <div className="mt-2 text-xs text-gray-500">
+            Tip: Use the toolbar above to format your text with bold, italic, lists, and more.
+          </div>
         </div>
 
         {/* Image Upload */}
@@ -313,10 +390,10 @@ export default function CreateBizHubPostPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Creating...
+                {editId ? "Updating..." : "Creating..."}
               </>
             ) : (
-              "Create Post"
+              editId ? "Update Post" : "Create Post"
             )}
           </button>
         </div>

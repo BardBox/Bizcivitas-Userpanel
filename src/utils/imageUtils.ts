@@ -4,7 +4,7 @@
  * Based on mobile app logic: if not https, prepend baseURL + /image/
  */
 export const getAbsoluteImageUrl = (imagePath: string | undefined): string => {
-  if (!imagePath) return "/images/default-avatar.svg";
+  if (!imagePath) return "/images/favicon.svg";
 
   // If it's a local public path, return as is
   if (imagePath.startsWith("/")) {
@@ -15,7 +15,7 @@ export const getAbsoluteImageUrl = (imagePath: string | undefined): string => {
   if (imagePath.startsWith("https://")) {
     // If it's from icon-library.com, return our default avatar instead
     if (imagePath.includes("icon-library.com")) {
-      return "/images/default-avatar.svg";
+      return "/images/favicon.svg";
     }
     return imagePath;
   }

@@ -81,7 +81,7 @@ export function transformBizHubPostToMock(post: any): BizPulseMockPost {
     author: {
       name: authorName,
       title: post.user?.role || post.user?.classification || "Member",
-      avatar: post.user?.avatar ? getImageUrl(post.user.avatar, "avatar") || null : null,
+      avatar: post.user?.avatar ? getImageUrl(post.user.avatar, "avatar") || null : "/favicon.ico",
     },
     image: imageFromMedia,
     stats: {

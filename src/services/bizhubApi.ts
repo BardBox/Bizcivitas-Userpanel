@@ -193,6 +193,22 @@ class BizHubApiService {
     const json = await response.json();
     return json;
   }
+
+  // Report post
+  async reportPost(postId: string, reason: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/report`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      credentials: "include",
+      body: JSON.stringify({ postId, reason }),
+    });
+    if (!response.ok) {
+      const json = await response.json();
+      throw new Error(json?.error || `Failed to report post: ${response.statusText}`);
+    }
+    const json = await response.json();
+    return json;
+  }
 }
 
 export const bizhubApi = new BizHubApiService();

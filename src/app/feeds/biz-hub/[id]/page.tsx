@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../../../../store/store";
@@ -12,8 +13,15 @@ import {
   editBizHubComment,
   deleteBizHubComment,
   likeBizHubComment,
+  deleteBizHubPost,
+  editBizHubPost,
 } from "../../../../../store/bizhubSlice";
 import { bizhubApi } from "@/services/bizhubApi";
+import ReportModal from "@/components/modals/ReportModal";
+import TipTapEditor from "@/components/TipTapEditor";
+import HtmlContent from "@/components/HtmlContent";
+import DeleteConfirmModal from "@/components/modals/DeleteConfirmModal";
+import ImageCarousel from "@/components/ImageCarousel";
 
 // Utility functions
 const getInitials = (name: string): string => {
@@ -65,12 +73,19 @@ export default function BizHubPostDetail() {
   const [imageError, setImageError] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<"comment" | "post">("comment");
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showPostMenu, setShowPostMenu] = useState(false);
 
   useEffect(() => {
     if (postId) {
       dispatch(fetchBizHubPostById(postId));
     }
   }, [dispatch, postId]);
+
 
   const handleLike = () => {
     if (postId) {
@@ -133,25 +148,69 @@ export default function BizHubPostDetail() {
     }
   };
 
-  const handleReportComment = async (commentId: string) => {
+  const handleOpenReportModal = (commentId: string) => {
+    setReportingCommentId(commentId);
+    setReportType("comment");
+    setIsReportModalOpen(true);
+  };
+
+  const handleOpenReportPostModal = () => {
+    setReportingPostId(postId);
+    setReportType("post");
+    setIsReportModalOpen(true);
+  };
+
+  const handleReportSubmit = async (reason: string) => {
     if (!postId) return;
 
-    const reason = prompt("Please provide a reason for reporting this comment:");
-    if (!reason || !reason.trim()) return;
-
     try {
-      setReportingCommentId(commentId);
-      await bizhubApi.reportComment(postId, commentId, reason.trim());
-      alert("Comment reported successfully. It will be hidden from your view.");
-      // Refresh post to hide reported comment
+      if (reportType === "comment" && reportingCommentId) {
+        await bizhubApi.reportComment(postId, reportingCommentId, reason);
+        toast.success("Comment reported successfully. It will be hidden from your view.");
+      } else if (reportType === "post" && reportingPostId) {
+        await bizhubApi.reportPost(postId, reason);
+        toast.success("Post reported successfully. Thank you for helping keep the community safe.");
+      }
+      // Refresh post to hide reported content
       dispatch(fetchBizHubPostById(postId));
     } catch (err: any) {
-      alert(err.message || "Failed to report comment");
-      console.error("Failed to report comment:", err);
+      toast.error(err.message || `Failed to report ${reportType}`);
+      console.error(`Failed to report ${reportType}:`, err);
+      throw err; // Re-throw to let modal handle the error state
     } finally {
       setReportingCommentId(null);
+      setReportingPostId(null);
     }
   };
+
+  const handleOpenDeleteModal = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!postId) return;
+
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteBizHubPost(postId)).unwrap();
+      toast.success("Post deleted successfully");
+      setIsDeleteModalOpen(false);
+      router.push("/feeds/biz-hub");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete post");
+      console.error("Failed to delete post:", err);
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEditPost = () => {
+    if (!post) return;
+    // Redirect to create page with edit mode
+    router.push(`/feeds/biz-hub/create?edit=${postId}`);
+  };
+
+  // Determine if current user is the post owner
+  const isPostOwner = post?.user?._id === userId || post?.userId?._id === userId;
 
   if (loading) {
     return (
@@ -233,7 +292,87 @@ export default function BizHubPostDetail() {
               </div>
             </div>
           </div>
-          <span className="text-sm text-gray-400">{post.timeAgo}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">{post.timeAgo}</span>
+
+            {/* Three-dot menu for post owner */}
+            {isPostOwner && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowPostMenu(!showPostMenu)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Post options"
+                >
+                  <svg
+                    className="w-5 h-5 text-gray-500"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showPostMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowPostMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                      <button
+                        onClick={() => {
+                          setShowPostMenu(false);
+                          handleEditPost();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Post
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowPostMenu(false);
+                          handleOpenDeleteModal();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Post
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Show report button for non-owners */}
+            {!isPostOwner && (
+              <button
+                onClick={handleOpenReportPostModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                title="Report post"
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500 hover:text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Category Badge */}
@@ -244,26 +383,19 @@ export default function BizHubPostDetail() {
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900">{post.title}</h1>
 
-        {/* Images */}
+        {/* Images Carousel */}
         {post.mediaUrls && post.mediaUrls.length > 0 && (
-          <div className="space-y-4">
-            {post.mediaUrls.map((url, index) => (
-              <Image
-                key={index}
-                src={getAbsoluteImageUrl(url) || "/placeholder.jpg"}
-                alt={`Image ${index + 1}`}
-                width={800}
-                height={450}
-                className="w-full h-auto rounded-lg object-cover"
-              />
-            ))}
-          </div>
+          <ImageCarousel
+            images={post.mediaUrls.map(url => getAbsoluteImageUrl(url) || "/placeholder.jpg")}
+            alt={post.title}
+          />
         )}
 
         {/* Description */}
-        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-          {post.description}
-        </div>
+        <HtmlContent
+          content={post.description}
+          className="text-gray-700 leading-relaxed"
+        />
 
         {/* Actions */}
         <div className="flex items-center gap-6 pt-4 border-t">
@@ -340,11 +472,11 @@ export default function BizHubPostDetail() {
               // Construct name from fname and lname (backend returns these separately)
               const commentAuthorName = comment.userId?.fname && comment.userId?.lname
                 ? `${comment.userId.fname} ${comment.userId.lname}`
-                : "Unknown";
+                : comment.user?.name || "Unknown";
 
               const commentAuthorInitials = getInitials(commentAuthorName);
               const commentAvatarColor = getAvatarColor(commentAuthorName);
-              const isCommentOwner = comment.userId?._id === userId;
+              const isCommentOwner = comment.userId?._id === userId || comment.user?._id === userId;
               const isCommentLiked = comment.likes?.some(
                 (like: any) => like.userId === userId
               );
@@ -454,9 +586,8 @@ export default function BizHubPostDetail() {
 
                           {!isCommentOwner && (
                             <button
-                              onClick={() => handleReportComment(comment._id)}
-                              disabled={reportingCommentId === comment._id}
-                              className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50"
+                              onClick={() => handleOpenReportModal(comment._id)}
+                              className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-600"
                               title="Report comment"
                             >
                               <svg
@@ -472,7 +603,7 @@ export default function BizHubPostDetail() {
                                   d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
                                 />
                               </svg>
-                              {reportingCommentId === comment._id ? "Reporting..." : "Report"}
+                              Report
                             </button>
                           )}
                         </div>
@@ -489,6 +620,28 @@ export default function BizHubPostDetail() {
           )}
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => {
+          setIsReportModalOpen(false);
+          setReportingCommentId(null);
+          setReportingPostId(null);
+        }}
+        onSubmit={handleReportSubmit}
+        type={reportType}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone and the post will be permanently removed."
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

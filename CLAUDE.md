@@ -40,6 +40,13 @@ bizcivitas-main/
 │   │   └── slices/             # Redux slices
 │   └── types/                   # TypeScript types
 ├── bizcivitas-apk/              ← React Native mobile app (reference)
+│   ├── src/
+│   │   ├── screens/
+│   │   │   ├── bizHub/         # BizHub forum screens
+│   │   │   ├── bizPulse/       # BizPulse social feed screens
+│   │   │   └── dashboard/      # Main dashboard screens
+│   │   ├── components/         # React Native components
+│   │   └── services/           # API services (Axios)
 ├── Bizcivitas-Admin-panel/      ← Admin panel
 └── BizCivitas/                  ← Legacy or other platform
 ```
@@ -346,6 +353,85 @@ NEXT_PUBLIC_FIREBASE_VAPID_KEY=   # For FCM
 4. Optimize image loading
 5. Implement code splitting for routes
 
+## 📱 BizHub & BizPulse - Key Files Reference
+
+### **Web App (Bizcivitas-Userpanel)**
+
+#### BizHub Files
+- `src/app/feeds/biz-hub/page.tsx` - Main BizHub feed listing
+- `src/app/feeds/biz-hub/[id]/page.tsx` - BizHub post detail page
+- `src/app/feeds/biz-hub/create/page.tsx` - Create BizHub post
+- `src/components/Dashboard/Bizhub/BizHubPostCard.tsx` - Post card component
+- `src/components/Dashboard/BizHubTabNavigation.tsx` - Category tabs
+- `store/bizhubSlice.ts` - Redux state management
+- `src/services/bizhubApi.ts` - BizHub API service
+
+#### BizPulse Files
+- `src/app/feeds/biz-pulse/page.tsx` - Main BizPulse feed
+- `src/app/feeds/biz-pulse/[id]/page.tsx` - BizPulse post detail page
+- `src/components/Dashboard/PostCard.tsx` - BizPulse post card
+- `store/postsSlice.ts` - Redux state for posts
+
+#### Shared Components
+- `src/components/modals/ReportModal.tsx` - Report modal (used by both)
+- `src/services/reportApi.ts` - Report API service
+
+### **Mobile App (bizcivitas-apk)**
+
+#### BizHub Files (React Native)
+- `src/screens/bizHub/BizHubForumScreen.tsx` - Main BizHub screen
+- `src/screens/dashboard/ForumScreen.tsx` - Forum detail screen with comments
+
+#### BizPulse Files (React Native)
+- `src/screens/bizPulse/BizPulseForumScreen.tsx` - BizPulse feed screen
+
+#### API Service
+- `src/services/api.js` - Axios instance with JWT auth
+
+### **Backend (DO NOT MODIFY - Reference Only)**
+
+#### Report Endpoints
+- `src/routes/report.routes.js` - Report API routes
+- `src/controllers/report.controller.js` - Report logic
+- `src/models/report.model.js` - Report schema
+
+#### BizHub Endpoints
+- Post routes: `POST /api/v1/post/create`, `GET /api/v1/post/`, `GET /api/v1/post/:id`
+- Comment routes: `POST /api/v1/post/:id/comment`, `PUT /api/v1/post/comments/edit`
+- Like routes: `POST /api/v1/post/like`, `POST /api/v1/post/:id/comments/:id/like`
+- Report routes: `POST /api/v1/report` (for posts and comments)
+
+### **Report API Payload Structure**
+
+```typescript
+// Report a post
+POST /api/v1/report
+{
+  postId: string;        // MongoDB ObjectId
+  reason: "spam" | "inappropriate" | "hate speech" | "misinformation" | "other";
+}
+
+// Report a comment
+POST /api/v1/report
+{
+  postId: string;        // MongoDB ObjectId (required for finding comment)
+  commentId: string;     // MongoDB ObjectId
+  reason: "spam" | "inappropriate" | "hate speech" | "misinformation" | "other";
+}
+```
+
+### **BizHub Categories**
+```typescript
+type BizHubCategory =
+  | "all"
+  | "general-chatter"
+  | "referral-exchange"
+  | "business-deep-dive"
+  | "travel-talks"
+  | "biz-learnings"
+  | "collab-corner"
+```
+
 ## 📚 References
 
 - Next.js 14 Docs: https://nextjs.org/docs
@@ -356,6 +442,6 @@ NEXT_PUBLIC_FIREBASE_VAPID_KEY=   # For FCM
 
 ---
 
-**Last Updated:** 2025-01-16
+**Last Updated:** 2025-01-30
 **Maintained By:** Claude Code AI Assistant
 **Project Version:** 1.0.0

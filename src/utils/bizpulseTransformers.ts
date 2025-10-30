@@ -134,7 +134,7 @@ export function transformBizPulsePostToMock(
         title: post.userId?.role || "Member",
         avatar: post.userId?.avatar
           ? getImageUrl(post.userId.avatar, "avatar")
-          : null,
+          : "/favicon.ico",
       },
       image: (() => {
         // Try to get image from images array
@@ -156,6 +156,13 @@ export function transformBizPulsePostToMock(
           return imageUrl;
         }
         console.log("No image found in post. images:", post.images, "article:", post.article);
+        return undefined;
+      })(),
+      images: (() => {
+        // Return all images if available
+        if (Array.isArray(post.images) && post.images.length > 0) {
+          return post.images.map(img => getImageUrl(img, "post")).filter(Boolean) as string[];
+        }
         return undefined;
       })(),
       stats: {

@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { Heart, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
@@ -13,7 +12,6 @@ interface PostCardProps {
   author?: {
     name: string;
     title: string;
-    avatar?: string;
   };
   image?: string;
   stats?: {
@@ -34,7 +32,6 @@ export default function PostCard({
   stats = { likes: 0, comments: 0, shares: 0 },
   timeAgo,
 }: PostCardProps) {
-  // Determine if this is a BizPulse post (has category) vs BizHub post
   const isBizPulse = !!category;
   const detailUrl = isBizPulse ? `/feeds/biz-pulse/${id}` : `/feeds/biz-hub/${id}`;
 
@@ -65,32 +62,36 @@ export default function PostCard({
           {author && (
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                {author.avatar ? (
-                  <Image
-                    src={getAbsoluteImageUrl(author.avatar)}
-                    alt={author.name}
-                    width={28}
-                    height={28}
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-gray-200" />
-                )}
+                {/* Always use favicon as avatar */}
+                <Image
+                  src="/favicon.ico"
+                  alt="Site Icon"
+                  width={28}
+                  height={28}
+                  className="rounded-full object-cover"
+                />
                 <div className="ml-2">
-                  <div className="text-sm font-medium text-gray-900 leading-4">{author.name}</div>
+                  <div className="text-sm font-medium text-gray-900 leading-4">
+                    {author.name}
+                  </div>
                   {author.title && (
-                    <div className="text-[11px] text-gray-500 leading-4">{author.title}</div>
+                    <div className="text-[11px] text-gray-500 leading-4">
+                      {author.title}
+                    </div>
                   )}
                 </div>
               </div>
               {timeAgo && <span className="text-[11px] text-gray-500">{timeAgo}</span>}
             </div>
           )}
+
           {/* Category */}
           {category && (
             <div className="mb-3">
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getCategoryColor(category)}`}
+                className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getCategoryColor(
+                  category
+                )}`}
               >
                 {getCategoryLabel(category)}
               </span>

@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import {
   useDeleteNotificationMutation,
   useGetUnreadNotificationsQuery,
@@ -154,14 +155,16 @@ export default function NotificationDropdown({
 
   const handleEnableNotifications = async () => {
     if (notificationPermission === "denied") {
-      alert(
-        "Notifications are blocked. Please enable them in your browser settings."
+      toast.error(
+        "Notifications are blocked. Please enable them in your browser settings.",
+        { duration: 5000 }
       );
       return;
     }
 
     const success = await requestNotificationPermission();
     if (success) {
+      toast.success("Notifications enabled successfully");
       refetch();
     }
   };

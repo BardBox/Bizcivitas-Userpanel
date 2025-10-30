@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import toast from "react-hot-toast";
 import { X, Phone, MessageCircle, Copy } from "lucide-react";
 
 interface CallOptionsModalProps {
@@ -182,8 +183,9 @@ const CallOptionsModal: React.FC<CallOptionsModalProps> = ({
           // Clean up textarea
           document.body.removeChild(textArea);
           console.error("Fallback copy failed:", fallbackError);
-          alert(
-            "Unable to copy automatically. Please copy manually: " + phoneNumber
+          toast.error(
+            "Unable to copy automatically. Please copy manually: " + phoneNumber,
+            { duration: 5000 }
           );
           // Still close modal after showing error
           onClose();
@@ -191,8 +193,9 @@ const CallOptionsModal: React.FC<CallOptionsModalProps> = ({
       }
     } catch (error) {
       console.error("Failed to copy phone number:", error);
-      alert(
-        "Unable to copy to clipboard. Please copy manually: " + phoneNumber
+      toast.error(
+        "Unable to copy to clipboard. Please copy manually: " + phoneNumber,
+        { duration: 5000 }
       );
       // Still close modal even on error
       onClose();

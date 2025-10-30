@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { useAppDispatch } from "../../../../store/hooks";
 import { addToast } from "../../../../store/toastSlice";
 import { useGetCurrentUserQuery } from "@/store/api";
@@ -185,9 +186,9 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
             document.body.removeChild(textArea);
             console.error("Fallback copy failed:", fallbackError);
             // Show the content to user so they can copy manually
-            alert(
-              "Unable to copy automatically. Here's the contact information:\n\n" +
-                shareMessage
+            toast.error(
+              "Unable to copy automatically. Please copy the information manually.",
+              { duration: 5000 }
             );
           }
         }

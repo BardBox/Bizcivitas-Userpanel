@@ -10,6 +10,7 @@ import FloatingDrawer from "@/components/Dashboard/FloatingDrawer";
 import { bizpulseApi } from "../../services/bizpulseApi";
 import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
 import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
+import { Activity, Network } from "lucide-react";
 
 // removed unused dummy utilities
 
@@ -20,6 +21,9 @@ export default function DashboardPage() {
   }
 
   const [posts, setPosts] = useState<any[]>([]);
+  const [allPosts, setAllPosts] = useState<any[]>([]);
+  const [recentPosts, setRecentPosts] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"bizpulse" | "bizhub">("bizpulse");
   const user = useSelector((state: RootState) => state.auth.user);
   const currentUserId = user?._id || user?.id || "";
   const [hasMore, setHasMore] = useState(false);
@@ -36,20 +40,55 @@ export default function DashboardPage() {
   const fetchDailyFeed = useCallback(async () => {
     try {
       setLoading(true);
-      const [dailyFeeds, bizhubPosts] = await Promise.all([
+      const [dailyFeeds, bizhubPosts, allWallFeeds] = await Promise.all([
         bizpulseApi.fetchDailyFeeds(),
         bizpulseApi.fetchBizHubPosts(),
+        bizpulseApi.fetchWallFeeds({ limit: 100 }), // Fetch recent posts
       ]);
 
-      const transformedDaily = dailyFeeds.map((wf: any) =>
-        transformWallFeedPostToMock(wf)
-      );
+      // Transform daily feed posts
+      const transformedDaily = dailyFeeds.map((wf: any) => ({
+        ...transformWallFeedPostToMock(wf),
+        postSource: "bizpulse"
+      }));
       const transformedBizhubDaily = bizhubPosts
         .filter((p: any) => p.isDailyFeed === true)
-        .map((p: any) => transformBizHubPostToMock(p));
+        .map((p: any) => ({
+          ...transformBizHubPostToMock(p),
+          postSource: "bizhub"
+        }));
 
       const merged = [...transformedDaily, ...transformedBizhubDaily];
+      setAllPosts(merged);
       setPosts(merged);
+
+      // Get all recent posts (mix BizPulse and BizHub)
+      const allBizPulsePosts = (allWallFeeds?.data?.wallFeeds || []).map((wf: any) => ({
+        ...transformWallFeedPostToMock(wf),
+        postSource: "bizpulse",
+        createdAtTimestamp: new Date(wf.createdAt).getTime()
+      }));
+
+      const allBizHubPosts = bizhubPosts.map((p: any) => ({
+        ...transformBizHubPostToMock(p),
+        postSource: "bizhub",
+        createdAtTimestamp: new Date(p.createdAt).getTime()
+      }));
+
+      // Mix and sort by most recent
+      const mixedPosts = [...allBizPulsePosts, ...allBizHubPosts]
+        .sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp)
+        .slice(0, 8)
+        .map(post => ({
+          id: post.id,
+          title: post.title,
+          description: post.content?.substring(0, 100),
+          author: post.author,
+          timeAgo: post.timeAgo,
+          postSource: post.postSource
+        }));
+
+      setRecentPosts(mixedPosts);
       setHasMore(false);
     } catch (e) {
       console.error("Failed to load daily feed", e);
@@ -62,6 +101,15 @@ export default function DashboardPage() {
     fetchDailyFeed();
   }, [fetchDailyFeed]);
 
+  // Filter posts based on active tab
+  useEffect(() => {
+    if (activeTab === "bizpulse") {
+      setPosts(allPosts.filter((post) => post.postSource === "bizpulse"));
+    } else if (activeTab === "bizhub") {
+      setPosts(allPosts.filter((post) => post.postSource === "bizhub"));
+    }
+  }, [activeTab, allPosts]);
+
   return (
     <div className="relative min-h-screen ">
       {/* Main content */}
@@ -71,7 +119,33 @@ export default function DashboardPage() {
         }`}
         style={{ height: "100vh", overflow: "auto" }}
       >
-        <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-6">
+        <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-4">
+          {/* Tab Navigation */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+            <button
+              onClick={() => setActiveTab("bizpulse")}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
+                activeTab === "bizpulse"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Activity className="w-5 h-5" />
+              <span className="font-medium">BizPulse</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("bizhub")}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
+                activeTab === "bizhub"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Network className="w-5 h-5" />
+              <span className="font-medium">BizHub</span>
+            </button>
+          </div>
+
           <InfiniteScroll
             dataLength={posts.length}
             next={() => {}}
@@ -125,7 +199,13 @@ export default function DashboardPage() {
                       post={wallFeedPost}
                       currentUserId={currentUserId}
                       onVoteSuccess={(updated) => {
-                        const updatedMock = transformWallFeedPostToMock(updated as any);
+                        const updatedMock = {
+                          ...transformWallFeedPostToMock(updated as any),
+                          postSource: "bizpulse"
+                        };
+                        setAllPosts((prev) =>
+                          prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                        );
                         setPosts((prev) =>
                           prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
                         );
@@ -136,7 +216,7 @@ export default function DashboardPage() {
               }
               return (
                 <div key={post.id}>
-                  <PostCard {...post} />
+                  <PostCard {...post} sourceType={post.postSource} />
                 </div>
               );
             })}
@@ -145,7 +225,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Right Floating Drawer */}
-      <FloatingDrawer onToggle={setIsDrawerOpen} />
+      <FloatingDrawer onToggle={setIsDrawerOpen} recentPosts={recentPosts} />
     </div>
   );
 }

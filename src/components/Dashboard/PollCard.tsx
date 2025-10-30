@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { WallFeedPost, PollOption } from "@/types/bizpulse.types";
 import { bizpulseApi } from "@/services/bizpulseApi";
-import { Calendar, ThumbsUp, X } from "lucide-react";
+import { Calendar, ThumbsUp, X, Activity } from "lucide-react";
 import Image from "next/image";
 
 interface PollCardProps {
@@ -119,21 +119,21 @@ export default function PollCard({
   const getAuthorCompany = () => "BizCivitas Member";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow mb-6">
       {/* Poll Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3 flex-1">
+          <div className="flex items-start space-x-3 flex-1 min-w-0">
             {/* ✅ Always use favicon as avatar */}
             <Image
               src="/favicon.ico"
               alt="Site Icon"
-              width={40}
-              height={40}
-              className="rounded-full object-cover"
+              width={32}
+              height={32}
+              className="rounded-full object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-wrap">
                 <h3 className="font-semibold text-gray-900 truncate">{getAuthorName()}</h3>
                 {post.badge && (
                   <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -146,6 +146,12 @@ export default function PollCard({
                 <Calendar className="w-3 h-3" />
                 <span>{post.timeAgo || new Date(post.createdAt).toLocaleDateString()}</span>
               </div>
+            </div>
+          </div>
+          {/* BizPulse Badge - Aligned with header */}
+          <div className="flex-shrink-0 ml-2">
+            <div className="flex items-center justify-center w-9 h-9 rounded-full shadow-md bg-blue-500">
+              <Activity className="w-4 h-4 text-white" />
             </div>
           </div>
         </div>

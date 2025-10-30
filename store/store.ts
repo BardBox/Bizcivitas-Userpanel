@@ -4,9 +4,12 @@ import toastReducer from "./toastSlice";
 import postsReducer from "./postsSlice";
 import authReducer from "./authSlice";
 import bizhubReducer from "./bizhubSlice";
+import dashboardReducer from "./dashboardSlice";
 import { baseApi } from "./api/baseApi";
 // Import latest events API
 import "./api/eventsApi.latest";
+// Import dashboard API
+import "./api/dashboardApi";
 
 // Placeholder slice to prevent empty reducer error
 const placeholderSlice = createSlice({
@@ -24,6 +27,7 @@ export const store = configureStore({
     posts: postsReducer,
     auth: authReducer,
     bizhub: bizhubReducer,
+    dashboard: dashboardReducer,
     // Add API reducer
     [baseApi.reducerPath]: baseApi.reducer,
   },

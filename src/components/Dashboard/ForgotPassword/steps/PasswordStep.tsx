@@ -75,9 +75,9 @@ export default function PasswordStep({
 
       if (response.ok && data.success) {
         setCompletedSteps((prev) => [...prev, 3]);
-        toast.success("Password reset successful! Redirecting to login...");
+        toast.success("Password reset successful! Redirecting to home page...");
         setTimeout(() => {
-          router.push("/login");
+          router.push("/");
         }, 2000);
       } else {
         setError(data.message || "Failed to reset password");

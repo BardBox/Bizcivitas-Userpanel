@@ -70,17 +70,17 @@ export default function DashboardPage() {
   const ActiveChart = chartComponents[activeChartIndex];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Dashboard
           </h1>
         </div>
 
         {/* Dashboard Cards Grid - Clickable to switch charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {dashboardCards.map((card, index) => (
             <div
               key={card.id}
@@ -96,7 +96,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Chart Section */}
-        <div className="mt-6">
+        <div className="mt-4 md:mt-6">
           <ActiveChart />
         </div>
       </div>

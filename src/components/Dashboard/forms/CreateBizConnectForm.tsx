@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Modal from "../Modal";
-import { Search, X } from "lucide-react";
+import UserSearchModal, { User } from "./UserSearchModal";
+import { Search, User as UserIcon, FileText, Phone, Mail, MapPinned, MessageSquare, AlertCircle } from "lucide-react";
 
 interface CreateBizConnectFormProps {
   isOpen: boolean;
@@ -29,7 +30,6 @@ export default function CreateBizConnectForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUserSearch, setShowUserSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -39,6 +39,19 @@ export default function CreateBizConnectForm({
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleSelectUser = (user: User) => {
+    setFormData((prev) => ({
+      ...prev,
+      to: user.name,
+      toUserId: user.userId,
+    }));
+    setShowUserSearch(false);
+    // Clear error when user selects
+    if (errors.to) {
+      setErrors((prev) => ({ ...prev, to: "" }));
     }
   };
 
@@ -114,137 +127,171 @@ export default function CreateBizConnectForm({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create BizConnect">
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {/* To User */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thank You To <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowUserSearch(true)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left flex items-center justify-between hover:border-blue-400 transition-colors"
-            >
-              <span className={formData.to ? "text-gray-900" : "text-gray-400"}>
-                {formData.to || "Select user..."}
-              </span>
-              <Search className="w-5 h-5 text-gray-400" />
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create BizConnect"
+    >
+      <form onSubmit={handleSubmit} className="p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        {/* Two Column Layout for Large Screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* To User */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <UserIcon className="w-4 h-4 text-blue-600" />
+                Thank You To <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowUserSearch(true)}
+                  className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl text-left flex items-center justify-between hover:border-blue-400 hover:bg-white transition-all shadow-sm bg-white/80 backdrop-blur-sm"
+                >
+                  <span className={formData.to ? "text-gray-900 font-medium" : "text-gray-500"}>
+                    {formData.to || "Select user..."}
+                  </span>
+                  <Search className="w-5 h-5 text-blue-500" />
+                </button>
+              </div>
+              {errors.to && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" /> {errors.to}
+                </p>
+              )}
+            </div>
+
+            {/* Referral Name */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600" />
+                Referral Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="referralName"
+                value={formData.referralName}
+                onChange={handleChange}
+                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500"
+                placeholder="Enter referral name"
+              />
+              {errors.referralName && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" /> {errors.referralName}
+                </p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <Phone className="w-4 h-4 text-blue-600" />
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="telephone"
+                value={formData.telephone}
+                onChange={handleChange}
+                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500"
+                placeholder="Enter 10-digit phone number"
+                maxLength={10}
+              />
+              {errors.telephone && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" /> {errors.telephone}
+                </p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-600" />
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500"
+                placeholder="Enter email (optional)"
+              />
+            </div>
           </div>
-          {errors.to && <p className="mt-1 text-sm text-red-600">{errors.to}</p>}
-        </div>
 
-        {/* Referral Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Referral Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="referralName"
-            value={formData.referralName}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter referral name"
-          />
-          {errors.referralName && (
-            <p className="mt-1 text-sm text-red-600">{errors.referralName}</p>
-          )}
-        </div>
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Address */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <MapPinned className="w-4 h-4 text-blue-600" />
+                Address
+              </label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows={5}
+                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white resize-none text-gray-900 placeholder-gray-500"
+                placeholder="Enter address (optional)"
+              />
+            </div>
 
-        {/* Phone */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter 10-digit phone number"
-            maxLength={10}
-          />
-          {errors.telephone && (
-            <p className="mt-1 text-sm text-red-600">{errors.telephone}</p>
-          )}
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter email (optional)"
-          />
-        </div>
-
-        {/* Address */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Address
-          </label>
-          <textarea
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="Enter address (optional)"
-          />
-        </div>
-
-        {/* Comments */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Comments
-          </label>
-          <textarea
-            name="comments"
-            value={formData.comments}
-            onChange={handleChange}
-            rows={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="Enter comments"
-          />
+            {/* Comments */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-blue-600" />
+                Comments
+              </label>
+              <textarea
+                name="comments"
+                value={formData.comments}
+                onChange={handleChange}
+                rows={7}
+                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white resize-none text-gray-900 placeholder-gray-500"
+                placeholder="Enter comments"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Submit Error */}
         {errors.submit && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{errors.submit}</p>
+          <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+            <p className="text-sm text-red-700 font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" /> {errors.submit}
+            </p>
           </div>
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-4 pt-6">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+            className="flex-1 px-6 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-semibold transition-all shadow-sm hover:shadow-md"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
           >
             {isSubmitting ? "Creating..." : "Create Referral"}
           </button>
         </div>
       </form>
 
-      {/* User Search Modal would go here - simplified for now */}
+      {/* User Search Modal */}
+      <UserSearchModal
+        isOpen={showUserSearch}
+        onClose={() => setShowUserSearch(false)}
+        onSelectUser={handleSelectUser}
+      />
     </Modal>
   );
 }

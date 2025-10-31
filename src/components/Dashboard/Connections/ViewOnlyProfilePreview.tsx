@@ -123,15 +123,15 @@ const ViewOnlyProfilePreview: React.FC<ViewOnlyProfilePreviewProps> = ({
 
       {/* Image Preview Modal */}
       {showImageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
-          <div className="relative max-w-3xl max-h-[90vh] p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="relative max-w-3xl max-h-[90vh] p-4 border-2 border-gray-300 rounded-lg bg-white shadow-2xl">
             <button
               onClick={() => setShowImageModal(false)}
-              className="absolute top-2 right-2 text-white hover:text-gray-300 z-10"
+              className="absolute top-2 right-2 text-gray-700 hover:text-gray-900 bg-white rounded-full p-1 shadow-md z-10"
             >
-              <X className="h-8 w-8" />
+              <X className="h-6 w-6" />
             </button>
-            <div className="bg-white rounded-lg overflow-hidden">
+            <div className="rounded-lg overflow-hidden">
               {currentImageUrl ? (
                 <Image
                   src={currentImageUrl}

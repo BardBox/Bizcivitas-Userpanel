@@ -19,6 +19,7 @@ import {
 } from "../../../../store/api/dashboardApi";
 import { Plus } from "lucide-react";
 import CreateBizWinForm from "../forms/CreateBizWinForm";
+import BizWinDetailModal from "./BizWinDetailModal";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
@@ -49,6 +50,7 @@ function formatCurrency(value: number): string {
 export default function BizWinChart() {
   const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Conditional API calls based on selected range
   const {
@@ -195,7 +197,10 @@ export default function BizWinChart() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-4 rounded-xl border border-blue-200">
+        <div
+          onClick={() => setIsDetailModalOpen(true)}
+          className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-4 rounded-xl border border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-blue-700 mb-1 font-medium">BizWin Given</p>
@@ -210,7 +215,10 @@ export default function BizWinChart() {
             </div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-green-50 to-green-100 px-6 py-4 rounded-xl border border-green-200">
+        <div
+          onClick={() => setIsDetailModalOpen(true)}
+          className="bg-gradient-to-br from-green-50 to-green-100 px-6 py-4 rounded-xl border border-green-200 cursor-pointer hover:shadow-lg transition-shadow"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-green-700 mb-1 font-medium">BizWin Received</p>
@@ -296,6 +304,8 @@ export default function BizWinChart() {
                   radius={[8, 8, 0, 0]}
                   name="Given"
                   maxBarSize={60}
+                  onClick={() => setIsDetailModalOpen(true)}
+                  cursor="pointer"
                 />
                 <Bar
                   dataKey="received"
@@ -303,6 +313,8 @@ export default function BizWinChart() {
                   radius={[8, 8, 0, 0]}
                   name="Received"
                   maxBarSize={60}
+                  onClick={() => setIsDetailModalOpen(true)}
+                  cursor="pointer"
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -317,6 +329,13 @@ export default function BizWinChart() {
         onSuccess={() => {
           window.location.reload();
         }}
+      />
+
+      {/* BizWin Detail Modal */}
+      <BizWinDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        initialDateRange={selectedRange}
       />
     </div>
   );

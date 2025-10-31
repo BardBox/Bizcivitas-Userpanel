@@ -243,12 +243,6 @@ const CallOptionsModal: React.FC<CallOptionsModalProps> = ({
 
   const modalContent = (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-[9998] transition-opacity"
-        onClick={onClose}
-      />
-
       {/* Modal */}
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <div

@@ -36,9 +36,9 @@ export default function DashboardHeader() {
       sessionStorage.clear();
     }
 
-    // Force immediate hard redirect using window.location
+    // Force immediate hard redirect to home page using window.location
     // This is more reliable than router.replace for logout
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return (

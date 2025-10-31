@@ -30,14 +30,14 @@ export function useFastAuth() {
     const authenticated = checkAuth();
     setIsLoading(false);
 
-    // If not authenticated, redirect immediately
+    // If not authenticated, redirect immediately to home page
     if (!authenticated) {
-      router.replace("/login");
+      router.replace("/");
     }
   }, []); // Remove dependencies to prevent infinite loop
 
   const redirectToLogin = useCallback(() => {
-    router.replace("/login");
+    router.replace("/");
   }, [router]);
 
   const redirectToFeeds = useCallback(() => {

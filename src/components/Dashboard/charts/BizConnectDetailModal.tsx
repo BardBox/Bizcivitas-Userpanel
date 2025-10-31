@@ -58,35 +58,53 @@ export default function BizConnectDetailModal({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Calculate date range based on selected filter
+  // Calculate date range based on selected filter (matching backend logic)
   const calculateDateRange = (range: string) => {
-    const now = new Date();
-    const start = new Date();
+    const currentDate = new Date();
+    currentDate.setUTCHours(23, 59, 59, 999);
+
+    const startDate = new Date(currentDate);
 
     switch (range) {
       case "15days":
-        start.setDate(now.getDate() - 14);
+        startDate.setDate(currentDate.getDate() - 14); // 15 days = today + last 14 days
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
       case "3months":
-        start.setMonth(now.getMonth() - 3);
+        const FORTNIGHT_DAYS = 15;
+        const TOTAL_FORTNIGHTS = 6;
+        startDate.setDate(startDate.getDate() - FORTNIGHT_DAYS * TOTAL_FORTNIGHTS);
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
       case "6months":
-        start.setMonth(now.getMonth() - 6);
+        startDate.setMonth(startDate.getMonth() - 5);
+        startDate.setDate(1);
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
       case "tilldate":
-        start.setFullYear(2000); // Far back in past
+        startDate.setFullYear(2000);
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
     }
 
+    // Add IST offset (5.5 hours) to compensate for backend's subtraction
+    startDate.setHours(startDate.getHours() + 5);
+    startDate.setMinutes(startDate.getMinutes() + 30);
+    currentDate.setHours(currentDate.getHours() + 5);
+    currentDate.setMinutes(currentDate.getMinutes() + 30);
+
     return {
-      startDate: start.toISOString().split("T")[0],
-      endDate: now.toISOString().split("T")[0],
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: currentDate.toISOString().split("T")[0],
     };
   };
 
   // Fetch data when modal opens or filters change
   useEffect(() => {
     if (isOpen) {
+      console.log("BizConnect Modal: Fetching data for date range:", dateRange);
       fetchData();
     }
   }, [isOpen, dateRange]);

@@ -49,37 +49,57 @@ export default function BizWinDetailModal({
   const [dateRange, setDateRange] = useState(initialDateRange);
   const [givenData, setGivenData] = useState<BizWinRecord[]>([]);
   const [receivedData, setReceivedData] = useState<BizWinRecord[]>([]);
+  const [totalGivenAmount, setTotalGivenAmount] = useState(0);
+  const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
   const calculateDateRange = (range: string) => {
-    const now = new Date();
-    const start = new Date();
+    const currentDate = new Date();
+    currentDate.setUTCHours(23, 59, 59, 999);
+
+    const startDate = new Date(currentDate);
 
     switch (range) {
       case "15days":
-        start.setDate(now.getDate() - 14);
+        startDate.setDate(currentDate.getDate() - 14); // 15 days = today + last 14 days
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
       case "3months":
-        start.setMonth(now.getMonth() - 3);
+        const FORTNIGHT_DAYS = 15;
+        const TOTAL_FORTNIGHTS = 6;
+        startDate.setDate(startDate.getDate() - FORTNIGHT_DAYS * TOTAL_FORTNIGHTS);
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
       case "6months":
-        start.setMonth(now.getMonth() - 6);
+        startDate.setMonth(startDate.getMonth() - 5);
+        startDate.setDate(1);
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
       case "tilldate":
-        start.setFullYear(2000);
+        startDate.setFullYear(2000);
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        startDate.setUTCHours(0, 0, 0, 0);
         break;
     }
 
+    // Add IST offset (5.5 hours) to compensate for backend's subtraction
+    startDate.setHours(startDate.getHours() + 5);
+    startDate.setMinutes(startDate.getMinutes() + 30);
+    currentDate.setHours(currentDate.getHours() + 5);
+    currentDate.setMinutes(currentDate.getMinutes() + 30);
+
     return {
-      startDate: start.toISOString().split("T")[0],
-      endDate: now.toISOString().split("T")[0],
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: currentDate.toISOString().split("T")[0],
     };
   };
 
   useEffect(() => {
     if (isOpen) {
+      console.log("BizWin Modal: Fetching data for date range:", dateRange);
       fetchData();
     }
   }, [isOpen, dateRange]);
@@ -91,8 +111,12 @@ export default function BizWinDetailModal({
       setStartDate(start);
       setEndDate(end);
 
+      console.log("📅 Sending dates to API:", { startDate: start, endDate: end });
+
+      const backendUrl = (process as any).env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/record/detailed-by-date`,
+        `${backendUrl}/record/detailed-by-date`,
         {
           method: "POST",
           headers: {
@@ -120,9 +144,13 @@ export default function BizWinDetailModal({
 
         setGivenData(data.data.tyfcbGiven || []);
         setReceivedData(data.data.tyfcbReceived || []);
+        setTotalGivenAmount(data.data.totalGivenAmount || 0);
+        setTotalReceivedAmount(data.data.totalReceivedAmount || 0);
 
         console.log("Given data set to:", data.data.tyfcbGiven?.length || 0, "records");
         console.log("Received data set to:", data.data.tyfcbReceived?.length || 0, "records");
+        console.log("Total Given Amount:", data.data.totalGivenAmount);
+        console.log("Total Received Amount:", data.data.totalReceivedAmount);
       } else {
         console.error("BizWin API error:", data);
       }
@@ -163,8 +191,20 @@ export default function BizWinDetailModal({
   if (!isOpen) return null;
 
   const currentData = activeTab === "given" ? givenData : receivedData;
-  const totalAmount = currentData.reduce((sum, record) => sum + (record.amount || 0), 0);
+  const totalAmount = activeTab === "given" ? totalGivenAmount : totalReceivedAmount;
   const totalCount = currentData.length;
+
+  console.log("🔍 Modal Display State:", {
+    activeTab,
+    dateRange,
+    givenDataLength: givenData.length,
+    receivedDataLength: receivedData.length,
+    totalGivenAmount,
+    totalReceivedAmount,
+    currentDataLength: currentData.length,
+    displayedTotalAmount: totalAmount,
+    displayedTotalCount: totalCount
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

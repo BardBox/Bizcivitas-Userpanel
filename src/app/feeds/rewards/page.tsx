@@ -1,13 +1,5 @@
-export default function RewardsPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Rewards</h1>
-      </div>
+import ComingSoon from "@/components/ComingSoon";
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">Your Rewards page content will go here.</p>
-      </div>
-    </div>
-  );
+export default function RewardsPage() {
+  return <ComingSoon title="Rewards" />;
 }

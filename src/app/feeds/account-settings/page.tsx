@@ -1,15 +1,5 @@
-export default function AccountSettingsPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
-      </div>
+import ComingSoon from "@/components/ComingSoon";
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">
-          Your Account Settings page content will go here.
-        </p>
-      </div>
-    </div>
-  );
+export default function AccountSettingsPage() {
+  return <ComingSoon title="Account Settings" />;
 }

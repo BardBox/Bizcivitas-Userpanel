@@ -10,7 +10,7 @@ import FloatingDrawer from "@/components/Dashboard/FloatingDrawer";
 import { bizpulseApi } from "../../services/bizpulseApi";
 import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
 import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
-import { Activity, Network } from "lucide-react";
+import { Activity, Network, Sparkles } from "lucide-react";
 
 // removed unused dummy utilities
 
@@ -23,7 +23,7 @@ export default function DashboardPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"bizpulse" | "bizhub">("bizpulse");
+  const [activeTab, setActiveTab] = useState<"all" | "bizpulse" | "bizhub">("all");
   const user = useSelector((state: RootState) => state.auth.user);
   const currentUserId = user?._id || user?.id || "";
   const [hasMore, setHasMore] = useState(false);
@@ -103,7 +103,9 @@ export default function DashboardPage() {
 
   // Filter posts based on active tab
   useEffect(() => {
-    if (activeTab === "bizpulse") {
+    if (activeTab === "all") {
+      setPosts(allPosts);
+    } else if (activeTab === "bizpulse") {
       setPosts(allPosts.filter((post) => post.postSource === "bizpulse"));
     } else if (activeTab === "bizhub") {
       setPosts(allPosts.filter((post) => post.postSource === "bizhub"));
@@ -122,6 +124,17 @@ export default function DashboardPage() {
         <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-4">
           {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
+                activeTab === "all"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Sparkles className="w-5 h-5" />
+              <span className="font-medium">All</span>
+            </button>
             <button
               onClick={() => setActiveTab("bizpulse")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${

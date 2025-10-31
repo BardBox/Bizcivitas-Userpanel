@@ -173,7 +173,10 @@ function HomePageContent() {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-200/30 to-transparent rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-200/30 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-200/30 to-transparent rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
       </div>
 
       <div className="max-w-md w-full relative z-10">
@@ -183,7 +186,13 @@ function HomePageContent() {
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
               <div className="relative bg-white rounded-2xl p-3 transform transition-transform group-hover:scale-105">
-                <Image src="/favicon.ico" alt="BizCivitas" width={64} height={64} className="rounded-lg" />
+                <Image
+                  src="/favicon.ico"
+                  alt="BizCivitas"
+                  width={64}
+                  height={64}
+                  className="rounded-lg"
+                />
               </div>
             </div>
           </div>
@@ -194,15 +203,23 @@ function HomePageContent() {
               Welcome Back
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600 max-w-sm mx-auto leading-relaxed">
-              Use your credentials which you are using for mobile applications of BizCivitas
+              Use your credentials which you are using for mobile applications
+              of BizCivitas
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit} action="javascript:void(0);">
+          <form
+            className="mt-8 space-y-6"
+            onSubmit={handleSubmit}
+            action="javascript:void(0);"
+          >
             <div className="space-y-5">
               {/* Email Input */}
               <div className="group">
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-focus-within:text-blue-600">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-focus-within:text-blue-600"
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -225,7 +242,10 @@ function HomePageContent() {
 
               {/* Password Input */}
               <div className="group">
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-focus-within:text-blue-600">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-focus-within:text-blue-600"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -264,13 +284,23 @@ function HomePageContent() {
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
-                      <svg className="h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      <svg
+                        className="h-4 w-4 text-red-600"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
                   </div>
                   <div className="ml-3 flex-1">
-                    <p className="text-sm font-semibold text-red-800">{error}</p>
+                    <p className="text-sm font-semibold text-red-800">
+                      {error}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -296,9 +326,25 @@ function HomePageContent() {
               <span className="relative flex items-center justify-center">
                 {loading ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Signing in...
                   </>
@@ -310,31 +356,7 @@ function HomePageContent() {
                 )}
               </span>
             </button>
-
-            {/* Additional Info */}
-            <div className="text-center pt-4">
-              <p className="text-xs text-gray-500">
-                By signing in, you agree to our{" "}
-                <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
-                  Terms of Service
-                </Link>
-                {" "}and{" "}
-                <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
           </form>
-        </div>
-
-        {/* Bottom decorative element */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors hover:underline decoration-2 underline-offset-2">
-              Contact Administrator
-            </Link>
-          </p>
         </div>
       </div>
     </div>

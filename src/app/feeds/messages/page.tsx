@@ -1,15 +1,5 @@
-export default function MessagesPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-      </div>
+import ComingSoon from "@/components/ComingSoon";
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">
-          Your Messages page content will go here.
-        </p>
-      </div>
-    </div>
-  );
+export default function MessagesPage() {
+  return <ComingSoon title="Messages" />;
 }

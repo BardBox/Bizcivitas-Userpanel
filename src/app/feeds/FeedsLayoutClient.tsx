@@ -14,7 +14,7 @@ export default function FeedsLayoutClient({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-dashboard-primary">
+    <div className="flex h-screen bg-dashboard-primary overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:block relative">
         <DashboardSidebar isMobile={false} />
@@ -51,11 +51,11 @@ export default function FeedsLayoutClient({
 
       {/* Main Content */}
       <div
-        className="flex-1 flex flex-col"
+        className="flex-1 flex flex-col overflow-hidden"
         onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
       >
         <DashboardHeader />
-        <main className="p-3 md:p-6 relative flex-1">
+        <main className="p-3 md:p-6 relative flex-1 overflow-y-auto">
           <NavigationLoader />
           <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
         </main>

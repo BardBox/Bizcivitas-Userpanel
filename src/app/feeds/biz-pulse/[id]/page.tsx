@@ -2,7 +2,7 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
-import { Heart, MessageSquare, Share2, ArrowLeft, MoreVertical, Flag } from "lucide-react";
+import { Heart, MessageSquare, ArrowLeft, MoreVertical, Flag } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import type { RootState } from "../../../../../store/store";
@@ -128,7 +128,7 @@ export default function BizPulseDetailPage() {
 
   // Helper function to get full avatar URL
   const getAvatarUrl = (avatarPath?: string | null) => {
-    if (!avatarPath) return undefined;
+    if (!avatarPath) return "/favicon.ico"; // Fallback to favicon
 
     // If it's already a full URL (starts with http), return as is
     if (avatarPath.startsWith("http")) {
@@ -334,6 +334,27 @@ export default function BizPulseDetailPage() {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+  {/* Author Info Header */}
+  <div className="px-6 py-5 sm:px-8">
+    <div className="flex items-center gap-3">
+      <Avatar
+        src={getAvatarUrl(post.author.avatar)}
+        alt={post.author.name}
+        size="md"
+        fallbackText={post.author.name}
+        showMembershipBorder={false}
+      />
+      <div className="flex-1">
+        <div className="text-base font-semibold text-gray-900">
+          {post.author.name}
+        </div>
+        <div className="text-sm text-gray-500 mt-0.5">
+          {post.timeAgo}
+        </div>
+      </div>
+    </div>
+  </div>
+
   {/* Hero Image(s) - Use carousel if multiple images exist */}
   {Array.isArray((post as any).images) && (post as any).images.length > 0 ? (
     <ImageCarousel
@@ -362,19 +383,9 @@ export default function BizPulseDetailPage() {
     </div>
 
     {/* Title */}
-    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 leading-tight">
       {post.title}
     </h1>
-
-    {/* Meta Info */}
-    <div className="flex items-center space-x-4 text-sm text-gray-500 mb-6 pb-6 border-b border-gray-200">
-      <span className="flex items-center">
-        <MessageSquare className="w-4 h-4 mr-1" />
-        {post.stats.comments} comments
-      </span>
-      <span>•</span>
-      <span>{post.timeAgo}</span>
-    </div>
 
     {/* Article Content */}
     <div className="prose prose-lg max-w-none text-gray-700 mb-8">
@@ -382,7 +393,7 @@ export default function BizPulseDetailPage() {
     </div>
 
     {/* Action Buttons */}
-    <div className="flex items-center space-x-4 py-6 border-y border-gray-200">
+    <div className="py-6 border-y border-gray-200">
       <button
         onClick={handleLike}
         disabled={isLiking}
@@ -400,11 +411,6 @@ export default function BizPulseDetailPage() {
         <span className="font-medium">
           {post.stats.likes} {isLiked ? "Liked" : "Like"}
         </span>
-      </button>
-
-      <button className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">
-        <Share2 className="w-5 h-5" />
-        <span className="font-medium">Share</span>
       </button>
     </div>
 

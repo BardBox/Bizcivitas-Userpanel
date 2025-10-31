@@ -64,58 +64,70 @@ export default function PostCard({
   return (
     <Link href={detailUrl} className="block">
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden mb-6 hover:shadow-md transition-shadow cursor-pointer relative">
-        <div className="p-4 sm:p-5">
-          {/* Header: Author + time + Icon */}
-          {author && (
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                {/* Display user avatar or fallback to favicon */}
-                <div className="relative w-8 h-8 flex-shrink-0">
+        {/* Header: Avatar + Admin Name + Time */}
+        {author && (
+          <div className="p-4 sm:p-5 pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                {/* Display user avatar or fallback to favicon for admin */}
+                <div className="relative w-10 h-10 flex-shrink-0">
                   <Image
                     src={avatarError || !author.avatar ? "/favicon.ico" : author.avatar}
                     alt={author.name}
-                    width={32}
-                    height={32}
-                    className="rounded-full object-cover"
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover bg-gray-100"
                     onError={() => setAvatarError(true)}
                   />
                 </div>
-                <div className="ml-1 flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 leading-tight truncate">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 leading-tight truncate">
                     {author.name}
                   </div>
-                  {author.title && (
-                    <div className="text-[11px] text-gray-500 leading-tight truncate">
-                      {author.title}
+                  {timeAgo && (
+                    <div className="text-xs text-gray-500 leading-tight mt-0.5">
+                      {timeAgo}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                {timeAgo && <span className="text-[11px] text-gray-500 whitespace-nowrap">{timeAgo}</span>}
-                {/* Floating Source Type Badge */}
-                {sourceType && (
-                  <div className={`flex items-center justify-center w-9 h-9 rounded-full shadow-md ${
-                    sourceType === "bizpulse"
-                      ? "bg-blue-500"
-                      : "bg-purple-500"
-                  }`}>
-                    {sourceType === "bizpulse" ? (
-                      <Activity className="w-4 h-4 text-white" />
-                    ) : (
-                      <Network className="w-4 h-4 text-white" />
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Floating Source Type Badge */}
+              {sourceType && (
+                <div className={`flex items-center justify-center w-9 h-9 rounded-full shadow-md flex-shrink-0 ${
+                  sourceType === "bizpulse"
+                    ? "bg-blue-500"
+                    : "bg-purple-500"
+                }`}>
+                  {sourceType === "bizpulse" ? (
+                    <Activity className="w-4 h-4 text-white" />
+                  ) : (
+                    <Network className="w-4 h-4 text-white" />
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Category */}
+        {/* Image with maintained aspect ratio */}
+        {image && (
+          <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
+            <Image
+              src={image}
+              alt={title}
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
+        )}
+
+        <div className="p-4 sm:p-5">
+          {/* Category Badge */}
           {category && (
             <div className="mb-3">
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getCategoryColor(
+                className={`px-2.5 py-1 rounded-full text-xs font-medium ${getCategoryColor(
                   category
                 )}`}
               >
@@ -123,36 +135,21 @@ export default function PostCard({
               </span>
             </div>
           )}
-        </div>
 
-        {/* Image */}
-        {image && (
-          <div className="w-full h-48 sm:h-64 relative overflow-hidden bg-gray-200">
-            <Image
-              src={image}
-              alt={title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          </div>
-        )}
-
-        <div className="p-4 sm:p-5 pt-4">
           {/* Title */}
-          <h4 className="text-[15px] sm:text-base font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
+          <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-snug">
             {title}
           </h4>
 
           {/* Stats */}
-          <div className="flex items-center text-xs text-gray-500 space-x-4 pt-2 border-t border-gray-100">
-            <div className="flex items-center space-x-1">
-              <Heart size={14} className="text-gray-400" />
-              <span>{stats.likes || 0}</span>
+          <div className="flex items-center text-sm text-gray-600 space-x-4 pt-3 border-t border-gray-100">
+            <div className="flex items-center space-x-1.5">
+              <Heart size={16} className="text-gray-400" />
+              <span className="font-medium">{stats.likes || 0}</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <MessageSquare size={14} className="text-gray-400" />
-              <span>{stats.comments || 0}</span>
+            <div className="flex items-center space-x-1.5">
+              <MessageSquare size={16} className="text-gray-400" />
+              <span className="font-medium">{stats.comments || 0}</span>
             </div>
           </div>
         </div>

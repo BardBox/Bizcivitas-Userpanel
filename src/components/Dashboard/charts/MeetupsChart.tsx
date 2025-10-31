@@ -17,6 +17,8 @@ import {
   useGetMeetups6MonthCountsQuery,
   useGetMeetupsAllTimeCountQuery,
 } from "../../../../store/api/dashboardApi";
+import { Plus } from "lucide-react";
+import CreateMeetupForm from "../forms/CreateMeetupForm";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
@@ -34,6 +36,7 @@ const dateFilters: DateFilterButton[] = [
 
 export default function MeetupsChart() {
   const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Conditional API calls based on selected range
   const {
@@ -88,17 +91,43 @@ export default function MeetupsChart() {
 
   const currentData = getData();
 
-  // Transform API data to chart format
-  const chartData =
-    currentData?.dayWiseData?.map((item) => ({
-      date: item.date.split("-").slice(1).join("/"), // Format: MM/DD
-      count: item.count,
-    })) || [];
+  // Debug logging
+  console.log('🟣 Meetups Chart - Selected Range:', selectedRange);
+  console.log('🟣 Meetups Chart - Current Data:', currentData);
+  console.log('🟣 Meetups Chart - Till Date Data:', dataTillDate);
+
+  // Get the appropriate data array based on the response structure
+  const getDataArray = () => {
+    if (currentData?.dayWiseData) return currentData.dayWiseData;
+    if (currentData?.fortnightCounts) return currentData.fortnightCounts; // Backend uses "Counts" not "Data"
+    if (currentData?.monthCounts) return currentData.monthCounts; // Backend uses "Counts" not "Data"
+    return [];
+  };
+
+  const dataArray = getDataArray();
+
+  // Transform API data to chart format - handle different field names
+  let chartData = dataArray.map((item: any) => ({
+    date: item.date ? item.date.split("-").slice(1).join("/") : item.period || "",
+    count: item.count || 0,
+  }));
+
+  // Handle different field names from backend (tilldate uses totalMeetupCount)
+  console.log('🟣 DEBUG - last15DaysMeetupCount:', currentData?.last15DaysMeetupCount);
+  console.log('🟣 DEBUG - allTimeCount:', currentData?.allTimeCount);
+  console.log('🟣 DEBUG - totalMeetupCount:', currentData?.totalMeetupCount);
 
   const totalCount =
     selectedRange === "15days"
       ? currentData?.last15DaysMeetupCount || 0
-      : currentData?.allTimeCount || 0;
+      : currentData?.totalMeetupCount || currentData?.allTimeCount || 0;
+
+  console.log('🟣 Meetups Chart - Total Count:', totalCount);
+
+  // For "Till Date", create a summary chart with total since there's no daily/period data
+  if (selectedRange === "tilldate" && chartData.length === 0 && totalCount > 0) {
+    chartData = [{ date: "Total Meetups", count: totalCount }];
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -111,7 +140,7 @@ export default function MeetupsChart() {
           </h2>
         </div>
 
-        {/* Time Filter Buttons */}
+        {/* Time Filter Buttons + Create Button */}
         <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
           {dateFilters.map((filter) => (
             <button
@@ -126,6 +155,13 @@ export default function MeetupsChart() {
               {filter.label}
             </button>
           ))}
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md hover:shadow-lg"
+            title="Create Meetup"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -227,6 +263,13 @@ export default function MeetupsChart() {
           </div>
         )}
       </div>
+
+      {/* Create Meetup Form Modal */}
+      <CreateMeetupForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   );
 }

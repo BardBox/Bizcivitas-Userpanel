@@ -17,6 +17,7 @@ import {
   useGetMeetings6MonthInvitedCountQuery,
   useGetMeetingsAllTimeInvitedPeopleCountQuery,
 } from "../../../../store/api/dashboardApi";
+import { Plus } from "lucide-react";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
@@ -88,17 +89,44 @@ export default function VisitorInvitationChart() {
 
   const currentData = getData();
 
-  // Transform API data to chart format
-  const chartData =
-    currentData?.dayWiseData?.map((item) => ({
-      date: item.date.split("-").slice(1).join("/"), // Format: MM/DD
-      count: item.count,
-    })) || [];
+  // Debug logging
+  console.log('🟠 Visitor Chart - Selected Range:', selectedRange);
+  console.log('🟠 Visitor Chart - Current Data:', currentData);
+  console.log('🟠 Visitor Chart - 15 Days Data:', data15Days);
+  console.log('🟠 Visitor Chart - 3 Months Data:', data3Months);
+  console.log('🟠 Visitor Chart - 6 Months Data:', data6Months);
+  console.log('🟠 Visitor Chart - Till Date Data:', dataTillDate);
 
+  // Get the appropriate data array based on the response structure
+  const getDataArray = () => {
+    if (currentData?.dayWiseData) return currentData.dayWiseData;
+    if (currentData?.fortnightCounts) return currentData.fortnightCounts; // Backend uses "Counts" not "Data"
+    if (currentData?.monthCounts) return currentData.monthCounts; // Backend uses "Counts" not "Data"
+    return [];
+  };
+
+  const dataArray = getDataArray();
+  console.log('🟠 Visitor Chart - Data Array:', dataArray);
+
+  // Transform API data to chart format - handle different field names
+  let chartData = dataArray.map((item: any) => ({
+    date: item.date ? item.date.split("-").slice(1).join("/") : item.period || "",
+    count: item.count || 0,
+  }));
+
+  // Handle different field names from backend (tilldate uses totalInvitedPeopleCount)
   const totalCount =
     selectedRange === "15days"
       ? currentData?.last15DaysCount || 0
-      : currentData?.allTimeCount || 0;
+      : currentData?.allTimeCount || currentData?.totalInvitedPeopleCount || 0;
+
+  console.log('🟠 Visitor Chart - Total Count:', totalCount);
+  console.log('🟠 Visitor Chart - Chart Data:', chartData);
+
+  // For "Till Date", create a summary chart with total since there's no daily/period data
+  if (selectedRange === "tilldate" && chartData.length === 0 && totalCount > 0) {
+    chartData = [{ date: "Total Invitations", count: totalCount }];
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -111,7 +139,7 @@ export default function VisitorInvitationChart() {
           </h2>
         </div>
 
-        {/* Time Filter Buttons */}
+        {/* Time Filter Buttons + Create Button */}
         <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
           {dateFilters.map((filter) => (
             <button
@@ -126,6 +154,13 @@ export default function VisitorInvitationChart() {
               {filter.label}
             </button>
           ))}
+          <button
+            onClick={() => alert("Visitor Invitation form coming soon!")}
+            className="p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all shadow-md hover:shadow-lg"
+            title="Create Visitor Invitation"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
       </div>
 

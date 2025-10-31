@@ -137,10 +137,10 @@ export default function FloatingDrawer({
           </div>
 
           {/* Drawer Content */}
-          <div className="p-4  bg-gray-50">
+          <div className="p-4 bg-gray-50">
             {/* Recent Posts List */}
             {recentPosts.length > 0 ? (
-              <div className="space-y-4">
+              <div>
                 {recentPosts.slice(0, 8).map((post) => {
                   const detailUrl =
                     post.postSource === "bizpulse"
@@ -149,7 +149,7 @@ export default function FloatingDrawer({
 
                   return (
                     <Link href={detailUrl} key={post.id}>
-                      <div className="group p-2  rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer border border-gray-200 transition-all hover:border-blue-300 hover:shadow-md bg-white">
+                      <div className="group p-3 mb-4 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer border border-gray-200 transition-all hover:border-blue-300 hover:shadow-md bg-white">
                         {/* Title with Icon */}
                         <div className="flex items-start gap-2 mb-2.5">
                           <h4 className="text-xs font-bold text-gray-900 line-clamp-2 flex-1 leading-tight group-hover:text-blue-700">

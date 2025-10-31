@@ -17,6 +17,8 @@ import {
   useGetReferrals6MonthCountsQuery,
   useGetReferralsTillDateCountsQuery,
 } from "../../../../store/api/dashboardApi";
+import { Plus } from "lucide-react";
+import CreateBizConnectForm from "../forms/CreateBizConnectForm";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
@@ -34,6 +36,7 @@ const dateFilters: DateFilterButton[] = [
 
 export default function BizConnectChart() {
   const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Conditional API calls based on selected range
   const {
@@ -87,17 +90,51 @@ export default function BizConnectChart() {
   const error =
     error15Days || error3Months || error6Months || errorTillDate;
 
+  // Debug errors
+  if (error15Days) console.error('BizConnect 15 Days Error:', error15Days);
+  if (error3Months) console.error('BizConnect 3 Months Error:', error3Months);
+  if (error6Months) console.error('BizConnect 6 Months Error:', error6Months);
+  if (errorTillDate) console.error('BizConnect Till Date Error:', errorTillDate);
+
   const currentData = getData();
 
-  // Transform API data to chart format
-  const chartData = currentData?.dailyCounts?.map((item) => ({
-    date: item.day.split("-").slice(1).join("/"), // Format: MM/DD
-    given: item.given,
-    received: item.referrals,
-  })) || [];
+  // Debug logging
+  console.log('BizConnect Chart - Selected Range:', selectedRange);
+  console.log('BizConnect Chart - Current Data:', currentData);
 
-  const totalGiven = currentData?.totalGivenCount || 0;
-  const totalReceived = currentData?.totalReferralsCount || 0;
+  // Get the appropriate data array based on the response structure
+  const getDataArray = () => {
+    if (currentData?.dailyCounts) return currentData.dailyCounts;
+    if (currentData?.fortnightCounts) return currentData.fortnightCounts;
+    if (currentData?.monthCounts) return currentData.monthCounts;
+    return [];
+  };
+
+  const dataArray = getDataArray();
+  console.log('BizConnect Chart - Data Array:', dataArray);
+
+  // Transform API data to chart format - handle different field names
+  let chartData = dataArray.map((item: any) => ({
+    date: item.day ? item.day.split("-").slice(1).join("/") : item.period || "",
+    given: item.given || 0,
+    received: item.referrals || 0,
+  }));
+
+  // Handle both response structures (Till Date uses different field names)
+  const totalGiven = currentData?.totalGivenCount || currentData?.totalReferralsGiven || 0;
+  const totalReceived = currentData?.totalReferralsCount || currentData?.totalReferralsReceived || 0;
+
+  // For "Till Date", create a summary chart with totals since there's no daily/period data
+  if (selectedRange === "tilldate" && chartData.length === 0 && (totalGiven > 0 || totalReceived > 0)) {
+    chartData = [
+      { date: "Total Given", given: totalGiven, received: 0 },
+      { date: "Total Received", given: 0, received: totalReceived },
+    ];
+  }
+
+  console.log('BizConnect Chart - Transformed Chart Data:', chartData);
+
+  console.log('BizConnect Chart - Total Given:', totalGiven, 'Total Received:', totalReceived);
 
   return (
     <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -110,7 +147,7 @@ export default function BizConnectChart() {
           </h2>
         </div>
 
-        {/* Time Filter Buttons */}
+        {/* Time Filter Buttons + Create Button */}
         <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
           {dateFilters.map((filter) => (
             <button
@@ -125,6 +162,14 @@ export default function BizConnectChart() {
               {filter.label}
             </button>
           ))}
+          {/* Create Button */}
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+            title="Create BizConnect"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -242,6 +287,16 @@ export default function BizConnectChart() {
           </div>
         )}
       </div>
+
+      {/* Create BizConnect Form Modal */}
+      <CreateBizConnectForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={() => {
+          // Optionally refresh chart data here
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

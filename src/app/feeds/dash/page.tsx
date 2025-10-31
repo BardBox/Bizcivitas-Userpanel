@@ -7,12 +7,64 @@ import BizWinChart from "@/components/Dashboard/charts/BizWinChart";
 import MeetupsChart from "@/components/Dashboard/charts/MeetupsChart";
 import VisitorInvitationChart from "@/components/Dashboard/charts/VisitorInvitationChart";
 import {
-  dashboardCards,
-  userProfile,
-} from "@/components/Dashboard/data/dashboard-data";
+  useGetReferralsMonthlyCountQuery,
+  useGetRecordLast15DaysCountsQuery,
+  useGetMeetupsMeetingCountQuery,
+  useGetMeetingsLast15DaysInvitedCountQuery,
+} from "../../../../store/api/dashboardApi";
 
 export default function DashboardPage() {
   const [activeChartIndex, setActiveChartIndex] = useState(0);
+
+  // Fetch dashboard data for cards
+  const { data: bizConnectData, isLoading: bizConnectLoading } = useGetReferralsMonthlyCountQuery();
+  const { data: bizWinData, isLoading: bizWinLoading } = useGetRecordLast15DaysCountsQuery();
+  const { data: meetupsData, isLoading: meetupsLoading } = useGetMeetupsMeetingCountQuery();
+  const { data: visitorData, isLoading: visitorLoading } = useGetMeetingsLast15DaysInvitedCountQuery();
+
+  // Calculate values for dashboard cards
+  const bizConnectCount = bizConnectData?.totalReferralsCount || 0;
+  const bizWinCount = bizWinData?.overallReceived ? `₹${(bizWinData.overallReceived / 100000).toFixed(1)}L` : "₹0";
+  const meetupsCount = meetupsData?.last15DaysMeetupCount || 0;
+  const visitorCount = visitorData?.last15DaysCount || 0;
+
+  const isLoading = bizConnectLoading || bizWinLoading || meetupsLoading || visitorLoading;
+
+  // Dashboard cards configuration with dynamic data
+  const dashboardCards = [
+    {
+      id: "1",
+      title: "Fortnight Overview: BizConnect",
+      value: isLoading ? "..." : String(bizConnectCount),
+      icon: "/dashboard/dash/bizconnect.svg",
+      bgColor: "bg-white",
+      iconColor: "text-dashboard-gray",
+    },
+    {
+      id: "2",
+      title: "Last Fortnight's BizWin",
+      value: isLoading ? "..." : bizWinCount,
+      icon: "/dashboard/dash/bizwin.svg",
+      bgColor: "bg-white",
+      iconColor: "text-dashboard-gray",
+    },
+    {
+      id: "3",
+      title: "Last Fortnight's Meet-ups",
+      value: isLoading ? "..." : String(meetupsCount),
+      icon: "/dashboard/dash/meetup.svg",
+      bgColor: "bg-white",
+      iconColor: "text-dashboard-gray",
+    },
+    {
+      id: "4",
+      title: "Visitor Invitation",
+      value: isLoading ? "..." : String(visitorCount),
+      icon: "/dashboard/dash/invite.svg",
+      bgColor: "bg-white",
+      iconColor: "text-dashboard-gray",
+    },
+  ];
 
   const chartComponents = [BizConnectChart, BizWinChart, MeetupsChart, VisitorInvitationChart];
   const ActiveChart = chartComponents[activeChartIndex];

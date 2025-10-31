@@ -17,6 +17,8 @@ import {
   useGetRecord6MonthCountsQuery,
   useGetRecordTillDateAmountsQuery,
 } from "../../../../store/api/dashboardApi";
+import { Plus } from "lucide-react";
+import CreateBizWinForm from "../forms/CreateBizWinForm";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
@@ -46,6 +48,7 @@ function formatCurrency(value: number): string {
 
 export default function BizWinChart() {
   const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Conditional API calls based on selected range
   const {
@@ -98,21 +101,60 @@ export default function BizWinChart() {
     loading15Days || loading3Months || loading6Months || loadingTillDate;
   const error = error15Days || error3Months || error6Months || errorTillDate;
 
+  // Debug errors
+  if (error15Days) console.error('❌ BizWin 15 Days Error:', error15Days);
+  if (error3Months) console.error('❌ BizWin 3 Months Error:', error3Months);
+  if (error6Months) console.error('❌ BizWin 6 Months Error:', error6Months);
+  if (errorTillDate) console.error('❌ BizWin Till Date Error:', errorTillDate);
+
   const currentData = getData();
 
-  // Transform API data to chart format
-  const chartData =
-    currentData?.dailySums?.map((item) => ({
-      date: item.date.split("-").slice(1).join("/"), // Format: MM/DD
-      given: item.totalGiven,
-      received: item.totalReceived,
-    })) || [];
+  // Debug logging
+  console.log('🔵 BizWin Chart - Selected Range:', selectedRange);
+  console.log('🔵 BizWin Chart - Current Data:', currentData);
+  console.log('🔵 BizWin Chart - 15 Days Data:', data15Days);
+  console.log('🔵 BizWin Chart - 3 Months Data:', data3Months);
+  console.log('🔵 BizWin Chart - 6 Months Data:', data6Months);
+  console.log('🔵 BizWin Chart - Till Date Data:', dataTillDate);
 
-  // Calculate totals - either from API or sum from dailySums
-  const totalGiven = currentData?.overallGiven ||
+  // Get the appropriate data array based on the response structure
+  const getDataArray = () => {
+    if (currentData?.dailySums) return currentData.dailySums;
+    if (currentData?.fortnightSums) return currentData.fortnightSums;
+    if (currentData?.monthSums) return currentData.monthSums;
+    return [];
+  };
+
+  const dataArray = getDataArray();
+
+  // Transform API data to chart format - handle different field names
+  let chartData = dataArray.map((item: any) => ({
+    date: item.date ? item.date.split("-").slice(1).join("/") : item.period || "",
+    given: item.totalGiven || 0,
+    received: item.totalReceived || 0,
+  }));
+
+  // Calculate totals - either from API or sum from data
+  // Note: Till Date endpoint uses "totalGivenAmount" and "totalReceivedAmount" field names
+  const totalGiven = currentData?.overallGiven || currentData?.totalGiven || currentData?.totalGivenAmount ||
     chartData.reduce((sum, item) => sum + item.given, 0);
-  const totalReceived = currentData?.overallReceived ||
+  const totalReceived = currentData?.overallReceived || currentData?.totalReceived || currentData?.totalReceivedAmount ||
     chartData.reduce((sum, item) => sum + item.received, 0);
+
+  console.log('🔵 BizWin Chart - Total Given:', totalGiven);
+  console.log('🔵 BizWin Chart - Total Received:', totalReceived);
+  console.log('🔵 BizWin Chart - Chart Data Length:', chartData.length);
+
+  // For "Till Date", create a summary chart with totals since there's no daily/period data
+  if (selectedRange === "tilldate" && chartData.length === 0 && (totalGiven > 0 || totalReceived > 0)) {
+    console.log('✅ BizWin Chart - Creating Till Date summary chart');
+    chartData = [
+      { date: "Total Given", given: totalGiven, received: 0 },
+      { date: "Total Received", given: 0, received: totalReceived },
+    ];
+  } else if (selectedRange === "tilldate" && chartData.length === 0) {
+    console.log('❌ BizWin Chart - Till Date has NO DATA (totalGiven:', totalGiven, 'totalReceived:', totalReceived, ')');
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -125,7 +167,7 @@ export default function BizWinChart() {
           </h2>
         </div>
 
-        {/* Time Filter Buttons */}
+        {/* Time Filter Buttons + Create Button */}
         <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
           {dateFilters.map((filter) => (
             <button
@@ -140,6 +182,14 @@ export default function BizWinChart() {
               {filter.label}
             </button>
           ))}
+          {/* Create Button */}
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
+            title="Create BizWin"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -259,6 +309,15 @@ export default function BizWinChart() {
           </div>
         )}
       </div>
+
+      {/* Create BizWin Form Modal */}
+      <CreateBizWinForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

@@ -17,41 +17,85 @@ interface ApiResponse<T> {
 }
 
 export interface ReferralChartData {
-  dailyCounts: Array<{
+  dailyCounts?: Array<{
     day: string;
     referrals: number; // received
     given: number; // sent
   }>;
-  totalReferralsCount: number; // all-time received
-  totalGivenCount: number; // all-time given
+  fortnightCounts?: Array<{
+    period: string;
+    referrals: number; // received
+    given: number; // sent
+  }>;
+  monthCounts?: Array<{
+    period: string;
+    referrals: number; // received
+    given: number; // sent
+  }>;
+  totalReferralsCount?: number; // all-time received
+  totalGivenCount?: number; // all-time given
+  totalReferralsGiven?: number; // alternative field name for given
+  totalReferralsReceived?: number; // alternative field name for received
 }
 
 export interface BizWinChartData {
-  dailySums: Array<{
+  dailySums?: Array<{
     date: string;
     totalReceived: number;
     totalGiven: number;
   }>;
-  overallReceived: number;
-  overallGiven: number;
+  fortnightSums?: Array<{
+    period: string;
+    totalReceived: number;
+    totalGiven: number;
+  }>;
+  monthSums?: Array<{
+    period: string;
+    totalReceived: number;
+    totalGiven: number;
+  }>;
+  overallReceived?: number;
+  overallGiven?: number;
+  totalGiven?: number; // alternative field name
+  totalReceived?: number; // alternative field name
+  totalGivenAmount?: number; // alternative field name for till date
+  totalReceivedAmount?: number; // alternative field name for till date
 }
 
 export interface MeetupChartData {
-  dayWiseData: Array<{
+  dayWiseData?: Array<{
     date: string;
     count: number;
   }>;
-  last15DaysMeetupCount: number;
-  allTimeCount: number;
+  fortnightCounts?: Array<{
+    period: string;
+    count: number;
+  }>;
+  monthCounts?: Array<{
+    period: string;
+    count: number;
+  }>;
+  last15DaysMeetupCount?: number;
+  allTimeCount?: number;
+  totalMeetupCount?: number; // alternative field name for till date
 }
 
 export interface VisitorInvitationChartData {
-  dayWiseData: Array<{
+  dayWiseData?: Array<{
     date: string;
     count: number;
   }>;
-  last15DaysCount: number;
-  allTimeCount: number;
+  fortnightCounts?: Array<{
+    period: string;
+    count: number;
+  }>;
+  monthCounts?: Array<{
+    period: string;
+    count: number;
+  }>;
+  last15DaysCount?: number;
+  allTimeCount?: number;
+  totalInvitedPeopleCount?: number; // alternative field name for till date
 }
 
 export interface Meeting {

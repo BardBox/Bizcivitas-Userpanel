@@ -201,7 +201,7 @@ export default function DashboardSidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-hidden px-4 pb-6">
+      <nav className="flex-1 overflow-y-auto px-4 pb-6">
         {navigationSections.map(({ title, items }, i) => {
           const open = expanded.has(title);
           return (

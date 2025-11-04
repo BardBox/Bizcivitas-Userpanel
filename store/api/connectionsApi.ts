@@ -26,6 +26,18 @@ interface ConnectionProfileApiResponse {
   success: boolean;
 }
 
+// Search parameters for user search
+export interface UserSearchParams {
+  keyword?: string;
+  fname?: string;
+  lname?: string;
+  companyName?: string;
+  city?: string;
+  Country?: string;
+  category?: string;
+  subcategory?: string;
+}
+
 // Inject connection endpoints into baseApi
 export const connectionsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -81,10 +93,71 @@ export const connectionsApi = baseApi.injectEndpoints({
       providesTags: ["Connections"],
     }),
     getSuggestionsAll: builder.query<User[], void>({
-      query: () => "/connections/getSuggestionsAll",
+      query: () => "/users/getallusers",
       providesTags: ["Connections"],
       transformResponse: (response: any): User[] => {
-        return response?.data?.suggestions || [];
+        // Handle the response structure from /users/getallusers
+        // Response format: { data: { users: [{ user: {...} }] } }
+        if (response?.data?.users && Array.isArray(response.data.users)) {
+          return response.data.users.map((item: any) => {
+            // Extract from nested user object (like mobile app does)
+            const user = item.user || item;
+
+            // Map fields to match expected User type
+            return {
+              _id: user.userId || user._id || user.id,
+              fname: user.fname || user.name?.split(' ')[0] || '',
+              lname: user.lname || user.name?.split(' ').slice(1).join(' ') || '',
+              email: user.email || '',
+              avatar: user.avatar || '',
+              classification: user.classification || user.businessCategory || 'Business Professional',
+              companyName: user.companyName || user.business || user.myBusiness || '',
+              profile: user.profile,
+              role: user.role || 'user',
+              membershipType: user.membershipType || '',
+              business: user.business || user.Business || '',
+              businessSubcategory: user.businessSubcategory || '',
+              region: user.region || '',
+              // Note: /users/getallusers doesn't return connectionStatus
+              // so we default to "not-connected"
+              connectionStatus: 'not-connected',
+            };
+          });
+        }
+        return [];
+      },
+    }),
+    searchUsers: builder.query<User[], UserSearchParams | void>({
+      query: (params) => ({
+        url: "/users/search",
+        params: params || {},
+      }),
+      providesTags: ["Connections"],
+      transformResponse: (response: any): User[] => {
+        // Handle the response structure from /users/search
+        // Response format: { success: boolean, data: User[] }
+        if (response?.data && Array.isArray(response.data)) {
+          return response.data.map((user: any) => ({
+            _id: user._id || user.id,
+            fname: user.fname || '',
+            lname: user.lname || '',
+            email: user.email || '',
+            avatar: user.avatar || '',
+            classification: user.classification || 'Business Professional',
+            companyName: user.companyName || '',
+            profile: user.profile,
+            role: user.role || 'user',
+            membershipType: user.membershipType || '',
+            business: user.business || '',
+            businessSubcategory: user.businessSubcategory || '',
+            region: user.region || '',
+            city: user.city || '',
+            state: user.state || '',
+            country: user.country || '',
+            connectionStatus: 'not-connected',
+          }));
+        }
+        return [];
       },
     }),
 
@@ -137,6 +210,8 @@ export const {
   useGetConnectionProfileQuery,
   useGetConnectionRequestsQuery,
   useGetSuggestionsAllQuery,
+  useSearchUsersQuery,
+  useLazySearchUsersQuery,
 
   // Connection Mutations
   useSendConnectionRequestMutation,

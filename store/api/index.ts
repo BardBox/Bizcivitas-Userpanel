@@ -49,11 +49,14 @@ export {
   useGetConnectionProfileQuery,
   useGetConnectionRequestsQuery,
   useGetSuggestionsAllQuery,
+  useSearchUsersQuery,
+  useLazySearchUsersQuery,
   // Mutations
   useSendConnectionRequestMutation,
   useAcceptConnectionRequestMutation,
   useDeleteConnectionMutation,
 } from "./connectionsApi";
+export type { UserSearchParams } from "./connectionsApi";
 
 // ============================================
 // EVENTS API (Event Management) - Using Latest Backend Schema

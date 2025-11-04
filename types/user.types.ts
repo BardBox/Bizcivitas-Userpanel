@@ -172,6 +172,9 @@ export interface User {
   region?: string;
   joiningDate?: string; // Date when user joined the platform
 
+  // Connection status (used in suggestions/all members list)
+  connectionStatus?: "connected" | "pending" | "not-connected";
+
   // Connections data (basic - see connection.types.ts for detailed)
   connections?: Array<{
     _id: string;

@@ -19,23 +19,23 @@ interface ApiResponse<T> {
 export interface ReferralChartData {
   dailyCounts?: Array<{
     day: string;
-    referrals: number; // received
-    given: number; // sent
+    referrals: number; // invites received
+    given: number; // invites given/sent
   }>;
   fortnightCounts?: Array<{
     period: string;
-    referrals: number; // received
-    given: number; // sent
+    referrals: number; // invites received
+    given: number; // invites given/sent
   }>;
   monthCounts?: Array<{
     period: string;
-    referrals: number; // received
-    given: number; // sent
+    referrals: number; // invites received
+    given: number; // invites given/sent
   }>;
-  totalReferralsCount?: number; // all-time received
-  totalGivenCount?: number; // all-time given
-  totalReferralsGiven?: number; // alternative field name for given
-  totalReferralsReceived?: number; // alternative field name for received
+  totalReferralsCount?: number; // all-time invites received
+  totalGivenCount?: number; // all-time invites given
+  totalReferralsGiven?: number; // alternative field name for invites given
+  totalReferralsReceived?: number; // alternative field name for invites received
 }
 
 export interface BizWinChartData {
@@ -140,7 +140,7 @@ type DateRange = "15days" | "3months" | "6months" | "tilldate";
 export const dashboardApi = baseApi.injectEndpoints({
   overrideExisting: true, // Allow overriding duplicate endpoints
   endpoints: (builder) => ({
-    // BizConnect (Referrals) Chart APIs
+    // BizConnect (Invites) Chart APIs
     getReferralsMonthlyCount: builder.query<ReferralChartData, void>({
       query: () => "/referrals/monthly-count",
       transformResponse: (response: ApiResponse<ReferralChartData>) =>
@@ -279,11 +279,11 @@ export const dashboardApi = baseApi.injectEndpoints({
       query: () => "/dashboard/stats",
     }),
 
-    // User Referral State
+    // User Invite State (referralstate endpoint tracks invites given/received)
     getUserReferralState: builder.query<
       {
-        referralsGiven: number;
-        referralsReceived: number;
+        referralsGiven: number; // invites given by user
+        referralsReceived: number; // invites received by user
         tyfcbGiven: number;
         tyfcbReceived: number;
       },

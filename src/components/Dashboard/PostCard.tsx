@@ -10,6 +10,7 @@ interface PostCardProps {
   content: string;
   id: string;
   category?: string;
+  type?: string; // BizHub type
   author?: {
     name: string;
     title: string;
@@ -30,6 +31,7 @@ export default function PostCard({
   content,
   id,
   category,
+  type,
   author,
   image,
   stats = { likes: 0, comments: 0, shares: 0 },
@@ -42,23 +44,45 @@ export default function PostCard({
   const isBizPulse = sourceType === "bizpulse" || (sourceType !== "bizhub" && !!category);
   const detailUrl = isBizPulse ? `/feeds/biz-pulse/${id}` : `/feeds/biz-hub/${id}`;
 
+  // Get the tag to display (category for BizPulse, type for BizHub)
+  const tagValue = isBizPulse ? category : type;
+
   const getCategoryLabel = (cat?: string) => {
     if (!cat) return "";
     return cat
-      .replace("-", " ")
-      .replace(/\b\w/g, (l) => l.toUpperCase());
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
-  const getCategoryColor = (cat?: string) => {
-    const colors: Record<string, string> = {
-      "travel-stories": "bg-blue-100 text-blue-800",
-      "light-pulse": "bg-yellow-100 text-yellow-800",
-      "spotlight-stories": "bg-purple-100 text-purple-800",
-      "pulse-polls": "bg-green-100 text-green-800",
-      "business-boosters": "bg-indigo-100 text-indigo-800",
-      "founders-desk": "bg-pink-100 text-pink-800",
+  const getCategoryColor = (cat?: string, source?: string) => {
+    // BizHub colors (purple theme)
+    const bizhubColors: Record<string, string> = {
+      "general-chatter": "bg-purple-100 text-purple-800 border border-purple-200",
+      "referral-exchanges": "bg-pink-100 text-pink-800 border border-pink-200",
+      "business-deep-dive": "bg-indigo-100 text-indigo-800 border border-indigo-200",
+      "travel-talks": "bg-cyan-100 text-cyan-800 border border-cyan-200",
+      "biz-learnings": "bg-violet-100 text-violet-800 border border-violet-200",
+      "collab-corner": "bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200",
     };
-    return colors[cat || ""] || "bg-gray-100 text-gray-800";
+
+    // BizPulse colors (blue theme)
+    const bizpulseColors: Record<string, string> = {
+      "travel-stories": "bg-blue-100 text-blue-800 border border-blue-200",
+      "light-pulse": "bg-yellow-100 text-yellow-800 border border-yellow-200",
+      "spotlight-stories": "bg-purple-100 text-purple-800 border border-purple-200",
+      "pulse-polls": "bg-green-100 text-green-800 border border-green-200",
+      "business-boosters": "bg-indigo-100 text-indigo-800 border border-indigo-200",
+      "founders-desk": "bg-pink-100 text-pink-800 border border-pink-200",
+      "article": "bg-orange-100 text-orange-800 border border-orange-200",
+      "trip": "bg-teal-100 text-teal-800 border border-teal-200",
+      "upcoming-event": "bg-red-100 text-red-800 border border-red-200",
+      "announcement": "bg-amber-100 text-amber-800 border border-amber-200",
+      "poll": "bg-emerald-100 text-emerald-800 border border-emerald-200",
+    };
+
+    const colors = source === "bizhub" ? bizhubColors : bizpulseColors;
+    return colors[cat || ""] || "bg-gray-100 text-gray-800 border border-gray-200";
   };
 
   return (
@@ -123,15 +147,16 @@ export default function PostCard({
         )}
 
         <div className="p-4 sm:p-5">
-          {/* Category Badge */}
-          {category && (
+          {/* Category/Type Tag */}
+          {tagValue && (
             <div className="mb-3">
               <span
-                className={`px-2.5 py-1 rounded-full text-xs font-medium ${getCategoryColor(
-                  category
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(
+                  tagValue,
+                  sourceType
                 )}`}
               >
-                {getCategoryLabel(category)}
+                {getCategoryLabel(tagValue)}
               </span>
             </div>
           )}

@@ -13,6 +13,7 @@ interface CardMember {
   company: string;
   avatar?: string;
   isOnline: boolean;
+  connectionStatus?: "connected" | "pending" | "not-connected";
 }
 
 interface AllMembersProps {
@@ -44,7 +45,7 @@ const AllMembers: React.FC<AllMembersProps> = ({
   const membersData: CardMember[] = useMemo(() => {
     if (!suggestions) return [];
 
-    return suggestions.map((user: User) => {
+    return suggestions.map((user: any) => {
       const fullName = `${user.fname || ""} ${user.lname || ""}`.trim();
 
       // Get title/classification
@@ -72,6 +73,7 @@ const AllMembers: React.FC<AllMembersProps> = ({
         company: company || "-",
         avatar: getAvatarUrl(user.avatar),
         isOnline: false,
+        connectionStatus: user.connectionStatus || "not-connected",
       };
     });
   }, [suggestions]);
@@ -199,6 +201,7 @@ const AllMembers: React.FC<AllMembersProps> = ({
             avatar={member.avatar}
             isOnline={member.isOnline}
             referrerTab={referrerTab}
+            connectionStatus={member.connectionStatus}
           />
         ))}
       </div>

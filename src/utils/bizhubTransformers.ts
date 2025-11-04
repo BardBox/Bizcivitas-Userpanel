@@ -104,6 +104,7 @@ export function transformBizHubPostToMock(post: any): BizPulseMockPost {
     },
     timeAgo: post.timeAgo || (post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently"),
     category: mappedCategory,
+    type: post.type, // Preserve original BizHub type for tag display
     tags: [],
     isLiked: post.isLiked || false,
     postType: "regular",

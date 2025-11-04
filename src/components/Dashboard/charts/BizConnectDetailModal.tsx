@@ -16,11 +16,11 @@ interface UserDetails {
   email?: string;
 }
 
-interface ReferralDetail {
+interface InviteDetail {
   id: string;
   _id?: string;
-  referralName?: string;
-  referral?: string;
+  referralName?: string; // Backend field name (maps to invited person's name)
+  referral?: string; // Backend field name (alternative)
   telephone?: string;
   email?: string;
   address?: string;
@@ -52,8 +52,8 @@ export default function BizConnectDetailModal({
 }: BizConnectDetailModalProps) {
   const [activeTab, setActiveTab] = useState<"given" | "received">(initialTab);
   const [dateRange, setDateRange] = useState(initialDateRange);
-  const [givenData, setGivenData] = useState<ReferralDetail[]>([]);
-  const [receivedData, setReceivedData] = useState<ReferralDetail[]>([]);
+  const [givenData, setGivenData] = useState<InviteDetail[]>([]);
+  const [receivedData, setReceivedData] = useState<InviteDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -135,14 +135,14 @@ export default function BizConnectDetailModal({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Referral data received:", data.data);
+        console.log("Invite data received:", data.data);
         setGivenData(data.data.referralsGiven || []);
         setReceivedData(data.data.referralsReceived || []);
       } else {
         console.error("API error:", data);
       }
     } catch (error) {
-      console.error("Error fetching referral details:", error);
+      console.error("Error fetching invite details:", error);
     } finally {
       setLoading(false);
     }
@@ -313,7 +313,7 @@ export default function BizConnectDetailModal({
                     }
                   }
 
-                  const referralName = record.referralName || record.referral || "N/A";
+                  const invitedName = record.referralName || record.referral || "N/A";
 
                   return (
                     <div
@@ -362,9 +362,9 @@ export default function BizConnectDetailModal({
                             Contact Relation: <span className="font-medium">{record.contactRelation}</span>
                           </p>
                         )}
-                        {referralName && referralName !== "N/A" && (
+                        {invitedName && invitedName !== "N/A" && (
                           <p className="text-sm text-gray-700 mt-1">
-                            Referral: <span className="font-medium">{referralName}</span>
+                            Invited: <span className="font-medium">{invitedName}</span>
                           </p>
                         )}
                         <p className="text-sm text-green-600 mt-1">

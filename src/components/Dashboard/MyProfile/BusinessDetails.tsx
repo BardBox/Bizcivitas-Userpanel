@@ -133,7 +133,16 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
     setSaveError(null);
 
     try {
-      // Remove old location fields from form data
+      // Get city/state/country names from ISO codes
+      const cityName = selectedCity || "";
+      const stateName = selectedState
+        ? getStateName(selectedCountry, selectedState)
+        : "";
+      const countryName = selectedCountry
+        ? getCountryName(selectedCountry)
+        : "";
+
+      // Remove old location fields from form data (we'll add them back properly)
       const { businessCity, businessState, businessCountry, ...formData } =
         data;
 
@@ -149,15 +158,20 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         {} as Record<string, any>
       );
 
+      // Add business location fields to professionalDetails
+      // This ensures BizWin Analytics can filter by country/state/city
+      cleanedData.businessCity = cityName;
+      cleanedData.businessState = stateName;
+      cleanedData.businessCountry = countryName;
+
       // Prepare addresses data - only send address fields we're updating
+      // Keep this for backward compatibility with other parts of the system
       const addressesData = {
         addresses: {
           address: {
-            city: selectedCity || "",
-            state: selectedState
-              ? getStateName(selectedCountry, selectedState)
-              : "",
-            country: selectedCountry ? getCountryName(selectedCountry) : "",
+            city: cityName,
+            state: stateName,
+            country: countryName,
           },
           billing: {}, // Empty object required by backend
         },

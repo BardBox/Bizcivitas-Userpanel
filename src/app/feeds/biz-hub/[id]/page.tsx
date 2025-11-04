@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -80,6 +81,21 @@ export default function BizHubPostDetail() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
+  const [backButtonText, setBackButtonText] = useState<string>("Back to Feeds");
+
+  // Determine back button text based on referrer
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const referrer = document.referrer;
+      if (referrer.includes('/feeds/biz-pulse')) {
+        setBackButtonText('Back to Biz Pulse');
+      } else if (referrer.includes('/feeds/biz-hub')) {
+        setBackButtonText('Back to Biz Hub');
+      } else {
+        setBackButtonText('Back to Feeds');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (postId) {
@@ -264,9 +280,23 @@ export default function BizHubPostDetail() {
     : `/feeds/connections/${postAuthorId}?from=connect-members`;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      {/* Post Card */}
-      <div className="bg-white rounded-lg shadow p-6 space-y-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with back button */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <button onClick={() => router.back()} className="flex items-center hover:text-blue-600 transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              {backButtonText}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* Post Card */}
+        <div className="bg-white rounded-lg shadow p-6 space-y-4">
         {/* Author Info */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -655,6 +685,7 @@ export default function BizHubPostDetail() {
         message="Are you sure you want to delete this post? This action cannot be undone and the post will be permanently removed."
         isDeleting={isDeleting}
       />
+      </div>
     </div>
   );
 }

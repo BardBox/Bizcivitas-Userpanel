@@ -89,20 +89,20 @@ export default function BizConnectChart() {
 
   const isLoading =
     loading15Days || loading3Months || loading6Months || loadingTillDate;
-  const error =
-    error15Days || error3Months || error6Months || errorTillDate;
+  const error = error15Days || error3Months || error6Months || errorTillDate;
 
   // Debug errors
-  if (error15Days) console.error('BizConnect 15 Days Error:', error15Days);
-  if (error3Months) console.error('BizConnect 3 Months Error:', error3Months);
-  if (error6Months) console.error('BizConnect 6 Months Error:', error6Months);
-  if (errorTillDate) console.error('BizConnect Till Date Error:', errorTillDate);
+  if (error15Days) console.error("BizConnect 15 Days Error:", error15Days);
+  if (error3Months) console.error("BizConnect 3 Months Error:", error3Months);
+  if (error6Months) console.error("BizConnect 6 Months Error:", error6Months);
+  if (errorTillDate)
+    console.error("BizConnect Till Date Error:", errorTillDate);
 
   const currentData = getData();
 
   // Debug logging
-  console.log('BizConnect Chart - Selected Range:', selectedRange);
-  console.log('BizConnect Chart - Current Data:', currentData);
+  console.log("BizConnect Chart - Selected Range:", selectedRange);
+  console.log("BizConnect Chart - Current Data:", currentData);
 
   // Get the appropriate data array based on the response structure
   const getDataArray = () => {
@@ -113,7 +113,7 @@ export default function BizConnectChart() {
   };
 
   const dataArray = getDataArray();
-  console.log('BizConnect Chart - Data Array:', dataArray);
+  console.log("BizConnect Chart - Data Array:", dataArray);
 
   // Transform API data to chart format - handle different field names
   let chartData = dataArray.map((item: any) => ({
@@ -123,20 +123,33 @@ export default function BizConnectChart() {
   }));
 
   // Handle both response structures (Till Date uses different field names)
-  const totalGiven = currentData?.totalGivenCount || currentData?.totalReferralsGiven || 0;
-  const totalReceived = currentData?.totalReferralsCount || currentData?.totalReferralsReceived || 0;
+  const totalGiven =
+    currentData?.totalGivenCount || currentData?.totalReferralsGiven || 0;
+  const totalReceived =
+    currentData?.totalReferralsCount ||
+    currentData?.totalReferralsReceived ||
+    0;
 
   // For "Till Date", create a summary chart with totals since there's no daily/period data
-  if (selectedRange === "tilldate" && chartData.length === 0 && (totalGiven > 0 || totalReceived > 0)) {
+  if (
+    selectedRange === "tilldate" &&
+    chartData.length === 0 &&
+    (totalGiven > 0 || totalReceived > 0)
+  ) {
     chartData = [
       { date: "Total Given", given: totalGiven, received: 0 },
       { date: "Total Received", given: 0, received: totalReceived },
     ];
   }
 
-  console.log('BizConnect Chart - Transformed Chart Data:', chartData);
+  console.log("BizConnect Chart - Transformed Chart Data:", chartData);
 
-  console.log('BizConnect Chart - Total Given:', totalGiven, 'Total Received:', totalReceived);
+  console.log(
+    "BizConnect Chart - Total Given:",
+    totalGiven,
+    "Total Received:",
+    totalReceived
+  );
 
   return (
     <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -183,14 +196,26 @@ export default function BizConnectChart() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-blue-700 mb-1 font-medium">BizConnect Given</p>
+              <p className="text-sm text-blue-700 mb-1 font-medium">
+                BizConnect Given
+              </p>
               <p className="text-3xl font-bold text-blue-900">
                 {isLoading ? "..." : totalGiven}
               </p>
             </div>
             <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              <svg
+                className="w-6 h-6 text-blue-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
               </svg>
             </div>
           </div>
@@ -201,14 +226,26 @@ export default function BizConnectChart() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-700 mb-1 font-medium">BizConnect Received</p>
+              <p className="text-sm text-green-700 mb-1 font-medium">
+                BizConnect Received
+              </p>
               <p className="text-3xl font-bold text-green-900">
                 {isLoading ? "..." : totalReceived}
               </p>
             </div>
             <div className="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+              <svg
+                className="w-6 h-6 text-green-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                />
               </svg>
             </div>
           </div>
@@ -227,28 +264,62 @@ export default function BizConnectChart() {
         ) : error ? (
           <div className="h-[400px] flex items-center justify-center bg-red-50 rounded-xl border border-red-200">
             <div className="text-center">
-              <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-12 h-12 text-red-400 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <p className="text-red-600 font-medium">Failed to load chart data</p>
-              <p className="text-red-500 text-sm mt-1">Please try again later</p>
+              <p className="text-red-600 font-medium">
+                Failed to load chart data
+              </p>
+              <p className="text-red-500 text-sm mt-1">
+                Please try again later
+              </p>
             </div>
           </div>
         ) : chartData.length === 0 ? (
           <div className="h-[400px] flex items-center justify-center bg-gray-50 rounded-xl border border-gray-200">
             <div className="text-center">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <svg
+                className="w-16 h-16 text-gray-300 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
               </svg>
               <p className="text-gray-600 font-medium">No data available</p>
-              <p className="text-gray-400 text-sm mt-1">Data will appear once you have BizConnect activity</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Data will appear once you have BizConnect activity
+              </p>
             </div>
           </div>
         ) : (
           <div className="bg-gray-50 rounded-xl p-4">
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData} barGap={4} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <BarChart
+                data={chartData}
+                barGap={4}
+                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e5e7eb"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 13, fill: "#6b7280", fontWeight: 500 }}
@@ -268,7 +339,11 @@ export default function BizConnectChart() {
                     padding: "12px 16px",
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
-                  labelStyle={{ fontWeight: "bold", marginBottom: "8px", color: "#111827" }}
+                  labelStyle={{
+                    fontWeight: "bold",
+                    marginBottom: "8px",
+                    color: "#111827",
+                  }}
                   cursor={{ fill: "rgba(74, 98, 173, 0.05)" }}
                 />
                 <Legend

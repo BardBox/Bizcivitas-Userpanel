@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, memo } from "react";
 import { useSelector } from "react-redux";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { RootState } from "../../../store/store";
 import PollCard from "@/components/Dashboard/PollCard";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -20,10 +21,18 @@ export default function DashboardPage() {
     console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
   }
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get initial tab from URL or default to "all"
+  const tabFromUrl = searchParams.get("tab") as "all" | "bizpulse" | "bizhub" | null;
+  const validTabs = ["all", "bizpulse", "bizhub"];
+  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "all";
+
   const [posts, setPosts] = useState<any[]>([]);
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"all" | "bizpulse" | "bizhub">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "bizpulse" | "bizhub">(initialTab);
   const user = useSelector((state: RootState) => state.auth.user);
   const currentUserId = user?._id || user?.id || "";
   const [hasMore, setHasMore] = useState(false);
@@ -36,6 +45,20 @@ export default function DashboardPage() {
     window.addEventListener("resize", updateDrawer);
     return () => window.removeEventListener("resize", updateDrawer);
   }, []);
+
+  // Handler to change tab and update URL
+  const handleTabChange = useCallback((tab: "all" | "bizpulse" | "bizhub") => {
+    setActiveTab(tab);
+    // Update URL without full page reload
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "all") {
+      params.delete("tab"); // Remove tab param for default "all"
+    } else {
+      params.set("tab", tab);
+    }
+    const newUrl = params.toString() ? `/feeds?${params.toString()}` : "/feeds";
+    router.push(newUrl, { scroll: false });
+  }, [router, searchParams]);
 
   const fetchDailyFeed = useCallback(async () => {
     try {
@@ -125,7 +148,7 @@ export default function DashboardPage() {
           {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
             <button
-              onClick={() => setActiveTab("all")}
+              onClick={() => handleTabChange("all")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
                 activeTab === "all"
                   ? "bg-orange-500 text-white shadow-md"
@@ -136,7 +159,7 @@ export default function DashboardPage() {
               <span className="font-medium">All</span>
             </button>
             <button
-              onClick={() => setActiveTab("bizpulse")}
+              onClick={() => handleTabChange("bizpulse")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
                 activeTab === "bizpulse"
                   ? "bg-blue-500 text-white shadow-md"
@@ -147,7 +170,7 @@ export default function DashboardPage() {
               <span className="font-medium">BizPulse</span>
             </button>
             <button
-              onClick={() => setActiveTab("bizhub")}
+              onClick={() => handleTabChange("bizhub")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
                 activeTab === "bizhub"
                   ? "bg-blue-500 text-white shadow-md"

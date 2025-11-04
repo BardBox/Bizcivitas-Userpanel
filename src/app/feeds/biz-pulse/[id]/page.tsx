@@ -40,6 +40,21 @@ export default function BizPulseDetailPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
+  const [backButtonText, setBackButtonText] = useState<string>("Back to Feeds");
+
+  // Determine back button text based on referrer
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const referrer = document.referrer;
+      if (referrer.includes('/feeds/biz-pulse')) {
+        setBackButtonText('Back to Biz Pulse');
+      } else if (referrer.includes('/feeds/biz-hub')) {
+        setBackButtonText('Back to Biz Hub');
+      } else {
+        setBackButtonText('Back to Feeds');
+      }
+    }
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -325,7 +340,7 @@ export default function BizPulseDetailPage() {
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <button onClick={() => router.back()} className="flex items-center hover:text-blue-600 transition-colors">
               <ArrowLeft className="w-4 h-4 mr-1" />
-              Back to Biz Hub
+              {backButtonText}
             </button>
           </div>
         </div>

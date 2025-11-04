@@ -12,6 +12,7 @@ interface UserCardProps {
   avatar?: string;
   isOnline?: boolean;
   referrerTab?: string; // Optional: to preserve the tab when navigating back
+  connectionStatus?: "connected" | "pending" | "not-connected"; // Connection status
 }
 
 const UserCard: React.FC<UserCardProps> = ({
@@ -22,6 +23,7 @@ const UserCard: React.FC<UserCardProps> = ({
   avatar,
   isOnline = false,
   referrerTab,
+  connectionStatus = "not-connected",
 }) => {
   const router = useRouter();
 
@@ -39,11 +41,44 @@ const UserCard: React.FC<UserCardProps> = ({
     router.push(url);
   };
 
+  // Get badge config based on connection status
+  const getBadgeConfig = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return {
+          text: "Connected",
+          bgColor: "bg-green-100",
+          textColor: "text-green-700",
+          borderColor: "border-green-200",
+        };
+      case "pending":
+        return {
+          text: "Pending",
+          bgColor: "bg-yellow-100",
+          textColor: "text-yellow-700",
+          borderColor: "border-yellow-200",
+        };
+      default:
+        return null;
+    }
+  };
+
+  const badgeConfig = getBadgeConfig();
+
   return (
     <div
       onClick={handleCardClick}
-      className="bg-white rounded-2xl border border-gray-200 p-3 xl:p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:border-blue-200"
+      className="bg-white rounded-2xl border border-gray-200 p-3 xl:p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:border-blue-200 relative"
     >
+      {/* Connection Status Badge */}
+      {badgeConfig && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold border ${badgeConfig.bgColor} ${badgeConfig.textColor} ${badgeConfig.borderColor}`}>
+            {badgeConfig.text}
+          </span>
+        </div>
+      )}
+
       {/* Avatar Section */}
       <div className="flex flex-col items-center mb-6">
         <div className="relative mb-4">

@@ -1,5 +1,213 @@
-import ComingSoon from "@/components/ComingSoon";
+"use client";
+
+import { useState } from "react";
+import { Video, FileText, BookOpen, Loader2, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  useGetSavedCollectionsQuery,
+  type Collection,
+} from "../../../../store/api/knowledgeHubApi";
+
+type TabType = "expert" | "knowledge" | "membership" | "resource";
+
+const SAVED_TABS = [
+  { id: "expert" as TabType, label: "Expert Learnings", icon: Video },
+  { id: "knowledge" as TabType, label: "Knowledge Sessions", icon: BookOpen },
+  { id: "membership" as TabType, label: "Members insights", icon: FileText },
+  { id: "resource" as TabType, label: "Resource centre", icon: FileText },
+];
 
 export default function SavedResourcesPage() {
-  return <ComingSoon title="Saved Resources" />;
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabType>("expert");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch saved collections
+  const { data: savedCollections = [], isLoading } =
+    useGetSavedCollectionsQuery();
+
+  // Handler for collection card click - navigate to detail page
+  const handleCollectionClick = (collectionId: string) => {
+    router.push(`/feeds/knowledge-hub/collection/${collectionId}`);
+  };
+
+  // Filter collections by active tab type
+  const filteredByTab = savedCollections.filter(
+    (collection) => collection.type === activeTab
+  );
+
+  // Filter by search query
+  const filteredCollections = filteredByTab.filter(
+    (collection) =>
+      collection.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      collection.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const activeTabInfo =
+    SAVED_TABS.find((tab) => tab.id === activeTab) || SAVED_TABS[0];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          Saved Resources
+        </h1>
+      </div>
+
+      {/* Search Bar */}
+      <div className="max-w-md">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search saved content..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="border-b border-gray-200">
+          <div className="hidden lg:block">
+            <nav
+              className="flex space-x-8 px-6 overflow-x-auto"
+              aria-label="Tabs"
+            >
+              {SAVED_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`${
+                    activeTab === tab.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
+                >
+                  {tab.label}
+                  {activeTab === tab.id && isLoading && (
+                    <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading saved content...</p>
+            </div>
+          </div>
+        ) : filteredCollections.length === 0 ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <activeTabInfo.icon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {searchQuery ? "No results found" : "No saved content"}
+              </h3>
+              <p className="text-gray-600">
+                {searchQuery
+                  ? "Try adjusting your search terms"
+                  : "Save collections from Knowledge Hub to see them here"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredCollections.map((collection) => (
+              <div
+                key={collection._id}
+                onClick={() => handleCollectionClick(collection._id)}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
+              >
+                <div className="space-y-4">
+                  {/* Collection Thumbnail */}
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                    {collection.thumbnailUrl ? (
+                      <img
+                        src={collection.thumbnailUrl}
+                        alt={collection.title}
+                        className="w-full h-full object-fill"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full">
+                        {activeTab === "membership" ||
+                        activeTab === "resource" ? (
+                          <FileText className="w-16 h-16 text-gray-400" />
+                        ) : (
+                          <Video className="w-16 h-16 text-gray-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Collection Stats */}
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-gray-900">
+                      {collection.title}
+                    </h3>
+
+                    {collection.expertType && (
+                      <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                        {collection.expertType}
+                      </span>
+                    )}
+
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      {activeTab === "membership" ||
+                      activeTab === "resource" ? (
+                        <>
+                          <FileText className="w-4 h-4" />
+                          <span>
+                            {collection.subItems?.length || 0}{" "}
+                            {collection.subItems?.length === 1
+                              ? "document"
+                              : "documents"}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Video className="w-4 h-4" />
+                          <span>
+                            {collection.subItems?.length || 0}{" "}
+                            {collection.subItems?.length === 1
+                              ? "video"
+                              : "videos"}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {collection.author && (
+                      <div className="text-sm text-gray-600">
+                        <span className="font-semibold">By:</span>{" "}
+                        {collection.author}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="text-center text-sm text-gray-500">
+        Your saved educational content, business templates, and expert
+        resources.
+      </div>
+    </div>
+  );
 }

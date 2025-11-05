@@ -53,6 +53,10 @@ export interface Collection {
   author?: string;
   subItems?: MediaItem[];
   tags?: string[];
+  savedBy?: Array<{
+    userId: string;
+    savedAt: string;
+  }>;
   createdAt?: string;
   updatedAt?: string;
 }

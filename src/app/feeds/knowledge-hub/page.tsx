@@ -10,10 +10,13 @@ import {
   ChevronDown,
   Search,
   Download,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useGetCollectionsQuery,
+  useSaveCollectionMutation,
   type Collection,
 } from "../../../../store/api/knowledgeHubApi";
 
@@ -55,9 +58,25 @@ export default function KnowledgeHubPage() {
   const { data: resourceCollections = [], isLoading: resourceLoading } =
     useGetCollectionsQuery({ type: "resource" });
 
+  // Save collection mutation
+  const [saveCollection] = useSaveCollectionMutation();
+
   // Handler for collection card click - navigate to detail page
   const handleCollectionClick = (collectionId: string) => {
     router.push(`/feeds/knowledge-hub/collection/${collectionId}`);
+  };
+
+  // Handler for save/unsave collection
+  const handleSaveCollection = async (
+    e: React.MouseEvent,
+    collectionId: string
+  ) => {
+    e.stopPropagation(); // Prevent card click
+    try {
+      await saveCollection({ collectionId }).unwrap();
+    } catch (error) {
+      console.error("Failed to save collection:", error);
+    }
   };
 
   // Close dropdown when clicking outside
@@ -255,6 +274,21 @@ export default function KnowledgeHubPage() {
                             <Video className="w-16 h-16 text-white/70" />
                           </div>
                         )}
+
+                        {/* Save Button */}
+                        <button
+                          onClick={(e) =>
+                            handleSaveCollection(e, collection._id)
+                          }
+                          className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all"
+                        >
+                          {collection.savedBy &&
+                          collection.savedBy.length > 0 ? (
+                            <BookmarkCheck className="w-5 h-5 text-blue-600" />
+                          ) : (
+                            <Bookmark className="w-5 h-5 text-gray-600" />
+                          )}
+                        </button>
                       </div>
 
                       {/* Collection Stats */}

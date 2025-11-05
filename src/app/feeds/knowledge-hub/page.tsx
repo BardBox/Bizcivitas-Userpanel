@@ -14,12 +14,10 @@ import {
 import { useRouter } from "next/navigation";
 import {
   useGetCollectionsQuery,
-  useGetPDFsQuery,
-  type MediaItem,
   type Collection,
 } from "../../../../store/api/knowledgeHubApi";
 
-type TabType = "recordings" | "tutorials" | "pdfs";
+type TabType = "recordings" | "tutorials" | "membership" | "resource";
 
 const KNOWLEDGE_HUB_TABS = [
   { id: "recordings" as TabType, label: "Expert Learnings", icon: Video },
@@ -29,7 +27,7 @@ const KNOWLEDGE_HUB_TABS = [
     icon: BookOpen,
   },
   {
-    id: "pdfs" as TabType,
+    id: "membership" as TabType,
     label: "Members insights",
     icon: FileText,
   },
@@ -52,7 +50,10 @@ export default function KnowledgeHubPage() {
     useGetCollectionsQuery({ type: "expert" });
   const { data: knowledgeCollections = [], isLoading: knowledgeLoading } =
     useGetCollectionsQuery({ type: "knowledge" });
-  const { data: pdfs = [], isLoading: pdfsLoading } = useGetPDFsQuery();
+  const { data: membershipCollections = [], isLoading: membershipLoading } =
+    useGetCollectionsQuery({ type: "membership" });
+  const { data: resourceCollections = [], isLoading: resourceLoading } =
+    useGetCollectionsQuery({ type: "resource" });
 
   // Handler for collection card click - navigate to detail page
   const handleCollectionClick = (collectionId: string) => {
@@ -77,44 +78,6 @@ export default function KnowledgeHubPage() {
     KNOWLEDGE_HUB_TABS.find((tab) => tab.id === activeTab) ||
     KNOWLEDGE_HUB_TABS[0];
 
-  const handleVideoClick = (
-    media: MediaItem,
-    type: "recordings" | "tutorials"
-  ) => {
-    const gradientColor = type === "recordings" ? "#8696C8" : "#6CCC86";
-    const headerTitle = type === "recordings" ? "Recording" : "Tutorial";
-
-    router.push(
-      `/feeds/knowledge-hub/video/${media._id}?` +
-        new URLSearchParams({
-          videoUrl:
-            media.embedLink ||
-            `https://player.vimeo.com/video/${media.vimeoId}`,
-          title: media.title,
-          description: media.description || "",
-          headerTitle,
-          gradientColor,
-        }).toString()
-    );
-  };
-
-  const handlePdfClick = (media: MediaItem) => {
-    router.push(
-      `/feeds/knowledge-hub/pdf/${media._id}?` +
-        new URLSearchParams({
-          pdfUrl: media.url || "",
-          title: media.title,
-        }).toString()
-    );
-  };
-
-  const handleDownload = (e: React.MouseEvent, media: MediaItem) => {
-    e.stopPropagation();
-    if (media.url) {
-      window.open(media.url, "_blank");
-    }
-  };
-
   // Get current data and loading state based on active tab
   const getCurrentData = () => {
     switch (activeTab) {
@@ -122,8 +85,10 @@ export default function KnowledgeHubPage() {
         return { data: expertCollections, isLoading: expertLoading };
       case "tutorials":
         return { data: knowledgeCollections, isLoading: knowledgeLoading };
-      case "pdfs":
-        return { data: pdfs, isLoading: pdfsLoading };
+      case "membership":
+        return { data: membershipCollections, isLoading: membershipLoading };
+      case "resource":
+        return { data: resourceCollections, isLoading: resourceLoading };
       default:
         return { data: [], isLoading: false };
     }
@@ -131,12 +96,8 @@ export default function KnowledgeHubPage() {
 
   const { data: currentData, isLoading: currentLoading } = getCurrentData();
 
-  // For collections (recordings and tutorials), currentData is already Collection[]
-  // For PDFs, it's MediaItem[]
-  const collections =
-    activeTab === "recordings" || activeTab === "tutorials"
-      ? (currentData as Collection[])
-      : [];
+  // All tabs now use collections
+  const collections = currentData as Collection[];
 
   // Filter collections based on search query
   const filteredCollections = collections.filter(
@@ -144,49 +105,6 @@ export default function KnowledgeHubPage() {
       collection.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       collection.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Filter PDFs based on search query
-  const filteredPDFs = (
-    activeTab === "pdfs" ? (currentData as MediaItem[]) : []
-  ).filter(
-    (item) =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.fileName &&
-        item.fileName.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  // Helper functions for PDFs
-  const getFileExtension = (fileName: string) => {
-    const ext = fileName.split(".").pop()?.toUpperCase();
-    return ext || "DOC";
-  };
-
-  const getFileTypeColor = (fileName?: string) => {
-    if (!fileName) return "bg-blue-100 text-blue-600";
-    const ext = fileName.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "pdf":
-        return "bg-red-100 text-red-600";
-      case "doc":
-      case "docx":
-        return "bg-blue-100 text-blue-600";
-      case "xls":
-      case "xlsx":
-        return "bg-green-100 text-green-600";
-      case "ppt":
-      case "pptx":
-        return "bg-orange-100 text-orange-600";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
-  };
-
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
   return (
     <div className="space-y-6">
@@ -288,21 +206,14 @@ export default function KnowledgeHubPage() {
 
       {/* Content Area - Outside Tab Container */}
       <div>
-        {currentLoading &&
-        (activeTab === "pdfs"
-          ? filteredPDFs.length === 0
-          : filteredCollections.length === 0) ? (
+        {currentLoading && filteredCollections.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
               <p className="text-gray-600">Loading content...</p>
             </div>
           </div>
-        ) : (
-            activeTab === "pdfs"
-              ? filteredPDFs.length === 0
-              : filteredCollections.length === 0
-          ) ? (
+        ) : filteredCollections.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <activeTabInfo.icon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -318,8 +229,11 @@ export default function KnowledgeHubPage() {
           </div>
         ) : (
           <>
-            {/* Collection Cards View (Recordings & Tutorials) */}
-            {(activeTab === "recordings" || activeTab === "tutorials") && (
+            {/* Collection Cards View - All Tabs */}
+            {(activeTab === "recordings" ||
+              activeTab === "tutorials" ||
+              activeTab === "membership" ||
+              activeTab === "resource") && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredCollections.map((collection) => (
                   <div
@@ -327,122 +241,66 @@ export default function KnowledgeHubPage() {
                     onClick={() => handleCollectionClick(collection._id)}
                     className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
                   >
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
-                      <div className="space-y-4">
-                        {/* Collection Thumbnail */}
-                        <div
-                          className={`relative aspect-video rounded-lg overflow-hidden bg-gradient-to-br ${
-                            activeTab === "recordings"
-                              ? "from-purple-500 to-indigo-600"
-                              : "from-green-500 to-emerald-600"
-                          }`}
-                        >
-                          {collection.thumbnailUrl ? (
-                            <img
-                              src={collection.thumbnailUrl}
-                              alt={collection.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center w-full h-full">
-                              <Video className="w-16 h-16 text-white/70" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Collection Stats */}
-                        <div className="space-y-3">
-                          <h3 className="font-bold text-gray-900">
-                            {collection.title}
-                          </h3>
-
-                          {collection.expertType && (
-                            <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                              {collection.expertType}
-                            </span>
-                          )}
-
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Video className="w-4 h-4" />
-                            <span>
-                              {collection.subItems?.length || 0}{" "}
-                              {collection.subItems?.length === 1
-                                ? "video"
-                                : "videos"}
-                            </span>
+                    <div className="space-y-4">
+                      {/* Collection Thumbnail */}
+                      <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                        {collection.thumbnailUrl ? (
+                          <img
+                            src={collection.thumbnailUrl}
+                            alt={collection.title}
+                            className="w-full h-full object-fill"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-full">
+                            <Video className="w-16 h-16 text-white/70" />
                           </div>
+                        )}
+                      </div>
 
-                          {collection.author && (
-                            <div className="text-sm text-gray-600">
-                              <span className="font-semibold">By:</span>{" "}
-                              {collection.author}
-                            </div>
+                      {/* Collection Stats */}
+                      <div className="space-y-3">
+                        <h3 className="font-bold text-gray-900">
+                          {collection.title}
+                        </h3>
+
+                        {collection.expertType && (
+                          <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                            {collection.expertType}
+                          </span>
+                        )}
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          {activeTab === "membership" ||
+                          activeTab === "resource" ? (
+                            <>
+                              <FileText className="w-4 h-4" />
+                              <span>
+                                {collection.subItems?.length || 0}{" "}
+                                {collection.subItems?.length === 1
+                                  ? "document"
+                                  : "documents"}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Video className="w-4 h-4" />
+                              <span>
+                                {collection.subItems?.length || 0}{" "}
+                                {collection.subItems?.length === 1
+                                  ? "video"
+                                  : "videos"}
+                              </span>
+                            </>
                           )}
                         </div>
+
+                        {collection.author && (
+                          <div className="text-sm text-gray-600">
+                            <span className="font-semibold">By:</span>{" "}
+                            {collection.author}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* PDFs Grid */}
-            {activeTab === "pdfs" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredPDFs.map((item) => (
-                  <div
-                    key={item._id}
-                    onClick={() => handlePdfClick(item)}
-                    className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all cursor-pointer group"
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      {/* File Icon */}
-                      <div
-                        className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 ${getFileTypeColor(
-                          item.fileName
-                        )}`}
-                      >
-                        <FileText className="w-10 h-10" />
-                      </div>
-
-                      {/* File Type Badge */}
-                      {item.fileName && (
-                        <span
-                          className={`text-xs font-semibold px-2 py-1 rounded mb-3 ${getFileTypeColor(
-                            item.fileName
-                          )}`}
-                        >
-                          {getFileExtension(item.fileName)}
-                        </span>
-                      )}
-
-                      {/* Title */}
-                      <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">
-                        {item.title}
-                      </h3>
-
-                      {/* File Name */}
-                      {item.fileName && (
-                        <p className="text-xs text-gray-500 mb-1">
-                          {item.fileName}
-                        </p>
-                      )}
-
-                      {/* File Size */}
-                      {item.sizeInBytes && (
-                        <p className="text-xs text-gray-400 mb-3">
-                          {formatFileSize(item.sizeInBytes)}
-                        </p>
-                      )}
-
-                      {/* Download Button */}
-                      <button
-                        onClick={(e) => handleDownload(e, item)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </button>
                     </div>
                   </div>
                 ))}

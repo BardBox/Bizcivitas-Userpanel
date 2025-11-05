@@ -294,6 +294,35 @@ export const dashboardApi = baseApi.injectEndpoints({
           ? `/dashboard/user-referralstate/${userId}`
           : "/dashboard/user-referralstate",
     }),
+
+    // Update Referral Slip
+    updateReferralSlip: builder.mutation<
+      any,
+      { id: string; data: Partial<{
+        to: string;
+        referral: string;
+        telephone: string;
+        email?: string;
+        address?: string;
+        comments?: string;
+        contactRelation?: string;
+        status?: string;
+      }> }
+    >({
+      query: ({ id, data }) => ({
+        url: `/referrals/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+    }),
+
+    // Delete Referral Slip
+    deleteReferralSlip: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/referrals/${id}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
@@ -330,4 +359,8 @@ export const {
   useGetUserConnectionsQuery,
   useGetDashboardStatsQuery,
   useGetUserReferralStateQuery,
+
+  // Mutations
+  useUpdateReferralSlipMutation,
+  useDeleteReferralSlipMutation,
 } = dashboardApi;

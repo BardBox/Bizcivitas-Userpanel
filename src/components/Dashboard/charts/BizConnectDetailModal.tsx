@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, Calendar } from "lucide-react";
+import { X, Download, Calendar, Edit, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { useUpdateReferralSlipMutation, useDeleteReferralSlipMutation } from "../../../../store/api/dashboardApi";
+import EditReferralModal from "./EditReferralModal";
 
 interface UserDetails {
   _id?: string;
@@ -26,6 +28,7 @@ interface InviteDetail {
   address?: string;
   comments?: string;
   contactRelation?: string;
+  status?: string;
   createdAt?: string;
   date?: string;
   fromUser?: string;
@@ -57,6 +60,12 @@ export default function BizConnectDetailModal({
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedReferral, setSelectedReferral] = useState<InviteDetail | null>(null);
+
+  // Mutations
+  const [updateReferralSlip] = useUpdateReferralSlipMutation();
+  const [deleteReferralSlip] = useDeleteReferralSlipMutation();
 
   // Calculate date range based on selected filter (matching backend logic)
   const calculateDateRange = (range: string) => {
@@ -152,6 +161,27 @@ export default function BizConnectDetailModal({
     // TODO: Implement PDF generation
     console.log("Downloading PDF report...");
     alert("PDF download functionality will be implemented");
+  };
+
+  const handleDelete = async (referralId: string) => {
+    if (!confirm("Are you sure you want to delete this referral?")) {
+      return;
+    }
+
+    try {
+      await deleteReferralSlip(referralId).unwrap();
+      alert("Referral deleted successfully");
+      // Refresh data
+      fetchData();
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      alert(error?.data?.message || "Failed to delete referral");
+    }
+  };
+
+  const handleEdit = (record: InviteDetail) => {
+    setSelectedReferral(record);
+    setEditModalOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -257,7 +287,7 @@ export default function BizConnectDetailModal({
         </div>
 
         {/* Records List */}
-        <div className="overflow-y-auto max-h-[50vh] p-6 bg-gray-50">
+        <div className="overflow-y-auto max-h-[55vh] p-6 bg-gray-50 pb-8">
           <div className="mb-4 p-3 bg-blue-100 rounded text-sm">
             <strong>Debug:</strong> Loading: {loading.toString()}, Given: {givenData.length}, Received: {receivedData.length}, Current: {currentData.length}
           </div>
@@ -271,7 +301,7 @@ export default function BizConnectDetailModal({
               <p className="text-sm">Try selecting a different date range</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               {currentData
                 .filter((record) => {
                   // Filter out records with missing user data
@@ -315,6 +345,13 @@ export default function BizConnectDetailModal({
 
                   const invitedName = record.referralName || record.referral || "N/A";
 
+                  // Get avatar URL
+                  const avatarUrl = displayUser?.avatar
+                    ? displayUser.avatar.startsWith('http')
+                      ? displayUser.avatar
+                      : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${displayUser.avatar}`
+                    : null;
+
                   return (
                     <div
                       key={record.id || record._id}
@@ -324,9 +361,9 @@ export default function BizConnectDetailModal({
                       {/* Avatar */}
                       <div className="flex-shrink-0">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                          {displayUser?.avatar && displayUser.avatar.startsWith('http') ? (
+                          {avatarUrl ? (
                             <img
-                              src={displayUser.avatar}
+                              src={avatarUrl}
                               alt={userName}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -340,7 +377,7 @@ export default function BizConnectDetailModal({
                           ) : null}
                           <div
                             className="w-full h-full flex items-center justify-center bg-blue-600 text-white font-bold text-lg"
-                            style={{ display: displayUser?.avatar && displayUser.avatar.startsWith('http') ? 'none' : 'flex' }}
+                            style={{ display: avatarUrl ? 'none' : 'flex' }}
                           >
                             {userInitials}
                           </div>
@@ -367,14 +404,44 @@ export default function BizConnectDetailModal({
                             Invited: <span className="font-medium">{invitedName}</span>
                           </p>
                         )}
-                        <p className="text-sm text-green-600 mt-1">
-                          Status: <span className="font-medium">Got the business</span>
-                        </p>
+                        {record.status && (
+                          <p className={`text-sm mt-1 ${
+                            record.status === "got the business" ? "text-green-600" :
+                            record.status === "contacted" ? "text-blue-600" :
+                            record.status === "not contacted yet" ? "text-yellow-600" :
+                            record.status === "no response" ? "text-red-600" :
+                            "text-gray-600"
+                          }`}>
+                            Status: <span className="font-medium capitalize">{record.status}</span>
+                          </p>
+                        )}
                       </div>
 
-                      {/* Date */}
-                      <div className="text-right text-sm text-gray-500">
-                        {formatDate(record.createdAt || record.date || "")}
+                      {/* Date and Actions */}
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="text-sm text-gray-500">
+                          {formatDate(record.createdAt || record.date || "")}
+                        </div>
+
+                        {/* Edit and Delete buttons (only for Given tab) */}
+                        {activeTab === "given" && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEdit(record)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit referral"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(record._id || record.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete referral"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -384,6 +451,17 @@ export default function BizConnectDetailModal({
           )}
         </div>
       </div>
+
+      {/* Edit Referral Modal */}
+      <EditReferralModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        referral={selectedReferral}
+        onSuccess={() => {
+          fetchData();
+          setEditModalOpen(false);
+        }}
+      />
     </div>
   );
 }

@@ -24,7 +24,9 @@ export default function PollCard({
   const [error, setError] = useState<string | null>(null);
 
   const [localHasVoted, setLocalHasVoted] = useState<boolean | null>(null);
-  const [localVotedOptionIndex, setLocalVotedOptionIndex] = useState<number | null>(null);
+  const [localVotedOptionIndex, setLocalVotedOptionIndex] = useState<
+    number | null
+  >(null);
 
   const poll = post.poll;
   if (!poll) return null;
@@ -39,7 +41,9 @@ export default function PollCard({
 
   const hasVoted = localHasVoted !== null ? localHasVoted : !!userVote;
   const votedOptionIndex =
-    localVotedOptionIndex !== null ? localVotedOptionIndex : userVote?.optionIndex;
+    localVotedOptionIndex !== null
+      ? localVotedOptionIndex
+      : userVote?.optionIndex;
 
   const calculatePercentage = (votes: number, total: number): number => {
     if (total === 0) return 0;
@@ -119,50 +123,32 @@ export default function PollCard({
   const getAuthorCompany = () => "BizCivitas Member";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow mb-6">
-      {/* Poll Header */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3 flex-1 min-w-0">
-            {/* ✅ Always use favicon as avatar */}
-            <Image
-              src="/favicon.ico"
-              alt="Site Icon"
-              width={32}
-              height={32}
-              className="rounded-full object-cover flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2 flex-wrap">
-                <h3 className="font-semibold text-gray-900 truncate">{getAuthorName()}</h3>
-                {post.badge && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    {post.badge}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 truncate">{getAuthorCompany()}</p>
-              <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
-                <Calendar className="w-3 h-3" />
-                <span>{post.timeAgo || new Date(post.createdAt).toLocaleDateString()}</span>
-              </div>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow h-[420px] flex flex-col">
+      {/* Poll Header - Compact */}
+      <div className="p-2 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500">
+              <Activity className="w-3 h-3 text-white" />
             </div>
+            <span className="text-xs font-semibold text-gray-700">
+              Pulse Poll
+            </span>
           </div>
-          {/* BizPulse Badge - Aligned with header */}
-          <div className="flex-shrink-0 ml-2">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full shadow-md bg-blue-500">
-              <Activity className="w-4 h-4 text-white" />
-            </div>
-          </div>
+          <span className="text-xs text-gray-500">
+            {post.timeAgo || new Date(post.createdAt).toLocaleDateString()}
+          </span>
         </div>
       </div>
 
       {/* Poll Question */}
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">{poll.question}</h2>
+      <div className="p-3 flex-1 overflow-y-auto">
+        <h2 className="text-sm font-bold text-gray-900 mb-2">
+          {poll.question}
+        </h2>
 
         {post.images && post.images.length > 0 && (
-          <div className="mb-4 rounded-lg overflow-hidden">
+          <div className="mb-2 rounded-lg overflow-hidden">
             <Image
               src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${post.images[0]}`}
               alt="Poll image"
@@ -174,18 +160,24 @@ export default function PollCard({
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2">
-            <X className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-700">{error}</p>
-            <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">
+          <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2">
+            <X className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-red-700">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-1.5">
           {poll.options.map((option: PollOption, index: number) => {
-            const percentage = calculatePercentage(option.votes, poll.totalVotes);
+            const percentage = calculatePercentage(
+              option.votes,
+              poll.totalVotes
+            );
             const isSelected = selectedOption === option._id;
             const isVotedOption = hasVoted && votedOptionIndex === index;
 
@@ -194,7 +186,7 @@ export default function PollCard({
                 key={option._id}
                 onClick={() => handleVote(index)}
                 disabled={isVoting || (hasVoted && !isVotedOption)}
-                className={`w-full text-left transition-all border rounded-lg p-4 relative overflow-hidden ${
+                className={`w-full text-left transition-all border rounded-lg p-2 relative overflow-hidden ${
                   isVotedOption
                     ? "bg-green-500 border-green-600 ring-2 ring-green-400 shadow-md"
                     : hasVoted
@@ -214,7 +206,7 @@ export default function PollCard({
                 <div className="relative z-10 flex items-center justify-between">
                   <div className="flex-1">
                     <p
-                      className={`font-medium ${
+                      className={`text-xs font-medium ${
                         isVotedOption
                           ? "text-white"
                           : hasVoted
@@ -226,7 +218,7 @@ export default function PollCard({
                     </p>
                     {hasVoted && (
                       <p
-                        className={`text-sm mt-1 ${
+                        className={`text-xs mt-0.5 ${
                           isVotedOption ? "text-green-100" : "text-gray-500"
                         }`}
                       >
@@ -235,9 +227,9 @@ export default function PollCard({
                     )}
                   </div>
                   {hasVoted && (
-                    <div className="ml-4">
+                    <div className="ml-2">
                       <span
-                        className={`text-lg font-bold ${
+                        className={`text-sm font-bold ${
                           isVotedOption ? "text-white" : "text-gray-500"
                         }`}
                       >
@@ -257,15 +249,15 @@ export default function PollCard({
           })}
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-xs text-gray-600">
             <span className="font-semibold">{poll.totalVotes}</span> total{" "}
             {poll.totalVotes === 1 ? "vote" : "votes"}
           </p>
           {hasVoted && !isVoting && (
             <a
               onClick={handleRemoveVote}
-              className="text-sm text-red-600 hover:text-red-700 underline cursor-pointer transition-colors"
+              className="text-xs text-red-600 hover:text-red-700 underline cursor-pointer transition-colors"
             >
               Remove vote
             </a>
@@ -273,18 +265,20 @@ export default function PollCard({
         </div>
       </div>
 
-      <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
+      <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <button
               onClick={() => onLike?.(post._id)}
-              className={`flex items-center space-x-2 text-sm transition-colors ${
+              className={`flex items-center space-x-1 text-xs transition-colors ${
                 post.isLiked
                   ? "text-blue-600 font-medium"
                   : "text-gray-600 hover:text-blue-600"
               }`}
             >
-              <ThumbsUp className={`w-4 h-4 ${post.isLiked ? "fill-current" : ""}`} />
+              <ThumbsUp
+                className={`w-3 h-3 ${post.isLiked ? "fill-current" : ""}`}
+              />
               {post.likeCount > 0 && <span>{post.likeCount}</span>}
             </button>
           </div>

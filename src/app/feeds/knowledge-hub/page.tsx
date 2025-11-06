@@ -92,8 +92,12 @@ export default function KnowledgeHubPage() {
     }
 
     // Check if currently saved
-    const collection = [...expertCollections, ...knowledgeCollections, ...membershipCollections, ...resourceCollections]
-      .find(c => c._id === collectionId);
+    const collection = [
+      ...expertCollections,
+      ...knowledgeCollections,
+      ...membershipCollections,
+      ...resourceCollections,
+    ].find((c) => c._id === collectionId);
     const wasSaved = isCollectionSaved(collection!);
 
     try {
@@ -101,12 +105,10 @@ export default function KnowledgeHubPage() {
 
       // Show success toast
       toast.success(
-        wasSaved
-          ? `Removed from saved resources`
-          : `Saved to resources`,
+        wasSaved ? `Removed from saved resources` : `Saved to resources`,
         {
           duration: 2000,
-          icon: wasSaved ? '🗑️' : '✅',
+          icon: wasSaved ? "🗑️" : "✅",
         }
       );
     } catch (error: any) {
@@ -298,7 +300,7 @@ export default function KnowledgeHubPage() {
                   <div
                     key={collection._id}
                     onClick={() => handleCollectionClick(collection._id)}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col h-full"
                   >
                     <div className="space-y-4">
                       {/* Collection Thumbnail */}
@@ -318,10 +320,18 @@ export default function KnowledgeHubPage() {
                         {/* Save Button */}
                         <button
                           onClick={(e) =>
-                            handleSaveCollection(e, collection._id, collection.title)
+                            handleSaveCollection(
+                              e,
+                              collection._id,
+                              collection.title
+                            )
                           }
                           className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all hover:scale-110"
-                          title={isCollectionSaved(collection) ? "Remove from saved" : "Save for later"}
+                          title={
+                            isCollectionSaved(collection)
+                              ? "Remove from saved"
+                              : "Save for later"
+                          }
                         >
                           {isCollectionSaved(collection) ? (
                             <BookmarkCheck className="w-5 h-5 text-blue-600 fill-current" />

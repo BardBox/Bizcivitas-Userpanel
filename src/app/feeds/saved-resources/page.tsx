@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Video, FileText, BookOpen, Loader2, Search, BookmarkCheck } from "lucide-react";
+import {
+  Video,
+  FileText,
+  BookOpen,
+  Loader2,
+  Search,
+  BookmarkCheck,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useGetSavedCollectionsQuery,
@@ -50,7 +57,7 @@ export default function SavedResourcesPage() {
       // Show success toast
       toast.success(`Removed "${collectionTitle}" from saved resources`, {
         duration: 2000,
-        icon: '🗑️',
+        icon: "🗑️",
       });
     } catch (error: any) {
       console.error("Failed to unsave collection:", error);
@@ -160,7 +167,7 @@ export default function SavedResourcesPage() {
               <div
                 key={collection._id}
                 onClick={() => handleCollectionClick(collection._id)}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col h-full"
               >
                 <div className="space-y-4">
                   {/* Collection Thumbnail */}
@@ -185,7 +192,11 @@ export default function SavedResourcesPage() {
                     {/* Unsave Button */}
                     <button
                       onClick={(e) =>
-                        handleUnsaveCollection(e, collection._id, collection.title)
+                        handleUnsaveCollection(
+                          e,
+                          collection._id,
+                          collection.title
+                        )
                       }
                       className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all hover:scale-110"
                       title="Remove from saved"

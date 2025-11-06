@@ -76,23 +76,23 @@ export default function BizPulseCard({
   };
 
   return (
-    <Link href={`/feeds/biz-pulse/${id}`} className="block">
+    <Link href={`/feeds/biz-pulse/${id}`} className="block ">
       <div
-        className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${
+        className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer overflow-hidden h-[420px] ${
           featured ? "ring-2 ring-blue-500/20" : ""
         }`}
       >
         {/* Header: Avatar + Admin Name + Time */}
-        <div className="p-4 sm:p-5 pb-3">
+        <div className="p-3 pb-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               {/* Display user avatar or fallback to favicon for admin */}
-              <div className="relative w-10 h-10 flex-shrink-0">
+              <div className="relative w-8 h-8 flex-shrink-0">
                 <Image
                   src={author.avatar || "/favicon.ico"}
                   alt={author.name}
-                  width={40}
-                  height={40}
+                  width={32}
+                  height={32}
                   className="rounded-full object-cover bg-gray-100"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -101,17 +101,17 @@ export default function BizPulseCard({
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-900 leading-tight truncate">
+                <div className="text-xs font-semibold text-gray-900 leading-tight truncate">
                   {author.name}
                 </div>
-                <div className="text-xs text-gray-500 leading-tight mt-0.5">
+                <div className="text-xs text-gray-500 leading-tight">
                   {timeAgo}
                 </div>
               </div>
             </div>
             {/* Featured Badge */}
             {featured && (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 flex-shrink-0">
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 flex-shrink-0">
                 Featured
               </span>
             )}
@@ -132,11 +132,11 @@ export default function BizPulseCard({
         )}
 
         {/* Content Section */}
-        <div className="p-4 sm:p-5">
+        <div className="p-3">
           {/* Category Badge */}
-          <div className="mb-3">
+          <div className="mb-2">
             <span
-              className={`px-2.5 py-1 rounded-full text-xs font-medium ${getCategoryColor(
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
                 category
               )}`}
             >
@@ -147,19 +147,19 @@ export default function BizPulseCard({
           </div>
 
           {/* Title */}
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-snug">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug">
             {title}
           </h3>
 
           {/* Stats and Like Button */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center text-sm text-gray-600 space-x-4">
-              <div className="flex items-center space-x-1.5">
-                <Heart size={16} className="text-gray-400" />
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center text-xs text-gray-600 space-x-3">
+              <div className="flex items-center space-x-1">
+                <Heart size={14} className="text-gray-400" />
                 <span className="font-medium">{stats.likes || 0}</span>
               </div>
-              <div className="flex items-center space-x-1.5">
-                <MessageSquare size={16} className="text-gray-400" />
+              <div className="flex items-center space-x-1">
+                <MessageSquare size={14} className="text-gray-400" />
                 <span className="font-medium">{stats.comments || 0}</span>
               </div>
             </div>
@@ -167,14 +167,14 @@ export default function BizPulseCard({
             {/* Like Button */}
             <button
               onClick={handleLike}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-1.5 rounded-lg transition-colors ${
                 isLiked
                   ? "text-red-500 bg-red-50 hover:bg-red-100"
                   : "text-gray-400 hover:text-red-500 hover:bg-red-50"
               }`}
             >
               <Heart
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill={isLiked ? "currentColor" : "none"}
               />
             </button>

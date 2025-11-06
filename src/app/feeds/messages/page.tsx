@@ -14,8 +14,10 @@ import {
   Trash2,
   X,
   Smile,
+  Send,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
 
 // Dynamic import for emoji picker to avoid SSR issues
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -50,6 +52,8 @@ export default function MessagesPage() {
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [chatMenuOpenForChatId, setChatMenuOpenForChatId] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showDeleteChatModal, setShowDeleteChatModal] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<{ chatId: string; chat: Chat } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -446,38 +450,39 @@ export default function MessagesPage() {
     setMenuOpenForMessage(null);
   };
 
-  // Handle delete chat
-  const handleDeleteChat = async (chatId?: string, chatToDelete?: Chat) => {
+  // Handle delete chat - open modal
+  const handleDeleteChat = (chatId?: string, chatToDeleteParam?: Chat) => {
     // If no chatId provided, use selected chat
     const targetChatId = chatId || selectedChat?._id;
-    const targetChat = chatToDelete || selectedChat;
+    const targetChat = chatToDeleteParam || selectedChat;
 
     if (!targetChatId || !targetChat) return;
-
-    const other = getOtherParticipant(targetChat);
-    const otherName = getUserFullName(other);
 
     // Close the menus
     setShowChatMenu(false);
     setChatMenuOpenForChatId(null);
 
-    // Confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this conversation with ${otherName}?\n\nThis will permanently delete all messages in this chat.`
-    );
+    // Open confirmation modal
+    setChatToDelete({ chatId: targetChatId, chat: targetChat });
+    setShowDeleteChatModal(true);
+  };
 
-    if (!confirmed) return;
+  // Confirm delete chat
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) return;
 
     try {
-      await deleteChat({ chatId: targetChatId }).unwrap();
+      await deleteChat({ chatId: chatToDelete.chatId }).unwrap();
       toast.success("Chat deleted successfully");
 
       // If the deleted chat was selected, clear selection
-      if (selectedChat?._id === targetChatId) {
+      if (selectedChat?._id === chatToDelete.chatId) {
         setSelectedChat(null);
       }
 
       refetch(); // Refresh chat list
+      setShowDeleteChatModal(false);
+      setChatToDelete(null);
     } catch (error: any) {
       console.error("Failed to delete chat:", error);
       const errorMessage = error?.data?.message || error?.message || "Failed to delete chat";
@@ -497,16 +502,18 @@ export default function MessagesPage() {
 
       <div className="grid grid-cols-12 gap-4 h-[75vh]">
         {/* Sidebar */}
-        <div className="col-span-4 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div className="p-3 border-b">
+        <div className="col-span-4 bg-teal-600 rounded-lg shadow-md overflow-hidden flex flex-col">
+          {/* Sidebar Header */}
+          <div className="bg-teal-600 p-4 text-white">
+            <h2 className="text-lg font-semibold mb-3">Chats</h2>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
+                <Search className="h-4 w-4 text-white/70" />
               </div>
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search conversations or members..."
+                placeholder="Search or start new chat..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => {
@@ -514,7 +521,7 @@ export default function MessagesPage() {
                     setShowDropdown(true);
                   }
                 }}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 text-sm bg-teal-700 bg-opacity-60 text-white placeholder-white/60 rounded-lg focus:outline-none focus:bg-opacity-80 transition-all"
               />
 
               {/* Autocomplete Dropdown */}
@@ -642,12 +649,12 @@ export default function MessagesPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto bg-white">
             {/* Hide sidebar list when dropdown is showing */}
             {showDropdown && searchQuery.trim().length > 0 ? null : isLoading ? (
               <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin mx-auto mb-2" />
+                  <Loader2 className="w-5 h-5 text-teal-600 animate-spin mx-auto mb-2" />
                   <p className="text-sm text-gray-600">Loading...</p>
                 </div>
               </div>
@@ -677,8 +684,8 @@ export default function MessagesPage() {
                     return (
                       <div
                         key={chat._id}
-                        className={`p-3 hover:bg-gray-50 transition-colors flex items-start gap-3 group relative ${
-                          selectedChat?._id === chat._id ? "bg-blue-50 border-l-2 border-blue-600" : ""
+                        className={`p-3 hover:bg-gray-50 transition-colors flex items-start gap-3 group relative border-b border-gray-100 last:border-b-0 ${
+                          selectedChat?._id === chat._id ? "bg-teal-50 border-l-4 border-l-teal-600" : "bg-white"
                         }`}
                       >
                         <div
@@ -760,10 +767,10 @@ export default function MessagesPage() {
                                   e.stopPropagation();
                                   handleDeleteChat(chat._id, chat);
                                 }}
-                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
+                               
                               >
                                 <Trash2 className="w-4 h-4" />
-                                Delete Conversation
+
                               </button>
                             </div>
                           )}
@@ -829,10 +836,11 @@ export default function MessagesPage() {
         </div>
 
         {/* Chat panel */}
-        <div className="col-span-8 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+        <div className="col-span-8 bg-white rounded-lg shadow-md border border-gray-200 flex flex-col overflow-hidden">
           {selectedChat ? (
             <div className="flex-1 flex flex-col">
-              <div className="p-3 border-b flex items-center gap-3">
+              {/* Chat Header - WhatsApp style */}
+              <div className="bg-teal-700 p-3 flex items-center gap-3 shadow-sm">
                 <div className="flex-shrink-0">
                   {(() => {
                     const other = getOtherParticipant(selectedChat);
@@ -854,18 +862,18 @@ export default function MessagesPage() {
                   })()}
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-semibold text-gray-900">{getUserFullName(getOtherParticipant(selectedChat))}</div>
+                  <div className="text-sm font-semibold text-white">{getUserFullName(getOtherParticipant(selectedChat))}</div>
                   {getOtherParticipant(selectedChat)?.businessCategory && (
-                    <div className="text-xs text-gray-500">{getOtherParticipant(selectedChat)?.businessCategory}</div>
+                    <div className="text-xs text-teal-100">{getOtherParticipant(selectedChat)?.businessCategory}</div>
                   )}
                 </div>
                 <div className="relative" ref={chatMenuRef}>
                   <button
                     onClick={() => setShowChatMenu(!showChatMenu)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-2 hover:bg-teal-600 rounded-full transition-colors"
                     title="More options"
                   >
-                    <MoreVertical className="w-5 h-5 text-gray-600" />
+                    <MoreVertical className="w-5 h-5 text-white" />
                   </button>
 
                   {showChatMenu && (
@@ -882,7 +890,25 @@ export default function MessagesPage() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 min-h-0" id="messages-area" style={{ maxHeight: 'calc(72vh - 200px)' }}>
+              {/* Messages Area with WhatsApp-style wallpaper */}
+              <div
+                className="flex-1 overflow-y-auto p-4 min-h-0 relative"
+                id="messages-area"
+                style={{
+                  maxHeight: 'calc(72vh - 200px)',
+                  backgroundImage: `
+                    repeating-linear-gradient(
+                      45deg,
+                      rgba(229, 231, 235, 0.1) 0px,
+                      rgba(229, 231, 235, 0.1) 10px,
+                      rgba(243, 244, 246, 0.1) 10px,
+                      rgba(243, 244, 246, 0.1) 20px
+                    ),
+                    linear-gradient(to bottom, #e5ddd5 0%, #f0ebe5 100%)
+                  `,
+                  backgroundColor: '#e5ddd5'
+                }}
+              >
                 {/* Render message thread: left = received, right = sent */}
                 {(() => {
                   const other = getOtherParticipant(selectedChat);
@@ -891,12 +917,12 @@ export default function MessagesPage() {
 
                   if (!messagesList || messagesList.length === 0) {
                     return (
-                      <div className="text-center text-gray-500 mt-8">No messages yet. Start the conversation below.</div>
+                      <div className="text-center text-gray-600 mt-8 bg-white bg-opacity-60 p-4 rounded-lg">No messages yet. Start the conversation below.</div>
                     );
                   }
 
                   return (
-                    <div className="space-y-4 pb-4">
+                    <div className="space-y-2 pb-4">
                       {messagesList.map((msg: any, idx: number) => {
                         // Robust check for message sender — support multiple shapes
                         const isSent = (() => {
@@ -936,8 +962,8 @@ export default function MessagesPage() {
                               </div>
                             )}
 
-                            <div className="relative flex items-center gap-2 max-w-[80%]">
-                              <div className={`break-words inline-block ${isSent ? 'text-white bg-blue-600 rounded-lg rounded-tr-none' : 'bg-gray-200 text-gray-900 rounded-lg rounded-tl-none'} p-3`}> 
+                            <div className="relative flex items-center gap-2 max-w-[75%]">
+                              <div className={`break-words inline-block shadow-md ${isSent ? 'bg-white text-gray-900 border border-gray-200 rounded-lg rounded-tr-none' : 'bg-gray-50 text-gray-900 border border-gray-200 rounded-lg rounded-tl-none'} px-4 py-2.5`}> 
                                 {isEditing ? (
                                   <div className="flex flex-col gap-2">
                                     <input
@@ -952,13 +978,13 @@ export default function MessagesPage() {
                                           setEditingContent("");
                                         }
                                       }}
-                                      className="text-sm bg-white text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      className="text-sm bg-white text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                                       autoFocus
                                     />
                                     <div className="flex gap-2">
                                       <button
                                         onClick={() => handleEditMessage(msg._id)}
-                                        className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                                        className="text-xs px-2 py-1 bg-brand-green-dark text-white rounded hover:opacity-90"
                                       >
                                         Save
                                       </button>
@@ -1038,7 +1064,8 @@ export default function MessagesPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="p-4 border-t">
+              {/* Message Input Area - WhatsApp style */}
+              <div className="p-3 bg-gray-100 border-t border-gray-200">
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
@@ -1076,23 +1103,23 @@ export default function MessagesPage() {
                         toast.error(message);
                       }
                   }}
-                  className="flex gap-2 relative"
+                  className="flex gap-2 relative items-center"
                 >
                   <div className="flex-1 relative">
                     <input
                       ref={messageInputRef}
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg pl-4 pr-12 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full bg-white border-0 rounded-full pl-5 pr-12 py-3 focus:ring-2 focus:ring-brand-blue focus:outline-none shadow-sm"
                       placeholder="Type a message"
                     />
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
                       title="Add emoji"
                     >
-                      <Smile className="w-5 h-5 text-gray-600" />
+                      <Smile className="w-5 h-5 text-gray-500" />
                     </button>
 
                     {/* Emoji Picker */}
@@ -1111,7 +1138,13 @@ export default function MessagesPage() {
                       </div>
                     )}
                   </div>
-                  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Send</button>
+                  <button
+                    type="submit"
+                    className="bg-brand-blue text-white p-3 rounded-full hover:opacity-90 transition-all shadow-md flex items-center justify-center"
+                    title="Send message"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
                 </form>
               </div>
             </div>
@@ -1124,6 +1157,28 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Chat Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={showDeleteChatModal}
+        onClose={() => {
+          setShowDeleteChatModal(false);
+          setChatToDelete(null);
+        }}
+        onConfirm={confirmDeleteChat}
+        title="Delete Conversation"
+        message={
+          chatToDelete
+            ? `Are you sure you want to delete this conversation with ${getUserFullName(
+                getOtherParticipant(chatToDelete.chat)
+              )}?`
+            : "Are you sure you want to delete this conversation?"
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        warningText="This will permanently delete all messages in this chat."
+      />
     </div>
   );
 }

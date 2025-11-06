@@ -4,7 +4,10 @@ import membersReducer from "./membersSlice";
 import toastReducer from "./toastSlice";
 import postsReducer from "./postsSlice";
 import likesReducer from "./slices/likeSlice";
+import messageReducer from "./messageSlice";
 import { baseApi } from "./api/baseApi";
+// Import message API
+import "./api/messageApi";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +16,7 @@ export const store = configureStore({
     toast: toastReducer,
     posts: postsReducer,
     likes: likesReducer,
+    messages: messageReducer,
     [baseApi.reducerPath]: baseApi.reducer, // RTK Query reducer
   },
   middleware: (getDefaultMiddleware) =>

@@ -257,10 +257,12 @@ body {
   color: var(--color-flat-text-inverse);
 }
 
-/* Performance optimizations */
+/* Performance optimizations: ensure images don't overflow their containers */
 img {
   height: auto;
   width: auto;
+  max-width: 100%;
+  display: inline-block;
 }
 
 /* Smooth scrolling */

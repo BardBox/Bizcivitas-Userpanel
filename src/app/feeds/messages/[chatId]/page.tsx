@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Search, X } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Search, X, Smile } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Dynamic import for emoji picker to avoid SSR issues
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 import {
   useGetChatMessagesQuery,
   useSendMessageMutation,
@@ -31,9 +35,12 @@ export default function ChatPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement | null>(null);
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();
@@ -230,6 +237,53 @@ export default function ChatPage() {
     }
   };
 
+  // Handle emoji selection
+  const handleEmojiClick = (emojiData: any) => {
+    const emoji = emojiData.emoji;
+    const input = messageInputRef.current;
+
+    if (input) {
+      const start = input.selectionStart || 0;
+      const end = input.selectionEnd || 0;
+      const currentValue = messageInput;
+      const newValue = currentValue.slice(0, start) + emoji + currentValue.slice(end);
+
+      setMessageInput(newValue);
+
+      // Set cursor position after emoji
+      setTimeout(() => {
+        input.focus();
+        const newPosition = start + emoji.length;
+        input.setSelectionRange(newPosition, newPosition);
+      }, 0);
+    } else {
+      // Fallback if ref is not available
+      setMessageInput(messageInput + emoji);
+    }
+
+    setShowEmojiPicker(false);
+  };
+
+  // Click-outside handler to close emoji picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
   // Format message time
   const formatMessageTime = (timestamp: string) => {
     try {
@@ -399,16 +453,44 @@ export default function ChatPage() {
 
       {/* Input Area */}
       <div className="border-t border-gray-200 bg-white p-4">
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={messageInput}
-            onChange={handleTyping}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-            disabled={isSending}
-          />
+        <div className="flex items-center gap-2 relative">
+          <div className="flex-1 relative">
+            <input
+              ref={messageInputRef}
+              type="text"
+              value={messageInput}
+              onChange={handleTyping}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              disabled={isSending}
+            />
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full transition-colors"
+              title="Add emoji"
+              disabled={isSending}
+            >
+              <Smile className="w-5 h-5 text-gray-600" />
+            </button>
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className="absolute bottom-full right-0 mb-2 z-50"
+              >
+                <EmojiPicker
+                  onEmojiClick={handleEmojiClick}
+                  searchDisabled={false}
+                  skinTonesDisabled={false}
+                  width={350}
+                  height={400}
+                />
+              </div>
+            )}
+          </div>
 
           <button
             onClick={handleSendMessage}

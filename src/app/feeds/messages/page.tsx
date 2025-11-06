@@ -12,20 +12,27 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
+  X,
+  Smile,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Dynamic import for emoji picker to avoid SSR issues
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 import {
   useGetUserChatsQuery,
-  useGetCommunityMembersQuery,
   useGetOrCreateChatMutation,
   useGetChatMessagesQuery,
   useSendMessageMutation,
   useDeleteMessageMutation,
   useEditMessageMutation,
   useMarkMessagesAsReadMutation,
+  useDeleteChatMutation,
   type Chat,
   type UserForChat,
 } from "../../../../store/api/messageApi";
 import { useGetCurrentUserQuery } from "../../../../store/api/userApi";
+import { useGetSuggestionsAllQuery } from "../../../../store/api/connectionsApi";
 import { formatDistanceToNow } from "date-fns";
 import { initializeSocket } from "@/lib/socket";
 import { skipToken } from "@reduxjs/toolkit/query/react";
@@ -39,7 +46,16 @@ export default function MessagesPage() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [menuOpenForMessage, setMenuOpenForMessage] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [chatMenuOpenForChatId, setChatMenuOpenForChatId] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const chatMenuRef = useRef<HTMLDivElement | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement | null>(null);
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();
@@ -47,7 +63,34 @@ export default function MessagesPage() {
 
   // Fetch user chats and all members
   const { data: chats = [], isLoading: chatsLoading, refetch } = useGetUserChatsQuery();
-  const { data: allMembers = [], isLoading: membersLoading } = useGetCommunityMembersQuery();
+  const { data: allMembers = [], isLoading: membersLoading } = useGetSuggestionsAllQuery();
+
+  // Debug: Log member count and search for "pritesh"
+  useEffect(() => {
+    if (allMembers && allMembers.length > 0) {
+      console.log(`✅ Total members fetched: ${allMembers.length}`);
+
+      // Search for "pritesh" in the members list
+      const priteshUsers = allMembers.filter((member) => {
+        const fullName = `${member.fname || ""} ${member.lname || ""}`.trim().toLowerCase();
+        return fullName.includes("pritesh");
+      });
+
+      if (priteshUsers.length > 0) {
+        console.log(`✅ Found ${priteshUsers.length} user(s) with "pritesh" in name:`);
+        priteshUsers.forEach((user) => {
+          console.log(`   - Name: ${user.fname} ${user.lname}, ID: ${user._id || user.id}`);
+        });
+      } else {
+        console.log(`❌ No users found with "pritesh" in name`);
+        console.log(`📋 Sample of first 5 users:`, allMembers.slice(0, 5).map(u => ({
+          fname: u.fname,
+          lname: u.lname,
+          id: u._id || u.id
+        })));
+      }
+    }
+  }, [allMembers]);
 
   // Mutations
   const [getOrCreateChat] = useGetOrCreateChatMutation();
@@ -55,6 +98,7 @@ export default function MessagesPage() {
   const [deleteMessage] = useDeleteMessageMutation();
   const [editMessage] = useEditMessageMutation();
   const [markAsRead] = useMarkMessagesAsReadMutation();
+  const [deleteChat] = useDeleteChatMutation();
 
   // Fetch messages for selected chat (loads full thread)
   const { data: chatMessages = [], isLoading: chatMessagesLoading, refetch: refetchChatMessages } = useGetChatMessagesQuery(
@@ -131,18 +175,98 @@ export default function MessagesPage() {
             return null;
           })
           .filter(Boolean),
-        // Members without chats matching search
-        ...membersWithoutChats
+        // Only show members WITHOUT existing chats (prevent duplicates)
+        ...allMembers
+          .filter((member) =>
+            member._id !== currentUserId &&
+            !existingChatUserIds.includes(member._id) // Exclude members with existing chats
+          )
           .map((member) => {
-            const fullName = member.fullName || `${member.fname} ${member.lname}`.trim();
+            const fullName = `${member.fname || ""} ${member.lname || ""}`.trim();
             if (fullName.toLowerCase().includes(searchQuery.toLowerCase())) {
-              return { type: "member" as const, data: member };
+              // Ensure member has fullName property
+              const mappedMember = {
+                ...member,
+                fullName: fullName,
+              };
+              return { type: "member" as const, data: mappedMember as any, hasExistingChat: false };
             }
             return null;
           })
           .filter(Boolean),
       ]
     : chats.map((chat) => ({ type: "chat" as const, data: chat }));
+
+  // Control dropdown visibility based on search query
+  useEffect(() => {
+    if (searchQuery.trim().length > 0 && searchResults.length > 0) {
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  }, [searchQuery, searchResults.length]);
+
+  // Click-outside handler to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  // Click-outside handler to close emoji picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
+  // Click-outside handler to close chat menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        chatMenuRef.current &&
+        !chatMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowChatMenu(false);
+      }
+    };
+
+    if (showChatMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showChatMenu]);
 
   // Handler for starting a conversation with a member
   const handleStartConversation = async (member: UserForChat) => {
@@ -152,6 +276,11 @@ export default function MessagesPage() {
 
       // set selected chat in UI instead of navigating away
       setSelectedChat(chat as Chat);
+
+      // Clear search and close dropdown
+      setSearchQuery("");
+      setShowDropdown(false);
+
       toast.success("Chat opened");
     } catch (error: any) {
       console.error("Failed to start conversation:", error);
@@ -244,6 +373,33 @@ export default function MessagesPage() {
     return user?.fullName || `${user?.fname || ""} ${user?.lname || ""}`.trim() || "Unknown User";
   };
 
+  // Handle emoji selection
+  const handleEmojiClick = (emojiData: any) => {
+    const emoji = emojiData.emoji;
+    const input = messageInputRef.current;
+
+    if (input) {
+      const start = input.selectionStart || 0;
+      const end = input.selectionEnd || 0;
+      const currentValue = messageInput;
+      const newValue = currentValue.slice(0, start) + emoji + currentValue.slice(end);
+
+      setMessageInput(newValue);
+
+      // Set cursor position after emoji
+      setTimeout(() => {
+        input.focus();
+        const newPosition = start + emoji.length;
+        input.setSelectionRange(newPosition, newPosition);
+      }, 0);
+    } else {
+      // Fallback if ref is not available
+      setMessageInput(messageInput + emoji);
+    }
+
+    setShowEmojiPicker(false);
+  };
+
   // Handle delete message
   const handleDeleteMessage = async (messageId: string) => {
     if (!selectedChat) return;
@@ -290,53 +446,222 @@ export default function MessagesPage() {
     setMenuOpenForMessage(null);
   };
 
+  // Handle delete chat
+  const handleDeleteChat = async (chatId?: string, chatToDelete?: Chat) => {
+    // If no chatId provided, use selected chat
+    const targetChatId = chatId || selectedChat?._id;
+    const targetChat = chatToDelete || selectedChat;
+
+    if (!targetChatId || !targetChat) return;
+
+    const other = getOtherParticipant(targetChat);
+    const otherName = getUserFullName(other);
+
+    // Close the menus
+    setShowChatMenu(false);
+    setChatMenuOpenForChatId(null);
+
+    // Confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this conversation with ${otherName}?\n\nThis will permanently delete all messages in this chat.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteChat({ chatId: targetChatId }).unwrap();
+      toast.success("Chat deleted successfully");
+
+      // If the deleted chat was selected, clear selection
+      if (selectedChat?._id === targetChatId) {
+        setSelectedChat(null);
+      }
+
+      refetch(); // Refresh chat list
+    } catch (error: any) {
+      console.error("Failed to delete chat:", error);
+      const errorMessage = error?.data?.message || error?.message || "Failed to delete chat";
+      toast.error(errorMessage);
+    }
+  };
+
   const isLoading = chatsLoading || membersLoading;
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between py-6">
+    <div className="max-w-7xl mx-auto">
+      <div className="flex items-center justify-between py-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Messages</h1>
-          <p className="text-gray-600 mt-1">Chat with your connections</p>
+          <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+          <p className="text-sm text-gray-600 mt-0.5">Chat with your connections</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6 h-[72vh]">
+      <div className="grid grid-cols-12 gap-4 h-[75vh]">
         {/* Sidebar */}
         <div className="col-span-4 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div className="p-4 border-b">
+          <div className="p-3 border-b">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search conversations or members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onFocus={() => {
+                  if (searchQuery.trim().length > 0 && searchResults.length > 0) {
+                    setShowDropdown(true);
+                  }
+                }}
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+
+              {/* Autocomplete Dropdown */}
+              {showDropdown && searchQuery.trim().length > 0 && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[400px] overflow-y-auto z-50"
+                >
+                  {searchResults.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      No results found
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      {searchResults.map((result: any) => {
+                        if (result.type === "chat") {
+                          const chat = result.data;
+                          const otherParticipant = getOtherParticipant(chat);
+                          const lastMessage = chat.latestMessage || chat.lastMessage;
+                          const isUnread = (chat.unseenMsg || chat.unreadCount || 0) > 0;
+
+                          return (
+                            <div
+                              key={chat._id}
+                              onClick={() => {
+                                handleChatClick(chat._id);
+                                setSearchQuery("");
+                                setShowDropdown(false);
+                              }}
+                              className="px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex-shrink-0 w-10 h-10">
+                                {otherParticipant?.avatar ? (
+                                  <img
+                                    src={
+                                      otherParticipant.avatar.startsWith("https")
+                                        ? otherParticipant.avatar
+                                        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${otherParticipant.avatar}`
+                                    }
+                                    alt={getUserFullName(otherParticipant)}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                                    {getUserFullName(otherParticipant).charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className={`text-sm text-gray-900 truncate ${isUnread ? "font-semibold" : "font-medium"}`}>
+                                    {getUserFullName(otherParticipant)}
+                                  </h3>
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Chat</span>
+                                </div>
+                                {lastMessage && (
+                                  <p className="text-xs text-gray-500 truncate mt-0.5">
+                                    {lastMessage.content}
+                                  </p>
+                                )}
+                              </div>
+
+                              {isUnread && (
+                                <div className="flex-shrink-0">
+                                  <div className="bg-green-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                                    {chat.unseenMsg || chat.unreadCount}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (result.type === "member") {
+                          const member = result.data;
+                          const fullName = getUserFullName(member);
+                          const hasChat = (result as any).hasExistingChat;
+
+                          return (
+                            <div
+                              key={`member-${member._id}`}
+                              onClick={() => handleStartConversation(member)}
+                              className="px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex-shrink-0 w-10 h-10">
+                                {member.avatar ? (
+                                  <img
+                                    src={
+                                      member.avatar.startsWith("https")
+                                        ? member.avatar
+                                        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${member.avatar}`
+                                    }
+                                    alt={fullName}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className={`w-10 h-10 rounded-full ${hasChat ? "bg-blue-600" : "bg-green-600"} flex items-center justify-center text-white font-semibold text-sm`}>
+                                    {fullName.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-medium text-sm text-gray-900 truncate">{fullName}</h3>
+                                  <span className={`text-xs ${hasChat ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} px-2 py-0.5 rounded-full`}>
+                                    {hasChat ? "Chat" : "New"}
+                                  </span>
+                                </div>
+                                {member.businessCategory && (
+                                  <p className="text-xs text-gray-500 truncate mt-0.5">{member.businessCategory}</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="flex-1 overflow-auto">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
+            {/* Hide sidebar list when dropdown is showing */}
+            {showDropdown && searchQuery.trim().length > 0 ? null : isLoading ? (
+              <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                  <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600">Loading conversations...</p>
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin mx-auto mb-2" />
+                  <p className="text-sm text-gray-600">Loading...</p>
                 </div>
               </div>
             ) : searchResults.length === 0 ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="text-center">
-                  <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center px-4">
+                  <MessageCircle className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">
                     {searchQuery ? "No results found" : "No messages yet"}
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-xs text-gray-500">
                     {searchQuery
-                      ? "Try searching for a different name"
-                      : "Start a conversation with your connections"}
+                      ? "Try a different name"
+                      : "Search to start chatting"}
                   </p>
                 </div>
               </div>
@@ -352,68 +677,97 @@ export default function MessagesPage() {
                     return (
                       <div
                         key={chat._id}
-                        onClick={() => handleChatClick(chat._id)}
-                        className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors flex items-start gap-4 ${
-                          selectedChat?._id === chat._id ? "bg-gray-50" : ""
+                        className={`p-3 hover:bg-gray-50 transition-colors flex items-start gap-3 group relative ${
+                          selectedChat?._id === chat._id ? "bg-blue-50 border-l-2 border-blue-600" : ""
                         }`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10">
-                          {otherParticipant?.avatar ? (
-                            <img
-                              src={
-                                otherParticipant.avatar.startsWith("https")
-                                  ? otherParticipant.avatar
-                                  : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${otherParticipant.avatar}`
-                              }
-                              alt={getUserFullName(otherParticipant)}
-                              className="w-10 h-10 rounded-full object-cover"
-                              style={{ width: 40, height: 40, objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                              {getUserFullName(otherParticipant).charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <h3 className={`font-semibold text-gray-900 truncate ${isUnread ? "font-bold" : ""}`}>
-                                {getUserFullName(otherParticipant)}
-                              </h3>
-                              {otherParticipant?.businessCategory && (
-                                <p className="text-xs text-gray-500 truncate">{otherParticipant.businessCategory}</p>
-                              )}
-                            </div>
-
-                            {lastMessage && (
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <Clock className="w-3 h-3" />
-                                <span>{formatTimestamp(lastMessage.createdAt)}</span>
+                        <div
+                          onClick={() => handleChatClick(chat._id)}
+                          className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                        >
+                          <div className="flex-shrink-0 w-10 h-10">
+                            {otherParticipant?.avatar ? (
+                              <img
+                                src={
+                                  otherParticipant.avatar.startsWith("https")
+                                    ? otherParticipant.avatar
+                                    : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${otherParticipant.avatar}`
+                                }
+                                alt={getUserFullName(otherParticipant)}
+                                className="w-10 h-10 rounded-full object-cover"
+                                style={{ width: 40, height: 40, objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                                {getUserFullName(otherParticipant).charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
 
-                          {lastMessage && (
-                            <div className="flex items-center gap-2 mt-1">
-                              {lastMessage.sender === currentUserId && (
-                                <CheckCheck className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <div className="flex-1 min-w-0">
+                                <h3 className={`text-sm text-gray-900 truncate ${isUnread ? "font-semibold" : "font-medium"}`}>
+                                  {getUserFullName(otherParticipant)}
+                                </h3>
+                              </div>
+
+                              {lastMessage && (
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                  <Clock className="w-3 h-3" />
+                                  <span className="text-xs">{formatTimestamp(lastMessage.createdAt)}</span>
+                                </div>
                               )}
-                              <p className={`text-sm truncate ${isUnread ? "text-gray-900 font-medium" : "text-gray-600"}`}>
-                                {lastMessage.content}
-                              </p>
+                            </div>
+
+                            {lastMessage && (
+                              <div className="flex items-center gap-1.5">
+                                {lastMessage.sender === currentUserId && (
+                                  <CheckCheck className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                                )}
+                                <p className={`text-xs truncate ${isUnread ? "text-gray-900 font-medium" : "text-gray-500"}`}>
+                                  {lastMessage.content}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {isUnread && (
+                            <div className="flex-shrink-0">
+                              <div className="bg-green-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                                {chat.unseenMsg || chat.unreadCount}
+                              </div>
                             </div>
                           )}
                         </div>
 
-                        {isUnread && (
-                          <div className="flex-shrink-0">
-                            <div className="bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                              {chat.unseenMsg || chat.unreadCount}
+                        {/* Three-dot menu */}
+                        <div className="relative flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setChatMenuOpenForChatId(chatMenuOpenForChatId === chat._id ? null : chat._id);
+                            }}
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                          >
+                            <MoreVertical className="w-4 h-4 text-gray-600" />
+                          </button>
+
+                          {chatMenuOpenForChatId === chat._id && (
+                            <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-50 min-w-[180px]">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteChat(chat._id, chat);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete Conversation
+                              </button>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     );
                   }
@@ -421,12 +775,15 @@ export default function MessagesPage() {
                   if (result.type === "member") {
                     const member = result.data;
                     const fullName = getUserFullName(member);
+                    const hasChat = (result as any).hasExistingChat;
 
                     return (
                       <div
                         key={`member-${member._id}`}
                         onClick={() => handleStartConversation(member)}
-                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 border-green-500 flex items-start gap-4"
+                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-start gap-3 ${
+                          hasChat ? "border-l-2 border-blue-300" : "border-l-2 border-green-500"
+                        }`}
                       >
                         <div className="flex-shrink-0 w-10 h-10">
                           {member.avatar ? (
@@ -441,20 +798,24 @@ export default function MessagesPage() {
                               style={{ width: 40, height: 40, objectFit: 'cover' }}
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold text-sm">
+                            <div className={`w-10 h-10 rounded-full ${hasChat ? "bg-blue-600" : "bg-green-600"} flex items-center justify-center text-white font-semibold text-sm`}>
                               {fullName.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{fullName}</h3>
+                          <h3 className="font-medium text-sm text-gray-900 truncate">{fullName}</h3>
                           {member.businessCategory && <p className="text-xs text-gray-500 truncate">{member.businessCategory}</p>}
-                          <p className="text-sm text-green-600 italic mt-1">Click to start conversation</p>
+                          <p className={`text-xs ${hasChat ? "text-blue-600" : "text-green-600"} italic mt-0.5`}>
+                            {hasChat ? "Open existing chat" : "Click to start conversation"}
+                          </p>
                         </div>
 
                         <div className="flex-shrink-0">
-                          <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">New</span>
+                          <span className={`${hasChat ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} text-xs font-medium px-2 py-0.5 rounded-full`}>
+                            {hasChat ? "Chat" : "New"}
+                          </span>
                         </div>
                       </div>
                     );
@@ -471,7 +832,7 @@ export default function MessagesPage() {
         <div className="col-span-8 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
           {selectedChat ? (
             <div className="flex-1 flex flex-col">
-              <div className="p-4 border-b flex items-center gap-4">
+              <div className="p-3 border-b flex items-center gap-3">
                 <div className="flex-shrink-0">
                   {(() => {
                     const other = getOtherParticipant(selectedChat);
@@ -480,22 +841,43 @@ export default function MessagesPage() {
                         <img
                           src={other.avatar.startsWith("https") ? other.avatar : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${other.avatar}`}
                           alt={getUserFullName(other)}
-                          className="w-12 h-12 rounded-full object-cover"
-                          style={{ width: 48, height: 48, objectFit: 'cover' }}
+                          className="w-10 h-10 rounded-full object-cover"
+                          style={{ width: 40, height: 40, objectFit: 'cover' }}
                         />
                       );
                     }
                     return (
-                      <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
                         {getUserFullName(other).charAt(0).toUpperCase()}
                       </div>
                     );
                   })()}
                 </div>
-                <div>
-                  <div className="font-semibold">{getUserFullName(getOtherParticipant(selectedChat))}</div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-gray-900">{getUserFullName(getOtherParticipant(selectedChat))}</div>
                   {getOtherParticipant(selectedChat)?.businessCategory && (
                     <div className="text-xs text-gray-500">{getOtherParticipant(selectedChat)?.businessCategory}</div>
+                  )}
+                </div>
+                <div className="relative" ref={chatMenuRef}>
+                  <button
+                    onClick={() => setShowChatMenu(!showChatMenu)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    title="More options"
+                  >
+                    <MoreVertical className="w-5 h-5 text-gray-600" />
+                  </button>
+
+                  {showChatMenu && (
+                    <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-10 min-w-[180px]">
+                      <button
+                        onClick={() => handleDeleteChat()}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete Conversation
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -694,23 +1076,50 @@ export default function MessagesPage() {
                         toast.error(message);
                       }
                   }}
-                  className="flex gap-2"
+                  className="flex gap-2 relative"
                 >
-                  <input
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Type a message"
-                  />
-                  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Send</button>
+                  <div className="flex-1 relative">
+                    <input
+                      ref={messageInputRef}
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg pl-4 pr-12 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Type a message"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                      title="Add emoji"
+                    >
+                      <Smile className="w-5 h-5 text-gray-600" />
+                    </button>
+
+                    {/* Emoji Picker */}
+                    {showEmojiPicker && (
+                      <div
+                        ref={emojiPickerRef}
+                        className="absolute bottom-full right-0 mb-2 z-50"
+                      >
+                        <EmojiPicker
+                          onEmojiClick={handleEmojiClick}
+                          searchDisabled={false}
+                          skinTonesDisabled={false}
+                          width={350}
+                          height={400}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Send</button>
                 </form>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-gray-500">
-              <MessageCircle className="w-20 h-20 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a conversation</h3>
-              <p>Choose a chat on the left or start a new conversation with a member.</p>
+              <MessageCircle className="w-16 h-16 mb-3 text-gray-300" />
+              <h3 className="text-base font-medium text-gray-900 mb-1">Select a conversation</h3>
+              <p className="text-sm text-gray-500">Choose a chat on the left or search for a member to start chatting.</p>
             </div>
           )}
         </div>

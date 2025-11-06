@@ -212,6 +212,21 @@ export const messageApi = baseApi.injectEndpoints({
       }
     ),
 
+    // Delete a chat (DELETE /chats/:chatId)
+    deleteChat: builder.mutation<
+      { message: string },
+      { chatId: string }
+    >({
+      query: ({ chatId }) => ({
+        url: `/chats/${chatId}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: any) => ({
+        message: response.message || "Chat deleted successfully"
+      }),
+      invalidatesTags: [{ type: 'Chat' as const, id: 'LIST' }],
+    }),
+
     // Search chats
     searchChats: builder.query<Chat[], string>({
       query: (searchTerm) => `/chats/search?q=${encodeURIComponent(searchTerm)}`,
@@ -248,6 +263,7 @@ export const {
   useDeleteMessageMutation,
   useMarkMessagesAsReadMutation,
   useEditMessageMutation,
+  useDeleteChatMutation,
   useSearchChatsQuery,
   useGetCommunityMembersQuery,
   useSearchUsersQuery,

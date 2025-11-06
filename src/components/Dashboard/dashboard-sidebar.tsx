@@ -191,11 +191,7 @@ export default function DashboardSidebar({
       {!isMobile && (
         <button
           onClick={handleToggle}
-          className={`fixed top-24 z-50 transition-all duration-300  ${
-            isCollapsed
-              ? "left-20"
-              : "md:left-[35%] xl:left-[17%] lg:left-[26%]"
-          } bg-white border-2 border-orange-400 hover:bg-orange-400 text-orange-500 hover:text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
+          className={`absolute top-24 -right-4 z-50 transition-all duration-300 bg-white border-2 border-orange-400 hover:bg-orange-400 text-orange-500 hover:text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           <Arrow collapsed={isCollapsed} />

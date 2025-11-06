@@ -40,6 +40,7 @@ export interface UserSearchParams {
 
 // Inject connection endpoints into baseApi
 export const connectionsApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // ============================================
     // CONNECTION QUERIES

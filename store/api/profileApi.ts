@@ -100,6 +100,7 @@ interface EndorseSkillResponse {
 
 // Inject profile endpoints into baseApi
 export const profileApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // ============================================
     // USER & PROFILE QUERIES

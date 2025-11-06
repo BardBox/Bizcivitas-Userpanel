@@ -10,7 +10,7 @@ import {
 } from "../../types/mongoEvent.types";
 
 export const eventsApi = baseApi.injectEndpoints({
-  overrideExisting: true, // Allow overriding duplicate endpoints
+  overrideExisting: true,
   endpoints: (builder) => ({
     // Get all events with optional filters
     getAllEvents: builder.query<FrontendEvent[], EventFilters | void>({

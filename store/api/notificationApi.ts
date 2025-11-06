@@ -31,6 +31,7 @@ interface NotificationsResponse {
 
 // Inject notification endpoints into baseApi
 export const notificationApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     // Get all notifications (read and unread)
     getAllNotifications: builder.query<NotificationsResponse, void>({

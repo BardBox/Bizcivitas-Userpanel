@@ -138,7 +138,7 @@ type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
 // Dashboard API endpoints
 export const dashboardApi = baseApi.injectEndpoints({
-  overrideExisting: true, // Allow overriding duplicate endpoints
+  overrideExisting: true,
   endpoints: (builder) => ({
     // BizConnect (Invites) Chart APIs
     getReferralsMonthlyCount: builder.query<ReferralChartData, void>({

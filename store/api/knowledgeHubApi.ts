@@ -129,18 +129,33 @@ export const knowledgeHubApi = baseApi.injectEndpoints({
         return `/collections${queryString ? `?${queryString}` : ""}`;
       },
       transformResponse: (response: ApiResponse<Collection[]>) => response.data,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ _id }) => ({ type: 'Collection' as const, id: _id })),
+              { type: 'Collection' as const, id: 'LIST' },
+            ]
+          : [{ type: 'Collection' as const, id: 'LIST' }],
     }),
 
     // Get single collection by ID
     getCollectionById: builder.query<Collection, string>({
       query: (id) => `/collections/${id}`,
       transformResponse: (response: ApiResponse<Collection>) => response.data,
+      providesTags: (result, error, id) => [{ type: 'Collection' as const, id }],
     }),
 
     // Get saved collections
     getSavedCollections: builder.query<Collection[], void>({
       query: () => "/collections/saved",
       transformResponse: (response: ApiResponse<Collection[]>) => response.data,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ _id }) => ({ type: 'Collection' as const, id: _id })),
+              { type: 'Collection' as const, id: 'SAVED' },
+            ]
+          : [{ type: 'Collection' as const, id: 'SAVED' }],
     }),
 
     // Get saved media
@@ -166,7 +181,7 @@ export const knowledgeHubApi = baseApi.injectEndpoints({
 
     // Toggle save collection
     saveCollection: builder.mutation<
-      { message: string; saved: boolean },
+      { message: string; data: Collection },
       { collectionId: string }
     >({
       query: (data) => ({
@@ -174,9 +189,11 @@ export const knowledgeHubApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      transformResponse: (
-        response: ApiResponse<{ message: string; saved: boolean }>
-      ) => response.data,
+      invalidatesTags: (result, error, { collectionId }) => [
+        { type: 'Collection' as const, id: collectionId },
+        { type: 'Collection' as const, id: 'LIST' },
+        { type: 'Collection' as const, id: 'SAVED' },
+      ],
     }),
   }),
 });

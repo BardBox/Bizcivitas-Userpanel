@@ -19,6 +19,8 @@ import {
   useSaveCollectionMutation,
   type Collection,
 } from "../../../../store/api/knowledgeHubApi";
+import { useGetCurrentUserQuery } from "../../../../store/api/userApi";
+import toast from "react-hot-toast";
 
 type TabType = "recordings" | "tutorials" | "membership" | "resource";
 
@@ -48,6 +50,10 @@ export default function KnowledgeHubPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Get current user
+  const { data: currentUser } = useGetCurrentUserQuery();
+  const currentUserId = currentUser?._id || currentUser?.id;
+
   // Fetch collections directly instead of media items
   const { data: expertCollections = [], isLoading: expertLoading } =
     useGetCollectionsQuery({ type: "expert" });
@@ -66,16 +72,50 @@ export default function KnowledgeHubPage() {
     router.push(`/feeds/knowledge-hub/collection/${collectionId}`);
   };
 
+  // Check if collection is saved by current user
+  const isCollectionSaved = (collection: Collection) => {
+    if (!currentUserId || !collection.savedBy) return false;
+    return collection.savedBy.some((save) => save.userId === currentUserId);
+  };
+
   // Handler for save/unsave collection
   const handleSaveCollection = async (
     e: React.MouseEvent,
-    collectionId: string
+    collectionId: string,
+    collectionTitle: string
   ) => {
     e.stopPropagation(); // Prevent card click
+
+    if (!currentUserId) {
+      toast.error("Please log in to save collections");
+      return;
+    }
+
+    // Check if currently saved
+    const collection = [...expertCollections, ...knowledgeCollections, ...membershipCollections, ...resourceCollections]
+      .find(c => c._id === collectionId);
+    const wasSaved = isCollectionSaved(collection!);
+
     try {
       await saveCollection({ collectionId }).unwrap();
-    } catch (error) {
+
+      // Show success toast
+      toast.success(
+        wasSaved
+          ? `Removed from saved resources`
+          : `Saved to resources`,
+        {
+          duration: 2000,
+          icon: wasSaved ? '🗑️' : '✅',
+        }
+      );
+    } catch (error: any) {
       console.error("Failed to save collection:", error);
+
+      // Show error toast
+      toast.error("Failed to update. Please try again.", {
+        duration: 3000,
+      });
     }
   };
 
@@ -278,13 +318,13 @@ export default function KnowledgeHubPage() {
                         {/* Save Button */}
                         <button
                           onClick={(e) =>
-                            handleSaveCollection(e, collection._id)
+                            handleSaveCollection(e, collection._id, collection.title)
                           }
-                          className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all"
+                          className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all hover:scale-110"
+                          title={isCollectionSaved(collection) ? "Remove from saved" : "Save for later"}
                         >
-                          {collection.savedBy &&
-                          collection.savedBy.length > 0 ? (
-                            <BookmarkCheck className="w-5 h-5 text-blue-600" />
+                          {isCollectionSaved(collection) ? (
+                            <BookmarkCheck className="w-5 h-5 text-blue-600 fill-current" />
                           ) : (
                             <Bookmark className="w-5 h-5 text-gray-600" />
                           )}

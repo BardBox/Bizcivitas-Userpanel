@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Video, FileText, BookOpen, Loader2, Search } from "lucide-react";
+import { Video, FileText, BookOpen, Loader2, Search, BookmarkCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useGetSavedCollectionsQuery,
+  useSaveCollectionMutation,
   type Collection,
 } from "../../../../store/api/knowledgeHubApi";
+import toast from "react-hot-toast";
 
 type TabType = "expert" | "knowledge" | "membership" | "resource";
 
@@ -26,9 +28,38 @@ export default function SavedResourcesPage() {
   const { data: savedCollections = [], isLoading } =
     useGetSavedCollectionsQuery();
 
+  // Save collection mutation
+  const [saveCollection] = useSaveCollectionMutation();
+
   // Handler for collection card click - navigate to detail page
   const handleCollectionClick = (collectionId: string) => {
     router.push(`/feeds/knowledge-hub/collection/${collectionId}`);
+  };
+
+  // Handler for unsave collection
+  const handleUnsaveCollection = async (
+    e: React.MouseEvent,
+    collectionId: string,
+    collectionTitle: string
+  ) => {
+    e.stopPropagation(); // Prevent card click
+
+    try {
+      await saveCollection({ collectionId }).unwrap();
+
+      // Show success toast
+      toast.success(`Removed "${collectionTitle}" from saved resources`, {
+        duration: 2000,
+        icon: '🗑️',
+      });
+    } catch (error: any) {
+      console.error("Failed to unsave collection:", error);
+
+      // Show error toast
+      toast.error("Failed to remove. Please try again.", {
+        duration: 3000,
+      });
+    }
   };
 
   // Filter collections by active tab type
@@ -150,6 +181,17 @@ export default function SavedResourcesPage() {
                         )}
                       </div>
                     )}
+
+                    {/* Unsave Button */}
+                    <button
+                      onClick={(e) =>
+                        handleUnsaveCollection(e, collection._id, collection.title)
+                      }
+                      className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all hover:scale-110"
+                      title="Remove from saved"
+                    >
+                      <BookmarkCheck className="w-5 h-5 text-blue-600 fill-current" />
+                    </button>
                   </div>
 
                   {/* Collection Stats */}

@@ -45,6 +45,7 @@ export const baseApi = createApi({
     "Member",
     "Notification",
     "Connections",
+    "Collection",
   ],
   endpoints: () => ({}), // Individual APIs will inject endpoints
 });

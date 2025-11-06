@@ -142,6 +142,7 @@ interface ConnectionActionResponse {
 
 // Inject user endpoints into baseApi
 export const userApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getCurrentUser: builder.query<User, void>({
       query: () => "/users/get-user",

@@ -76,9 +76,9 @@ export default function BizPulseCard({
   };
 
   return (
-    <Link href={`/feeds/biz-pulse/${id}`} className="block ">
+    <Link href={`/feeds/biz-pulse/${id}`} className="block h-full">
       <div
-        className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer overflow-hidden h-[420px] ${
+        className={`bg-white rounded-lg shadow-sm border border-gray-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden h-full flex flex-col ${
           featured ? "ring-2 ring-blue-500/20" : ""
         }`}
       >
@@ -132,7 +132,7 @@ export default function BizPulseCard({
         )}
 
         {/* Content Section */}
-        <div className="p-3">
+        <div className="p-3 flex-1 flex flex-col">
           {/* Category Badge */}
           <div className="mb-2">
             <span
@@ -152,7 +152,7 @@ export default function BizPulseCard({
           </h3>
 
           {/* Stats and Like Button */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-2 mt-auto border-t border-gray-100">
             <div className="flex items-center text-xs text-gray-600 space-x-3">
               <div className="flex items-center space-x-1">
                 <Heart size={14} className="text-gray-400" />

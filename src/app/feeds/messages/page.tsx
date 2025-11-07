@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   MessageCircle,
   Search,
@@ -37,6 +37,7 @@ import toast from "react-hot-toast";
 
 export default function MessagesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [messageInput, setMessageInput] = useState("");
@@ -112,6 +113,75 @@ export default function MessagesPage() {
       }, 100);
     }
   }, [selectedChat?._id, chatMessages]);
+
+  // Auto-open chat when userId query parameter is present
+  useEffect(() => {
+    const userId = searchParams?.get('userId');
+    if (userId && currentUserId && !selectedChat) {
+      // Wait a bit for chats to load
+      const timer = setTimeout(() => {
+        // Try to find existing chat with this user
+        const existingChat = chats.find((chat) => {
+          const users = chat.users || chat.participants || [];
+          return users.some((u) => u._id === userId);
+        });
+
+        if (existingChat) {
+          // Open existing chat by setting it directly
+          setSelectedChat(existingChat as Chat);
+          toast.success("Chat opened");
+          
+          // Mark as read
+          const other = (existingChat.users || existingChat.participants || []).find((u) => u._id !== currentUserId);
+          if (other?._id) {
+            markAsRead({ chatId: existingChat._id, targetUserId: other._id }).catch((err) => {
+              console.log("Could not mark as read:", err);
+            });
+          }
+          
+          // Clean up URL after opening chat
+          router.replace('/feeds/messages', { scroll: false });
+        } else {
+          // Create new chat with this user
+          getOrCreateChat({ userId })
+            .unwrap()
+            .then(async (createdChat) => {
+              // Refetch chats to update the sidebar with new chat
+              const refetchResult = await refetch();
+              
+              // Find the newly created chat in the refetched list
+              const updatedChats = refetchResult.data || [];
+              const newChat = updatedChats.find((chat: Chat) => {
+                const users = chat.users || chat.participants || [];
+                return users.some((u) => u._id === userId);
+              });
+              
+              // Set selected chat using the chat from refetched list
+              if (newChat) {
+                setSelectedChat(newChat as Chat);
+                toast.success("Chat opened");
+              } else {
+                // Fallback to the created chat if not found in list
+                setSelectedChat(createdChat as Chat);
+                toast.success("Chat opened");
+              }
+              
+              // Clean up URL after opening chat
+              router.replace('/feeds/messages', { scroll: false });
+            })
+            .catch((error) => {
+              console.error("Failed to open chat:", error);
+              toast.error("Failed to open chat");
+              
+              // Clean up URL even on error
+              router.replace('/feeds/messages', { scroll: false });
+            });
+        }
+      }, 800); // Increased to 800ms to ensure chats are loaded
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, currentUserId, chats, selectedChat, getOrCreateChat, router, markAsRead, refetch]);
 
   // Initialize Socket.io when user is available (optional for real-time updates)
   useEffect(() => {

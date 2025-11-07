@@ -142,13 +142,13 @@ export default function PollCard({
       </div>
 
       {/* Poll Question */}
-      <div className="p-3 flex-1 overflow-y-auto">
-        <h2 className="text-sm font-bold text-gray-900 mb-2">
+      <div className="p-2 flex-1 overflow-y-auto">
+        <h2 className="text-sm font-bold text-gray-900 mb-1.5">
           {poll.question}
         </h2>
 
         {post.images && post.images.length > 0 && (
-          <div className="mb-2 rounded-lg overflow-hidden">
+          <div className="mb-1.5 rounded-lg overflow-hidden">
             <Image
               src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${post.images[0]}`}
               alt="Poll image"
@@ -160,7 +160,7 @@ export default function PollCard({
         )}
 
         {error && (
-          <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2">
+          <div className="mb-1.5 p-1.5 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2">
             <X className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-red-700">{error}</p>
             <button

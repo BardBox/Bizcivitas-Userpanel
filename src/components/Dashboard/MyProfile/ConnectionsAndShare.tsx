@@ -72,7 +72,16 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   };
 
   const handleMessage = () => {
-    router.push("/feeds/messages");
+    if (isOwnProfile) {
+      // For own profile, just navigate to messages page
+      router.push("/feeds/messages");
+    } else if (userId) {
+      // For other users, navigate to messages page with userId to open their chat
+      router.push(`/feeds/messages?userId=${userId}`);
+    } else {
+      // Fallback to messages page
+      router.push("/feeds/messages");
+    }
   };
 
   const handleConnect = () => {

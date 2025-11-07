@@ -13,7 +13,7 @@ import {
   Bookmark,
   BookmarkCheck,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useGetCollectionsQuery,
   useSaveCollectionMutation,
@@ -45,10 +45,22 @@ const KNOWLEDGE_HUB_TABS = [
 
 export default function KnowledgeHubPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>("recordings");
+  const searchParams = useSearchParams();
+
+  // Get tab from URL query parameter, default to "recordings"
+  const tabFromUrl = (searchParams.get("tab") as TabType) || "recordings";
+  const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync activeTab with URL parameter changes
+  useEffect(() => {
+    const urlTab = searchParams.get("tab") as TabType;
+    if (urlTab && KNOWLEDGE_HUB_TABS.some(tab => tab.id === urlTab)) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();
@@ -67,9 +79,15 @@ export default function KnowledgeHubPage() {
   // Save collection mutation
   const [saveCollection] = useSaveCollectionMutation();
 
-  // Handler for collection card click - navigate to detail page
+  // Handler for tab change - update URL
+  const handleTabChange = (newTab: TabType) => {
+    setActiveTab(newTab);
+    router.push(`/feeds/knowledge-hub?tab=${newTab}`, { scroll: false });
+  };
+
+  // Handler for collection card click - navigate to detail page with tab context
   const handleCollectionClick = (collectionId: string) => {
-    router.push(`/feeds/knowledge-hub/collection/${collectionId}`);
+    router.push(`/feeds/knowledge-hub/collection/${collectionId}?returnTab=${activeTab}`);
   };
 
   // Check if collection is saved by current user
@@ -221,7 +239,7 @@ export default function KnowledgeHubPage() {
                     <button
                       key={tab.id}
                       onClick={() => {
-                        setActiveTab(tab.id);
+                        handleTabChange(tab.id);
                         setIsDropdownOpen(false);
                       }}
                       className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg ${
@@ -247,7 +265,7 @@ export default function KnowledgeHubPage() {
               {KNOWLEDGE_HUB_TABS.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`${
                     activeTab === tab.id
                       ? "border-blue-500 text-blue-600"

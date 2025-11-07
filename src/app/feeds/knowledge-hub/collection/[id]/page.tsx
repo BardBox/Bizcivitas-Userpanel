@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Play, Video, CheckCircle, FileText } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, Play, Video, CheckCircle, FileText, Home } from "lucide-react";
 import {
   useGetCollectionByIdQuery,
   type Collection,
@@ -12,7 +12,12 @@ import {
 export default function CollectionDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const collectionId = params.id as string;
+
+  // Get return context from URL parameters
+  const returnTab = searchParams.get("returnTab");
+  const source = searchParams.get("source"); // 'saved' or undefined (knowledge-hub)
 
   const [activeTab, setActiveTab] = useState<"contents" | "description">(
     "contents"
@@ -47,6 +52,24 @@ export default function CollectionDetailPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Handle back navigation with proper context
+  const handleBack = () => {
+    if (returnTab && source) {
+      // Return to saved resources with the tab context
+      if (source === "saved") {
+        router.push(`/feeds/saved-resources?tab=${returnTab}`);
+      } else {
+        router.push(`/feeds/knowledge-hub?tab=${returnTab}`);
+      }
+    } else if (returnTab) {
+      // Return to knowledge hub with the tab context
+      router.push(`/feeds/knowledge-hub?tab=${returnTab}`);
+    } else {
+      // Fallback to browser back
+      router.back();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -67,7 +90,7 @@ export default function CollectionDetailPage() {
             Collection not found
           </h3>
           <button
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="text-blue-600 hover:text-blue-700"
           >
             Go back
@@ -79,13 +102,39 @@ export default function CollectionDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+            <Home className="w-4 h-4" />
+            <span className="text-gray-400">/</span>
+            <button
+              onClick={handleBack}
+              className="hover:text-blue-600 transition-colors"
+            >
+              {source === "saved" ? "Saved Resources" : "Knowledge Hub"}
+            </button>
+            <span className="text-gray-400">/</span>
+            <span className="text-gray-900 font-medium">
+              {returnTab === "recordings" || returnTab === "expert"
+                ? "Expert Learnings"
+                : returnTab === "tutorials" || returnTab === "knowledge"
+                ? "Knowledge Sessions"
+                : returnTab === "membership"
+                ? "Members insights"
+                : returnTab === "resource"
+                ? "Resource centre"
+                : "Collection"}
+            </span>
+          </div>
+
+          {/* Title */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.back()}
+              onClick={handleBack}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Go back"
             >
               <ChevronLeft className="w-6 h-6 text-gray-600" />
             </button>

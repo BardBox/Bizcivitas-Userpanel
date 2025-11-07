@@ -13,14 +13,9 @@ import {
   Edit2,
   Trash2,
   X,
-  Smile,
-  Send,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
-
-// Dynamic import for emoji picker to avoid SSR issues
-const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
+import MessageInput from "@/components/MessageInput";
 import {
   useGetUserChatsQuery,
   useGetOrCreateChatMutation,
@@ -1064,88 +1059,38 @@ export default function MessagesPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input Area - WhatsApp style */}
-              <div className="p-3 bg-gray-100 border-t border-gray-200">
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!messageInput.trim() || !selectedChat) return;
+              {/* Message Input Area - Colorful & Stylish */}
+              <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 p-4 border-t border-gray-200">
+                <MessageInput
+                  onSendMessage={async (message) => {
+                    if (!message.trim() || !selectedChat) return;
+
                     try {
-                      await sendMessage({ chatId: selectedChat._id, content: messageInput }).unwrap();
+                      await sendMessage({
+                        chatId: selectedChat._id,
+                        content: message,
+                      }).unwrap();
+
                       setMessageInput("");
+
                       // refresh chats list and the messages for the selected chat
                       try { refetch(); } catch {}
                       try { refetchChatMessages && refetchChatMessages(); } catch {}
+
                       // scroll to bottom
                       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
                     } catch (err: any) {
-                        // Safely serialize errors (handles circular refs) and log as a string
-                        try {
-                          const safeStringify = (obj: any) => {
-                            const seen = new WeakSet();
-                            return JSON.stringify(obj, function (_key, value) {
-                              if (typeof value === "object" && value !== null) {
-                                if (seen.has(value)) return "[Circular]";
-                                seen.add(value);
-                              }
-                              return value;
-                            });
-                          };
-
-                          const payload = typeof err === "string" ? err : safeStringify(err);
-                          // Use console.log to avoid potential overridden error handlers
-                          if (typeof console !== "undefined" && console.log) console.log("sendMessage error:", payload);
-                        } catch (loggingErr) {
-                          // swallow any logging errors
-                        }
-
-                        const message = err?.data?.message || err?.message || (typeof err === "string" ? err : "Failed to send message");
-                        toast.error(message);
-                      }
+                      console.error("Send error:", err);
+                      const errorMessage = err?.data?.message || err?.message || (typeof err === "string" ? err : "Failed to send message");
+                      toast.error(errorMessage);
+                    }
                   }}
-                  className="flex gap-2 relative items-center"
-                >
-                  <div className="flex-1 relative">
-                    <input
-                      ref={messageInputRef}
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      className="w-full bg-white border-0 rounded-full pl-5 pr-12 py-3 focus:ring-2 focus:ring-brand-blue focus:outline-none shadow-sm"
-                      placeholder="Type a message"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                      title="Add emoji"
-                    >
-                      <Smile className="w-5 h-5 text-gray-500" />
-                    </button>
-
-                    {/* Emoji Picker */}
-                    {showEmojiPicker && (
-                      <div
-                        ref={emojiPickerRef}
-                        className="absolute bottom-full right-0 mb-2 z-50"
-                      >
-                        <EmojiPicker
-                          onEmojiClick={handleEmojiClick}
-                          searchDisabled={false}
-                          skinTonesDisabled={false}
-                          width={350}
-                          height={400}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="submit"
-                    className="bg-brand-blue text-white p-3 rounded-full hover:opacity-90 transition-all shadow-md flex items-center justify-center"
-                    title="Send message"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </form>
+                  placeholder="Type a message..."
+                  showEmojiPicker={true}
+                  showFileUpload={false}
+                  size="md"
+                  variant="rounded"
+                />
               </div>
             </div>
           ) : (

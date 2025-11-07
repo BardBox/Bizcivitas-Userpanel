@@ -52,6 +52,9 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [newSkillName, setNewSkillName] = useState("");
   const [endorseSkill, { isLoading: isEndorsing }] = useEndorseSkillMutation();
 
+  // Track when last endorsement action occurred to prevent immediate sync overwrite
+  const [lastEndorsementTime, setLastEndorsementTime] = useState<number>(0);
+
   // Track endorsement state locally for persistence
   const [endorsementState, setEndorsementState] = useState<
     Record<string, boolean>
@@ -82,24 +85,60 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   // Sync localSkills when mySkillItems prop changes (only when not editing)
   React.useEffect(() => {
     if (!isEditing) {
-      // Merge API data with local endorsement state
+      // Skip sync if endorsement just occurred (within 3 seconds)
+      // This prevents the API data from immediately overwriting our optimistic update
+      const timeSinceLastEndorsement = Date.now() - lastEndorsementTime;
+      if (timeSinceLastEndorsement < 3000 && lastEndorsementTime > 0) {
+        return;
+      }
+
+      // Load persisted endorsement state from localStorage
+      const persistedState =
+        typeof window !== "undefined" && targetUserId
+          ? (() => {
+              const stored = localStorage.getItem(`endorsements_${targetUserId}`);
+              return stored ? JSON.parse(stored) : {};
+            })()
+          : {};
+
+      // Merge API data with persisted localStorage state
+      // Prioritize localStorage for endorsedByMe (user's actions should persist)
+      // But use API data for score (server is source of truth for counts)
       const skillsWithEndorsementStatus = mySkillItems.map((skill) => {
         const skillId = skill._id;
-        // Use local state if available, otherwise use API data
-        const isEndorsed =
-          endorsementState[skillId] !== undefined
-            ? endorsementState[skillId]
-            : Boolean(skill.endorsedByMe);
+
+        // Check if we have a persisted endorsement state for this skill
+        const hasPersistedState = skillId in persistedState;
+
+        // Use persisted state if available, otherwise use API data
+        const isEndorsed = hasPersistedState
+          ? Boolean(persistedState[skillId])
+          : Boolean(skill.endorsedByMe);
 
         return {
           ...skill,
           endorsedByMe: isEndorsed,
+          // Always use API score as it's the source of truth
+          score: skill.score,
         };
       });
 
       setLocalSkills(skillsWithEndorsementStatus);
+
+      // Only update localStorage if API data has changed OR we don't have persisted state
+      if (typeof window !== "undefined" && targetUserId) {
+        const newState: Record<string, boolean> = {};
+        skillsWithEndorsementStatus.forEach((skill) => {
+          newState[skill._id] = Boolean(skill.endorsedByMe);
+        });
+        setEndorsementState(newState);
+        localStorage.setItem(
+          `endorsements_${targetUserId}`,
+          JSON.stringify(newState)
+        );
+      }
     }
-  }, [isEditing, mySkillItems, endorsementState]);
+  }, [isEditing, mySkillItems, targetUserId, lastEndorsementTime]);
 
   const handleAddSkill = () => {
     if (!newSkillName.trim()) return;
@@ -128,12 +167,20 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     }
 
     try {
+      // Store the CURRENT state before making API call
+      const wasEndorsed = Boolean(endorsedByMe);
+
+      // Call API to endorse/un-endorse (API toggles the state)
       const result = await endorseSkill({
         skillId: skillId,
         targetUserId: targetUserId!,
       }).unwrap();
 
-      const newEndorsedState = !endorsedByMe;
+      // New state is opposite of what it WAS
+      const newEndorsedState = !wasEndorsed;
+
+      // Mark the time when endorsement occurred to prevent immediate sync overwrite
+      setLastEndorsementTime(Date.now());
 
       // Update local endorsement state for persistence
       setEndorsementState((prev) => {
@@ -153,13 +200,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         return newState;
       });
 
-      // Update local skills state
+      // Update local skills state optimistically
       setLocalSkills((prevSkills) =>
         prevSkills.map((skill) => {
           if (skill._id === skillId) {
             return {
               ...skill,
               endorsedByMe: newEndorsedState,
+              // Calculate score optimistically based on action
               score: newEndorsedState
                 ? skill.score + 1
                 : Math.max(0, skill.score - 1),
@@ -169,9 +217,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         })
       );
 
-      toast.success(endorsedByMe ? "Endorsement removed!" : "Skill endorsed!");
+      // Show correct toast message based on what it WAS (not what it is now)
+      toast.success(wasEndorsed ? "Endorsement removed!" : "Skill endorsed!");
     } catch (error: any) {
-      // Handle specific 409 error (trying to remove endorsement when score is 0)x
+      // Handle specific 409 error (trying to remove endorsement when score is 0)
       if (error?.status === 409) {
         toast.error("Cannot remove endorsement: skill score is already at 0");
       } else {
@@ -367,21 +416,21 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                           }
                         >
                           {skill.endorsedByMe ? (
-                            // Filled arrow (endorsed)
+                            // Filled arrow (endorsed by you)
                             <img
                               src="/arrowfilled.svg"
                               alt="Endorsed"
                               className="h-4 w-4 transition-transform"
                             />
                           ) : (
-                            // Outlined arrow (not endorsed)
+                            // Outlined arrow (not endorsed by you)
                             <img
                               src="/arrow.svg"
                               alt="Endorse"
                               className="h-4 w-4 transition-transform group-hover:scale-110"
                             />
                           )}
-                          <span className="text-xs font-bold">
+                          <span className="text-xs font-bold text-gray-700">
                             {skill.score}
                           </span>
                         </button>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Send, Loader2, Search, X, Smile } from "lucide-react";
 import dynamic from "next/dynamic";
+import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
 
 // Dynamic import for emoji picker to avoid SSR issues
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -36,6 +37,8 @@ export default function ChatPage() {
   const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -187,8 +190,15 @@ export default function ChatPage() {
     }
   };
 
-  // Handle delete messages
-  const handleDeleteMessages = async () => {
+  // Handle delete messages - show confirmation modal
+  const handleDeleteMessages = () => {
+    if (selectedMessages.length === 0) return;
+    setMessageToDelete(selectedMessages[0]); // Store first message for modal
+    setShowDeleteModal(true);
+  };
+
+  // Confirm and execute delete
+  const confirmDeleteMessage = async () => {
     if (selectedMessages.length === 0) return;
 
     try {
@@ -200,10 +210,14 @@ export default function ChatPage() {
       );
       setSelectedMessages([]);
       setIsSelectionMode(false);
+      setShowDeleteModal(false);
+      setMessageToDelete(null);
       toast.success("Messages deleted");
     } catch (error: any) {
       console.error("Failed to delete messages:", error);
       toast.error("Failed to delete messages. Please try again.");
+      setShowDeleteModal(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -451,35 +465,42 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white p-4">
-        <div className="flex items-center gap-2 relative">
+      {/* Input Area - SUPER COLORFUL & STYLISH DESIGN */}
+      <div className="relative border-t border-transparent bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 p-6 shadow-2xl backdrop-blur-sm">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-purple-400/10 to-pink-400/10 animate-pulse"></div>
+
+        <div className="flex items-end gap-4 relative max-w-5xl mx-auto">
           <div className="flex-1 relative">
-            <input
-              ref={messageInputRef}
-              type="text"
-              value={messageInput}
-              onChange={handleTyping}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-              disabled={isSending}
-            />
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full transition-colors"
-              title="Add emoji"
-              disabled={isSending}
-            >
-              <Smile className="w-5 h-5 text-gray-600" />
-            </button>
+            {/* Colorful gradient border wrapper */}
+            <div className="relative p-[3px] rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 shadow-2xl hover:shadow-purple-500/50 transition-all duration-300">
+              <input
+                ref={messageInputRef}
+                type="text"
+                value={messageInput}
+                onChange={handleTyping}
+                onKeyPress={handleKeyPress}
+                placeholder="✨ Type your message..."
+                className="w-full pl-6 pr-16 py-5  focus:ring-4 focus:ring-purple-300 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 transition-all duration-300 text-base font-semibold shadow-inner disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-purple-500 placeholder:font-normal outline-none"
+                disabled={isSending}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 rounded-full transition-all duration-300 disabled:opacity-50 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 z-10"
+                title="Add emoji"
+                disabled={isSending}
+              >
+                <Smile className="w-5 h-5 text-white drop-shadow" />
+              </button>
+            </div>
 
             {/* Emoji Picker */}
             {showEmojiPicker && (
               <div
                 ref={emojiPickerRef}
-                className="absolute bottom-full right-0 mb-2 z-50"
+                className="absolute bottom-full right-0 mb-3 z-50 shadow-2xl rounded-2xl overflow-hidden border-4 border-purple-200"
               >
                 <EmojiPicker
                   onEmojiClick={handleEmojiClick}
@@ -492,24 +513,64 @@ export default function ChatPage() {
             )}
           </div>
 
+          {/* ULTRA COLORFUL SEND BUTTON */}
           <button
             onClick={handleSendMessage}
             disabled={!messageInput.trim() || isSending}
-            className={`p-3 rounded-full transition-colors flex-shrink-0 ${
+            className={`relative p-5 rounded-full transition-all duration-500 transform flex-shrink-0 ${
               messageInput.trim() && !isSending
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white hover:scale-125 active:scale-90 shadow-2xl hover:shadow-purple-500/50 animate-pulse"
+                : "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-500 cursor-not-allowed shadow-lg"
             }`}
+            style={{
+              boxShadow: messageInput.trim() && !isSending
+                ? '0 0 30px rgba(147, 51, 234, 0.6), 0 0 60px rgba(59, 130, 246, 0.4)'
+                : 'none'
+            }}
             title="Send message"
           >
-            {isSending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
+            {/* Spinning gradient ring */}
+            {messageInput.trim() && !isSending && (
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 opacity-75 blur-sm animate-spin"></div>
             )}
+
+            <div className="relative">
+              {isSending ? (
+                <Loader2 className="w-7 h-7 animate-spin drop-shadow-lg" />
+              ) : (
+                <Send className="w-7 h-7 drop-shadow-lg" />
+              )}
+            </div>
           </button>
         </div>
+
+        {/* Colorful Character Counter */}
+        {messageInput.length > 0 && (
+          <div className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-right mt-3 max-w-5xl mx-auto animate-pulse">
+            ✨ {messageInput.length} characters
+          </div>
+        )}
       </div>
+
+      {/* Delete Message Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setMessageToDelete(null);
+        }}
+        onConfirm={confirmDeleteMessage}
+        title="Delete Message"
+        message={
+          selectedMessages.length > 1
+            ? `Are you sure you want to delete ${selectedMessages.length} messages? This action cannot be undone.`
+            : "Are you sure you want to delete this message? This action cannot be undone."
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        warningText="Deleted messages cannot be recovered."
+      />
     </div>
   );
 }

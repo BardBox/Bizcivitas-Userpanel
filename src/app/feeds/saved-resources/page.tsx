@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Video,
   FileText,
@@ -9,7 +9,7 @@ import {
   Search,
   BookmarkCheck,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useGetSavedCollectionsQuery,
   useSaveCollectionMutation,
@@ -28,8 +28,20 @@ const SAVED_TABS = [
 
 export default function SavedResourcesPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>("expert");
+  const searchParams = useSearchParams();
+
+  // Get tab from URL query parameter, default to "expert"
+  const tabFromUrl = (searchParams.get("tab") as TabType) || "expert";
+  const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Sync activeTab with URL parameter changes
+  useEffect(() => {
+    const urlTab = searchParams.get("tab") as TabType;
+    if (urlTab && SAVED_TABS.some(tab => tab.id === urlTab)) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
 
   // Fetch saved collections
   const { data: savedCollections = [], isLoading } =
@@ -38,9 +50,15 @@ export default function SavedResourcesPage() {
   // Save collection mutation
   const [saveCollection] = useSaveCollectionMutation();
 
-  // Handler for collection card click - navigate to detail page
+  // Handler for tab change - update URL
+  const handleTabChange = (newTab: TabType) => {
+    setActiveTab(newTab);
+    router.push(`/feeds/saved-resources?tab=${newTab}`, { scroll: false });
+  };
+
+  // Handler for collection card click - navigate to detail page with tab context
   const handleCollectionClick = (collectionId: string) => {
-    router.push(`/feeds/knowledge-hub/collection/${collectionId}`);
+    router.push(`/feeds/knowledge-hub/collection/${collectionId}?returnTab=${activeTab}&source=saved`);
   };
 
   // Handler for unsave collection
@@ -120,7 +138,7 @@ export default function SavedResourcesPage() {
               {SAVED_TABS.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`${
                     activeTab === tab.id
                       ? "border-blue-500 text-blue-600"

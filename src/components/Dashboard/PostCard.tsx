@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Heart, MessageSquare, Activity, Network } from "lucide-react";
+import { ThumbsUp, MessageSquare, Activity, Network } from "lucide-react";
 import Link from "next/link";
 
 interface PostCardProps {
@@ -24,6 +24,8 @@ interface PostCardProps {
   };
   timeAgo?: string;
   sourceType?: string; // 'bizhub' or 'bizpulse'
+  onLike?: (postId: string) => void;
+  isLiked?: boolean;
 }
 
 export default function PostCard({
@@ -37,8 +39,18 @@ export default function PostCard({
   stats = { likes: 0, comments: 0, shares: 0 },
   timeAgo,
   sourceType,
+  onLike,
+  isLiked: initialIsLiked = false,
 }: PostCardProps) {
   const [avatarError, setAvatarError] = useState(false);
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [likeCount, setLikeCount] = useState(stats.likes || 0);
+
+  // Update local state when props change
+  useState(() => {
+    setIsLiked(initialIsLiked);
+    setLikeCount(stats.likes || 0);
+  });
 
   // Determine if this is a BizPulse post based on sourceType or category
   const isBizPulse = sourceType === "bizpulse" || (sourceType !== "bizhub" && !!category);
@@ -85,57 +97,69 @@ export default function PostCard({
     return colors[cat || ""] || "bg-gray-100 text-gray-800 border border-gray-200";
   };
 
-  return (
-    <Link href={detailUrl} className="block">
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden mb-6 hover:shadow-md transition-shadow cursor-pointer relative">
-        {/* Header: Avatar + Admin Name + Time */}
-        {author && (
-          <div className="p-4 sm:p-5 pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                {/* Display user avatar or fallback to favicon for admin */}
-                <div className="relative w-10 h-10 flex-shrink-0">
-                  <Image
-                    src={avatarError || !author.avatar ? "/favicon.ico" : author.avatar}
-                    alt={author.name}
-                    width={40}
-                    height={40}
-                    className="rounded-full object-cover bg-gray-100"
-                    onError={() => setAvatarError(true)}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 leading-tight truncate">
-                    {author.name}
-                  </div>
-                  {timeAgo && (
-                    <div className="text-xs text-gray-500 leading-tight mt-0.5">
-                      {timeAgo}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* Floating Source Type Badge */}
-              {sourceType && (
-                <div className={`flex items-center justify-center w-9 h-9 rounded-full shadow-md flex-shrink-0 ${
-                  sourceType === "bizpulse"
-                    ? "bg-blue-500"
-                    : "bg-purple-500"
-                }`}>
-                  {sourceType === "bizpulse" ? (
-                    <Activity className="w-4 h-4 text-white" />
-                  ) : (
-                    <Network className="w-4 h-4 text-white" />
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-        {/* Image with maintained aspect ratio */}
-        {image && (
-          <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
+    // Optimistic update
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+    setLikeCount(prev => newIsLiked ? prev + 1 : prev - 1);
+
+    onLike?.(id);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border overflow-hidden mb-6 hover:shadow-md transition-shadow relative">
+      {/* Header: Avatar + Admin Name + Time */}
+      {author && (
+        <div className="p-4 sm:p-5 pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              {/* Display user avatar or fallback to favicon for admin */}
+              <div className="relative w-10 h-10 flex-shrink-0">
+                <Image
+                  src={avatarError || !author.avatar ? "/favicon.ico" : author.avatar}
+                  alt={author.name}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover bg-gray-100"
+                  onError={() => setAvatarError(true)}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-gray-900 leading-tight truncate">
+                  {author.name}
+                </div>
+                {timeAgo && (
+                  <div className="text-xs text-gray-500 leading-tight mt-0.5">
+                    {timeAgo}
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Floating Source Type Badge */}
+            {sourceType && (
+              <div className={`flex items-center justify-center w-9 h-9 rounded-full shadow-md flex-shrink-0 ${
+                sourceType === "bizpulse"
+                  ? "bg-blue-500"
+                  : "bg-purple-500"
+              }`}>
+                {sourceType === "bizpulse" ? (
+                  <Activity className="w-4 h-4 text-white" />
+                ) : (
+                  <Network className="w-4 h-4 text-white" />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Image with maintained aspect ratio - Clickable */}
+      {image && (
+        <Link href={detailUrl}>
+          <div className="w-full aspect-video relative overflow-hidden bg-gray-100 cursor-pointer">
             <Image
               src={image}
               alt={title}
@@ -144,41 +168,55 @@ export default function PostCard({
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
+        </Link>
+      )}
+
+      <div className="p-4 sm:p-5">
+        {/* Category/Type Tag */}
+        {tagValue && (
+          <div className="mb-3">
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(
+                tagValue,
+                sourceType
+              )}`}
+            >
+              {getCategoryLabel(tagValue)}
+            </span>
+          </div>
         )}
 
-        <div className="p-4 sm:p-5">
-          {/* Category/Type Tag */}
-          {tagValue && (
-            <div className="mb-3">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(
-                  tagValue,
-                  sourceType
-                )}`}
-              >
-                {getCategoryLabel(tagValue)}
-              </span>
-            </div>
-          )}
-
-          {/* Title */}
-          <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-snug">
+        {/* Title - Clickable */}
+        <Link href={detailUrl}>
+          <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-snug cursor-pointer hover:text-blue-600 transition-colors">
             {title}
           </h4>
+        </Link>
 
-          {/* Stats */}
-          <div className="flex items-center text-sm text-gray-600 space-x-4 pt-3 border-t border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <Heart size={16} className="text-gray-400" />
-              <span className="font-medium">{stats.likes || 0}</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <MessageSquare size={16} className="text-gray-400" />
-              <span className="font-medium">{stats.comments || 0}</span>
-            </div>
+        {/* Stats and Like Button */}
+        <div className="flex items-center text-sm text-gray-600 space-x-4 pt-3 border-t border-gray-100">
+          {/* Like Button */}
+          <button
+            onClick={handleLike}
+            className={`flex items-center space-x-1.5 transition-colors ${
+              isLiked
+                ? "text-blue-600"
+                : "text-gray-600 hover:text-blue-600"
+            }`}
+          >
+            <ThumbsUp
+              size={16}
+              className={isLiked ? "fill-current" : ""}
+            />
+            <span className="font-medium">{likeCount}</span>
+          </button>
+          {/* Comments */}
+          <div className="flex items-center space-x-1.5">
+            <MessageSquare size={16} className="text-gray-400" />
+            <span className="font-medium">{stats.comments || 0}</span>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

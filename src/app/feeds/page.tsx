@@ -9,6 +9,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import PostCard from "@/components/Dashboard/PostCard";
 import FloatingDrawer from "@/components/Dashboard/FloatingDrawer";
 import { bizpulseApi } from "../../services/bizpulseApi";
+import { bizhubApi } from "../../services/bizhubApi";
 import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
 import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
 import { Activity, Network, Sparkles } from "lucide-react";
@@ -252,7 +253,51 @@ export default function DashboardPage() {
               }
               return (
                 <div key={post.id}>
-                  <PostCard {...post} sourceType={post.postSource} />
+                  <PostCard
+                    {...post}
+                    sourceType={post.postSource}
+                    isLiked={post.isLiked}
+                    onLike={async (postId) => {
+                      // Handle like based on post source
+                      if (post.postSource === "bizpulse") {
+                        try {
+                          const response = await bizpulseApi.likeWallFeed(postId);
+                          if (response.success && response.data) {
+                            const updatedMock = {
+                              ...transformWallFeedPostToMock(response.data as any),
+                              postSource: "bizpulse"
+                            };
+                            setAllPosts((prev) =>
+                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                            );
+                            setPosts((prev) =>
+                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                            );
+                          }
+                        } catch (error) {
+                          console.error("Failed to like post:", error);
+                        }
+                      } else if (post.postSource === "bizhub") {
+                        try {
+                          const response = await bizhubApi.likePost(postId);
+                          if (response) {
+                            const updatedMock = {
+                              ...transformBizHubPostToMock(response),
+                              postSource: "bizhub"
+                            };
+                            setAllPosts((prev) =>
+                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                            );
+                            setPosts((prev) =>
+                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                            );
+                          }
+                        } catch (error) {
+                          console.error("Failed to like post:", error);
+                        }
+                      }
+                    }}
+                  />
                 </div>
               );
             })}

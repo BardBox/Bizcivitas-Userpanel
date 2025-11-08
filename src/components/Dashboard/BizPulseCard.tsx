@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, MessageSquare } from "lucide-react";
+import { ThumbsUp, MessageSquare } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Image from "next/image";
 
@@ -154,30 +154,28 @@ export default function BizPulseCard({
           {/* Stats and Like Button */}
           <div className="flex items-center justify-between pt-2 mt-auto border-t border-gray-100">
             <div className="flex items-center text-xs text-gray-600 space-x-3">
-              <div className="flex items-center space-x-1">
-                <Heart size={14} className="text-gray-400" />
+              {/* Like Button with Count */}
+              <button
+                onClick={handleLike}
+                className={`flex items-center space-x-1 transition-colors ${
+                  isLiked
+                    ? "text-blue-600"
+                    : "text-gray-600 hover:text-blue-600"
+                }`}
+              >
+                <ThumbsUp
+                  size={16}
+                  className={isLiked ? "fill-current" : ""}
+                />
                 <span className="font-medium">{stats.likes || 0}</span>
-              </div>
+              </button>
+
+              {/* Comments */}
               <div className="flex items-center space-x-1">
                 <MessageSquare size={14} className="text-gray-400" />
                 <span className="font-medium">{stats.comments || 0}</span>
               </div>
             </div>
-
-            {/* Like Button */}
-            <button
-              onClick={handleLike}
-              className={`p-1.5 rounded-lg transition-colors ${
-                isLiked
-                  ? "text-red-500 bg-red-50 hover:bg-red-100"
-                  : "text-gray-400 hover:text-red-500 hover:bg-red-50"
-              }`}
-            >
-              <Heart
-                className="w-4 h-4"
-                fill={isLiked ? "currentColor" : "none"}
-              />
-            </button>
           </div>
         </div>
       </div>

@@ -12,6 +12,9 @@ import {
   Download,
   Bookmark,
   BookmarkCheck,
+  Trash2,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -21,11 +24,11 @@ import {
 } from "../../../../store/api/knowledgeHubApi";
 import { useGetCurrentUserQuery } from "../../../../store/api/userApi";
 import toast from "react-hot-toast";
+import SavedResourcesButton from "@/components/KnowledgeHub/SavedResourcesButton";
 
 type TabType = "recordings" | "tutorials" | "membership" | "resource";
 
 const KNOWLEDGE_HUB_TABS = [
-  { id: "recordings" as TabType, label: "Expert Learnings", icon: Video },
   {
     id: "tutorials" as TabType,
     label: "Knowledge Sessions",
@@ -41,14 +44,15 @@ const KNOWLEDGE_HUB_TABS = [
     label: "Resource centre",
     icon: FileText,
   },
+  { id: "recordings" as TabType, label: "Expert Learnings", icon: Video },
 ];
 
 export default function KnowledgeHubPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get tab from URL query parameter, default to "recordings"
-  const tabFromUrl = (searchParams.get("tab") as TabType) || "recordings";
+  // Get tab from URL query parameter, default to "tutorials"
+  const tabFromUrl = (searchParams.get("tab") as TabType) || "tutorials";
   const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -126,7 +130,7 @@ export default function KnowledgeHubPage() {
         wasSaved ? `Removed from saved resources` : `Saved to resources`,
         {
           duration: 2000,
-          icon: wasSaved ? "🗑️" : "✅",
+          icon: wasSaved ? <Trash2 className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />,
         }
       );
     } catch (error: any) {
@@ -135,6 +139,7 @@ export default function KnowledgeHubPage() {
       // Show error toast
       toast.error("Failed to update. Please try again.", {
         duration: 3000,
+        icon: <AlertCircle className="w-5 h-5" />,
       });
     }
   };
@@ -416,6 +421,9 @@ export default function KnowledgeHubPage() {
         Access educational content, business templates, and expert resources
         curated by BizCivitas.
       </div>
+
+      {/* Floating Saved Resources Button */}
+      <SavedResourcesButton />
     </div>
   );
 }

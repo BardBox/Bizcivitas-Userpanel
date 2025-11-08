@@ -8,6 +8,8 @@ import {
   Loader2,
   Search,
   BookmarkCheck,
+  Trash2,
+  AlertCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -20,10 +22,11 @@ import toast from "react-hot-toast";
 type TabType = "expert" | "knowledge" | "membership" | "resource";
 
 const SAVED_TABS = [
-  { id: "expert" as TabType, label: "Expert Learnings", icon: Video },
+ 
   { id: "knowledge" as TabType, label: "Knowledge Sessions", icon: BookOpen },
   { id: "membership" as TabType, label: "Members insights", icon: FileText },
   { id: "resource" as TabType, label: "Resource centre", icon: FileText },
+ { id: "expert" as TabType, label: "Expert Learnings", icon: Video },
 ];
 
 export default function SavedResourcesPage() {
@@ -75,7 +78,7 @@ export default function SavedResourcesPage() {
       // Show success toast
       toast.success(`Removed "${collectionTitle}" from saved resources`, {
         duration: 2000,
-        icon: "🗑️",
+        icon: <Trash2 className="w-5 h-5" />,
       });
     } catch (error: any) {
       console.error("Failed to unsave collection:", error);
@@ -83,6 +86,7 @@ export default function SavedResourcesPage() {
       // Show error toast
       toast.error("Failed to remove. Please try again.", {
         duration: 3000,
+        icon: <AlertCircle className="w-5 h-5" />,
       });
     }
   };

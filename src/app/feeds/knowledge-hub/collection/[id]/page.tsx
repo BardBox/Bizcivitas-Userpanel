@@ -55,13 +55,9 @@ export default function CollectionDetailPage() {
 
   // Handle back navigation with proper context
   const handleBack = () => {
-    if (returnTab && source) {
-      // Return to saved resources with the tab context
-      if (source === "saved") {
-        router.push(`/feeds/saved-resources?tab=${returnTab}`);
-      } else {
-        router.push(`/feeds/knowledge-hub?tab=${returnTab}`);
-      }
+    if (source === "saved") {
+      // Return to saved resources page
+      router.push(`/feeds/saved-resources`);
     } else if (returnTab) {
       // Return to knowledge hub with the tab context
       router.push(`/feeds/knowledge-hub?tab=${returnTab}`);

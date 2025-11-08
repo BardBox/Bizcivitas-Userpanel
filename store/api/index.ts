@@ -96,6 +96,15 @@ export {
 } from "./notificationApi";
 
 // ============================================
+// MEMBERSHIP API (Membership Management)
+// ============================================
+export {
+  membershipApi,
+  // Queries
+  useGetMembershipBenefitsQuery,
+} from "./membershipApi";
+
+// ============================================
 // TYPES (Re-export for convenience)
 // ============================================
 export type { User, FullProfile, ApiResponse } from "../../types/user.types";

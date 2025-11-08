@@ -162,6 +162,15 @@ body {
   --color-brand-green: #22c55e;
   --color-brand-yellow: #f59e0b;
   --color-brand-yellow-dark: #d97706;
+
+  /* Tailwind Brand Colors */
+  --color-brand-orange: #ff9d00;
+  --color-brand-blue: #3359ff;
+  --color-brand-green-dark: #1db212;
+  --color-brand-orange-dark: #ea580c;
+  --color-brand-green: #22c55e;
+  --color-brand-yellow: #f59e0b;
+  --color-brand-yellow-dark: #d97706;
   --color-flat-bg: #f8fafc;
   --color-flat-surface: #ffffff;
   --color-flat-surface-alt: #f1f5f9;

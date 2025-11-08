@@ -32,10 +32,11 @@ export default function CollectionDetailPage() {
   const currentItem = items[currentItemIndex];
 
   // Check if collection contains documents or videos
-  const isDocumentCollection =
-    collection?.type === "membership" || collection?.type === "resource";
+  const isDocumentCollection = collection?.type === "resource";
   const isVideoCollection =
-    collection?.type === "expert" || collection?.type === "knowledge";
+    collection?.type === "expert" ||
+    collection?.type === "knowledge" ||
+    collection?.type === "membership";
 
   // Determine colors based on collection type
   const isExpert = collection?.type === "expert";

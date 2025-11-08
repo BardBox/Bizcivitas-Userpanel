@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Users, Search } from "lucide-react";
+import { ArrowLeft, Users, Search, Home, ChevronRight } from "lucide-react";
 import { toast } from "react-hot-toast";
 import ConnectionCard from "@/components/Dashboard/Connections/ConnectionCard";
 import {
@@ -88,8 +88,8 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
 
   // Initialize pagination
   const pagination = usePagination<Connection>(filteredConnections, {
-    initialItemsPerPage: 8,
-    itemsPerPageOptions: [8, 12, 16, 20],
+    initialItemsPerPage: 9,
+    itemsPerPageOptions: [9, 12, 15, 18],
     resetPageOnDataChange: true,
   });
 
@@ -285,14 +285,37 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
+          <div className="py-4">
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
               <button
-                onClick={() => router.back()}
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                onClick={() => router.push("/feeds")}
+                className="hover:text-blue-600 transition-colors"
               >
-                <ArrowLeft className="h-5 w-5 mr-2" />
+                <Home className="w-4 h-4" />
               </button>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <button
+                onClick={() => router.push("/feeds/connections")}
+                className="hover:text-blue-600 transition-colors"
+              >
+                Connections
+              </button>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <button
+                onClick={() => router.push(`/feeds/connections/${slug}`)}
+                className="hover:text-blue-600 transition-colors"
+              >
+                {userName}
+              </button>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-900 font-medium">
+                Connections
+              </span>
+            </div>
+
+            {/* Title and Search Section */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Users className="h-6 w-6 text-blue-600" />
                 <div>
@@ -304,56 +327,56 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
                   </p>
                 </div>
               </div>
-            </div>
 
-            {/* Search Bar, Items Per Page, and Pagination Info */}
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+              {/* Search Bar, Items Per Page, and Pagination Info */}
+              <div className="flex items-center space-x-6">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search connections..."
+                    className="block w-64 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search connections..."
-                  className="block w-64 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+
+                {/* Items Per Page Selector */}
+                {filteredConnections.length > 0 && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <label className="text-gray-600">Show:</label>
+                    <select
+                      value={pagination.state.itemsPerPage}
+                      onChange={(e) => {
+                        pagination.actions.setItemsPerPage(
+                          Number(e.target.value)
+                        );
+                        pagination.actions.goToFirstPage();
+                      }}
+                      className="border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[9, 12, 15, 18].map((option) => (
+                        <option key={option} value={option}>
+                          {option} per page
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Pagination Info */}
+                {filteredConnections.length > 0 && (
+                  <PaginationInfo
+                    state={pagination.state}
+                    itemName="members"
+                    searchTerm={searchTerm}
+                    showItemsPerPage={false}
+                    className="text-sm"
+                  />
+                )}
               </div>
-
-              {/* Items Per Page Selector */}
-              {filteredConnections.length > 0 && (
-                <div className="flex items-center space-x-2 text-sm">
-                  <label className="text-gray-600">Show:</label>
-                  <select
-                    value={pagination.state.itemsPerPage}
-                    onChange={(e) => {
-                      pagination.actions.setItemsPerPage(
-                        Number(e.target.value)
-                      );
-                      pagination.actions.goToFirstPage();
-                    }}
-                    className="border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {[8, 12, 16, 20].map((option) => (
-                      <option key={option} value={option}>
-                        {option} per page
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Pagination Info */}
-              {filteredConnections.length > 0 && (
-                <PaginationInfo
-                  state={pagination.state}
-                  itemName="members"
-                  searchTerm={searchTerm}
-                  showItemsPerPage={false}
-                  className="text-sm"
-                />
-              )}
             </div>
           </div>
         </div>
@@ -405,7 +428,7 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
             </div>
 
             {/* Connections Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
               {currentConnections.map((connection) => {
                 const otherUserId =
                   connection.sender === connectionProfile?._id

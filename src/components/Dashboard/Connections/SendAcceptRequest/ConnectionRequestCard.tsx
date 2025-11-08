@@ -35,37 +35,55 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
   const UserInfo = () => (
     <div className="flex-1 min-w-0 px-4">
       <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`}>
-        <h3 className="font-bold text-blue-600 text-lg truncate mb-1 hover:text-blue-700 transition-colors cursor-pointer">
+        <h3 className="font-bold text-blue-600 text-lg truncate mb-1 transition-all duration-300 group-hover:text-blue-700 group-hover:scale-105 cursor-pointer">
           {userName}
         </h3>
       </Link>
       {jobTitle && (
-        <p className="text-sm text-gray-600 font-medium truncate mb-1">
+        <p className="text-sm text-gray-600 font-medium truncate mb-1 transition-colors duration-300 group-hover:text-gray-700">
           {jobTitle}
         </p>
       )}
       {companyName && (
-        <p className="text-sm text-gray-700 font-semibold truncate mb-1">
+        <p className="text-sm text-gray-700 font-semibold truncate mb-1 transition-colors duration-300 group-hover:text-gray-800">
           {companyName}
         </p>
       )}
-      <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+      <p className="text-xs text-gray-500 truncate transition-colors duration-300 group-hover:text-gray-600">{userEmail}</p>
     </div>
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
+    <div className="group relative bg-white rounded-2xl border-2 border-gray-100 p-4 cursor-pointer transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.01] hover:-translate-y-1 hover:border-transparent overflow-hidden">
+      {/* Animated gradient border on hover using brand colors */}
+      <div
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
+        style={{
+          padding: '2px',
+          background: 'linear-gradient(135deg, var(--color-brand-orange), var(--color-brand-blue), var(--color-brand-green-dark))'
+        }}
+      >
+        <div className="absolute inset-[2px] bg-white rounded-2xl"></div>
+      </div>
+
+      {/* Glow effect on hover using brand colors */}
+      <div
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 -z-20"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 157, 0, 0.2), rgba(51, 89, 255, 0.2), rgba(29, 178, 18, 0.2))'
+        }}
+      ></div>
       {request.type === "received" ? (
         // RECEIVED REQUEST LAYOUT: Avatar - Info - Actions
         <div className="flex items-center gap-4">
-          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
             <Avatar
               src={displayUser.avatar}
               alt={userName}
               size="xl"
               fallbackText={userName}
               showMembershipBorder={false}
-              className="cursor-pointer"
+              className="cursor-pointer group-hover:shadow-lg transition-shadow duration-300"
             />
           </Link>
           <UserInfo />
@@ -74,21 +92,21 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
             <button
               onClick={() => onAccept?.(request.connectionId)}
               disabled={isProcessing}
-              className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
+              className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-110 hover:rotate-12"
               title="Accept request"
               aria-label="Accept connection request"
             >
-              <Check className="h-5 w-5" />
+              <Check className="h-5 w-5 group-hover:animate-pulse" />
             </button>
             {/* Reject Button */}
             <button
               onClick={() => onReject?.(request.connectionId)}
               disabled={isProcessing}
-              className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
+              className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-110 hover:rotate-12"
               title="Reject request"
               aria-label="Reject connection request"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 group-hover:animate-pulse" />
             </button>
           </div>
         </div>
@@ -100,22 +118,22 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
             <button
               onClick={() => onWithdraw?.(request.connectionId)}
               disabled={isProcessing}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-110"
               aria-label="Withdraw connection request"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
               Withdraw
             </button>
           </div>
           <UserInfo />
-          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
             <Avatar
               src={displayUser.avatar}
               alt={userName}
               size="xl"
               fallbackText={userName}
               showMembershipBorder={false}
-              className="cursor-pointer"
+              className="cursor-pointer group-hover:shadow-lg transition-shadow duration-300"
             />
           </Link>
         </div>

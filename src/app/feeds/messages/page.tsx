@@ -906,7 +906,15 @@ export default function MessagesPage() {
             <div className="flex-1 flex flex-col">
               {/* Chat Header - WhatsApp style */}
               <div className="bg-teal-700 p-3 flex items-center gap-3 shadow-sm">
-                <div className="flex-shrink-0">
+                <button
+                  onClick={() => {
+                    const other = getOtherParticipant(selectedChat);
+                    if (other?._id) {
+                      router.push(`/feeds/connections/${other._id}?from=messages`);
+                    }
+                  }}
+                  className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   {(() => {
                     const other = getOtherParticipant(selectedChat);
                     if (other?.avatar) {
@@ -925,9 +933,19 @@ export default function MessagesPage() {
                       </div>
                     );
                   })()}
-                </div>
+                </button>
                 <div className="flex-1">
-                  <div className="text-sm font-semibold text-white">{getUserFullName(getOtherParticipant(selectedChat))}</div>
+                  <button
+                    onClick={() => {
+                      const other = getOtherParticipant(selectedChat);
+                      if (other?._id) {
+                        router.push(`/feeds/connections/${other._id}?from=messages`);
+                      }
+                    }}
+                    className="text-sm font-semibold text-white hover:text-teal-100 transition-colors text-left cursor-pointer"
+                  >
+                    {getUserFullName(getOtherParticipant(selectedChat))}
+                  </button>
                   {getOtherParticipant(selectedChat)?.businessCategory && (
                     <div className="text-xs text-teal-100">{getOtherParticipant(selectedChat)?.businessCategory}</div>
                   )}

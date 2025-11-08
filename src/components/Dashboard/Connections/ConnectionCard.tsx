@@ -144,28 +144,35 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
       tabIndex={0}
       role="button"
       aria-label={`View ${fullName}'s profile`}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 hover:border-blue-200 cursor-pointer"
+      className="group relative bg-white rounded-xl shadow-sm border-2 border-gray-100 p-5 cursor-pointer transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 hover:border-transparent overflow-hidden"
     >
+      {/* Animated gradient border on hover */}
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" style={{ padding: '2px' }}>
+        <div className="absolute inset-[2px] bg-white rounded-xl"></div>
+      </div>
+
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 -z-20"></div>
       {/* Header with Avatar and Basic Info */}
       <div className="flex items-start space-x-4 mb-4">
         {/* Avatar with membership border */}
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
           <div
-            className={`w-14 h-14 rounded-full p-0.5 ${membershipStyling.borderGradient}`}
+            className={`w-14 h-14 rounded-full p-0.5 ${membershipStyling.borderGradient} group-hover:shadow-lg transition-shadow duration-300`}
           >
             <div className="w-full h-full rounded-full overflow-hidden bg-white">
               {user?.avatar ? (
                 <img
                   src={getAvatarUrl(user.avatar)}
                   alt={fullName}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = FALLBACK_AVATAR_URL;
                   }}
                 />
               ) : (
                 <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <User className="h-6 w-6 text-gray-600" />
+                  <User className="h-6 w-6 text-gray-600 group-hover:text-blue-600 transition-colors duration-300" />
                 </div>
               )}
             </div>
@@ -173,7 +180,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
           {/* Crown for Core Members */}
           {showCrown && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white">
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white transform group-hover:rotate-12 group-hover:scale-125 transition-all duration-300">
               <span className="text-yellow-800 text-xs">👑</span>
             </div>
           )}
@@ -181,12 +188,12 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
         {/* Name and Title */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-900 text-lg leading-tight mb-1 truncate">
+          <h4 className="font-semibold text-gray-900 text-lg leading-tight mb-1 truncate group-hover:text-blue-600 transition-colors duration-300">
             {fullName}
           </h4>
           <div className="flex items-center space-x-2">
             <span
-              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${membershipStyling.badgeClasses}`}
+              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${membershipStyling.badgeClasses} transition-all duration-300 group-hover:shadow-md group-hover:scale-105`}
             >
               {membershipStyling.displayName}
             </span>
@@ -197,15 +204,15 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
       {/* Company and Industry */}
       <div className="mb-4 space-y-2">
         <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-          <p className="font-medium text-gray-800 text-sm leading-relaxed">
+          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 group-hover:animate-pulse group-hover:shadow-lg group-hover:shadow-blue-500/50"></div>
+          <p className="font-medium text-gray-800 text-sm leading-relaxed group-hover:text-gray-900 transition-colors duration-300">
             {profile?.professionalDetails?.companyName ||
               "Company not specified"}
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0"></div>
-          <p className="text-gray-600 text-sm leading-relaxed">
+          <div className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0 group-hover:bg-purple-500 group-hover:animate-pulse group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-colors duration-300"></div>
+          <p className="text-gray-600 text-sm leading-relaxed group-hover:text-gray-800 transition-colors duration-300">
             {profile?.professionalDetails?.industry ||
               profile?.professionalDetails?.business ||
               "Industry not specified"}
@@ -214,8 +221,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
       </div>
 
       {/* Connection Date */}
-      <div className="mb-4 py-2 px-3 bg-gray-50 rounded-lg">
-        <p className="text-xs text-gray-500 text-center">
+      <div className="mb-4 py-2 px-3 bg-gray-50 rounded-lg transition-all duration-300 group-hover:bg-gradient-to-r group-hover:from-blue-50 group-hover:via-purple-50 group-hover:to-pink-50 group-hover:shadow-sm">
+        <p className="text-xs text-gray-500 text-center group-hover:text-gray-700 group-hover:font-medium transition-all duration-300">
           Connected on {formatConnectionDate(connectionDate)}
         </p>
       </div>

@@ -153,6 +153,15 @@ body {
   --color-green-500: #24b34b;
   --color-mint-500: oklch(0.72 0.11 178);
   --color-orange-500: #f99d1c;
+
+  /* Brand Specific Colors */
+  --color-brand-orange: #ff9d00;
+  --color-brand-blue: #3359ff;
+  --color-brand-green-dark: #1db212;
+  --color-brand-orange-dark: #ea580c;
+  --color-brand-green: #22c55e;
+  --color-brand-yellow: #f59e0b;
+  --color-brand-yellow-dark: #d97706;
   --color-flat-bg: #f8fafc;
   --color-flat-surface: #ffffff;
   --color-flat-surface-alt: #f1f5f9;
@@ -1471,6 +1480,59 @@ button {
 
 .prose p {
   margin: 0.5rem 0;
+}
+
+/* Animated Card Hover Effect with Brand Colors */
+.animated-card-hover {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid #f3f4f6;
+}
+
+.animated-card-hover:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: transparent;
+}
+
+/* Animated gradient border */
+.animated-card-hover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--color-brand-orange), var(--color-brand-blue), var(--color-brand-green-dark));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.animated-card-hover:hover::before {
+  opacity: 1;
+}
+
+/* Glow effect */
+.animated-card-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 157, 0, 0.15), rgba(51, 89, 255, 0.15), rgba(29, 178, 18, 0.15));
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -2;
+}
+
+.animated-card-hover:hover::after {
+  opacity: 1;
 }
 
 /* Swiper Carousel Styles */

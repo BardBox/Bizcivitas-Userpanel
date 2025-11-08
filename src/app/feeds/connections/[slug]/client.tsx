@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home, ChevronRight } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
   useGetConnectionProfileQuery,
@@ -405,26 +405,65 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     (section) => section.hasData
   );
 
+  // Helper function to get tab label
+  const getTabLabel = (tab: string | null) => {
+    switch (tab) {
+      case "my-network":
+        return "My Network";
+      case "requests":
+        return "Requests";
+      case "messages":
+        return "Messages";
+      default:
+        return "Connections";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <button
-              onClick={() => {
-                // Navigate back with the correct tab if referrer exists
-                if (referrerTab) {
-                  router.push(`/feeds/connections?tab=${referrerTab}`);
-                } else {
-                  router.back();
-                }
-              }}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Connections
-            </button>
+          <div className="py-4">
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <button
+                onClick={() => router.push("/feeds")}
+                className="hover:text-blue-600 transition-colors"
+              >
+                <Home className="w-4 h-4" />
+              </button>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <button
+                onClick={() => {
+                  if (referrerTab) {
+                    router.push(`/feeds/connections?tab=${referrerTab}`);
+                  } else {
+                    router.push("/feeds/connections");
+                  }
+                }}
+                className="hover:text-blue-600 transition-colors"
+              >
+                Connections
+              </button>
+              {referrerTab && (
+                <>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <button
+                    onClick={() => {
+                      router.push(`/feeds/connections?tab=${referrerTab}`);
+                    }}
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    {getTabLabel(referrerTab)}
+                  </button>
+                </>
+              )}
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-900 font-medium">
+                {`${personalCardData?.fname} ${personalCardData?.lname}`}
+              </span>
+            </div>
           </div>
         </div>
       </div>

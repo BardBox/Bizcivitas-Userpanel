@@ -48,6 +48,7 @@ export interface ProfessionalDetails {
   businessCity?: string;
   businessState?: string;
   businessCountry?: string;
+  isPublic?: boolean; // Privacy setting for contact visibility
 }
 
 /**

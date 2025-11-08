@@ -219,6 +219,21 @@ export const profileApi = baseApi.injectEndpoints({
     }),
 
     // ============================================
+    // ACCOUNT SETTINGS MUTATIONS
+    // ============================================
+    toggleProfessionalVisibility: builder.mutation<
+      { success: boolean; message: string },
+      { isPublic: boolean }
+    >({
+      query: (data) => ({
+        url: "/profiles/professionalDetails/visibility",
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["Profile"],
+    }),
+
+    // ============================================
     // AUTH MUTATIONS
     // ============================================
     logout: builder.mutation<{ message: string }, { fcmToken: string }>({
@@ -255,6 +270,9 @@ export const {
   useUpdateTravelDiaryMutation,
   useUpdateContactDetailsMutation,
   useUpdateAddressDetailsMutation,
+
+  // Account Settings
+  useToggleProfessionalVisibilityMutation,
 
   // Auth
   useLogoutMutation,

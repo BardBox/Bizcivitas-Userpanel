@@ -1,4 +1,6 @@
 import React from "react";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 import ProfilePhotoUpload from "./ProfilePhoto/ProfilePhotoUpload";
 import CompanyLogoUpload from "./CompanyLogo/CompanyLogoUpload";
 import ConnectionsAndShare from "./ConnectionsAndShare";
@@ -31,7 +33,16 @@ const PersonalProfileCard: React.FC<PersonalProfileCardProps> = ({
   profile,
 }) => {
   return (
-    <div className=" rounded-xl flex flex-col items-center justify-center border bg-white border-gray-100 overflow-hidden ">
+    <div className="rounded-xl flex flex-col items-center justify-center border bg-white border-gray-100 overflow-hidden relative">
+      {/* Settings Button - Top Right */}
+      <Link
+        href="/feeds/account-settings"
+        className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors group"
+        title="Account Settings"
+      >
+        <Settings size={18} className="text-gray-600 group-hover:text-gray-900" />
+      </Link>
+
       <ProfilePhotoUpload />
       <h2 className="text-xl sm:text-[24px] font-bold text-gray-900 mb-1">
         <span>

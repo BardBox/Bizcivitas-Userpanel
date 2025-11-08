@@ -280,7 +280,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
           {/* Contact Details */}
           {profile.contact && (
             <>
-              {profile.contact.personal && (
+              {profile.contact.personal ? (
                 <a
                   href={`tel:${profile.contact.personal}`}
                   className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -288,8 +288,15 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
                   <Phone className="h-4 w-4" />
                   <span>Personal: {profile.contact.personal}</span>
                 </a>
+              ) : (
+                connectionStatus?.status !== "connected" && (
+                  <div className="flex items-center justify-center gap-2 text-gray-400 font-medium">
+                    <Phone className="h-4 w-4" />
+                    <span>Personal: •••••••••</span>
+                  </div>
+                )
               )}
-              {profile.contact.professional && (
+              {profile.contact.professional ? (
                 <a
                   href={`tel:${profile.contact.professional}`}
                   className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -297,8 +304,15 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
                   <Phone className="h-4 w-4" />
                   <span>Professional: {profile.contact.professional}</span>
                 </a>
+              ) : (
+                connectionStatus?.status !== "connected" && (
+                  <div className="flex items-center justify-center gap-2 text-gray-400 font-medium">
+                    <Phone className="h-4 w-4" />
+                    <span>Professional: •••••••••</span>
+                  </div>
+                )
               )}
-              {profile.contact.email && (
+              {profile.contact.email ? (
                 <a
                   href={`mailto:${profile.contact.email}`}
                   className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium break-all transition-colors"
@@ -306,6 +320,13 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
                   <Mail className="h-4 w-4 flex-shrink-0" />
                   <span className="break-all">{profile.contact.email}</span>
                 </a>
+              ) : (
+                connectionStatus?.status !== "connected" && (
+                  <div className="flex items-center justify-center gap-2 text-gray-400 font-medium">
+                    <Mail className="h-4 w-4 flex-shrink-0" />
+                    <span>•••••••••@••••••••</span>
+                  </div>
+                )
               )}
               {profile.contact.website && (
                 <a

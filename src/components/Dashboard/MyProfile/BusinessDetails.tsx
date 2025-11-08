@@ -47,6 +47,7 @@ interface BusinessDetailsProps {
   isEditing?: boolean; // Controlled by parent (accordion)
   onEditStateChange?: (isEditing: boolean) => void;
   formRef?: React.RefObject<HTMLFormElement | null>;
+  isConnected?: boolean; // Whether viewer is connected to profile owner
 }
 
 const BusinessDetails: React.FC<BusinessDetailsProps> = ({
@@ -54,6 +55,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   isEditing = false,
   onEditStateChange,
   formRef,
+  isConnected = true, // Default to true for own profile
 }) => {
   const defaultValues = {
     email: professionalDetails?.email || "",
@@ -265,7 +267,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             <div>
               {!isEditing ? (
                 <span className="text-gray-600">
-                  {professionalDetails?.email || "-"}
+                  {professionalDetails?.email && isConnected
+                    ? professionalDetails.email
+                    : !isConnected && !professionalDetails?.email
+                    ? "-"
+                    : "•••••••••@••••••••"}
                 </span>
               ) : (
                 <input
@@ -287,7 +293,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             <div>
               {!isEditing ? (
                 <span className="text-gray-600">
-                  {professionalDetails?.mobile || "-"}
+                  {professionalDetails?.mobile && isConnected
+                    ? professionalDetails.mobile
+                    : !isConnected && !professionalDetails?.mobile
+                    ? "-"
+                    : "•••••••••"}
                 </span>
               ) : (
                 <input

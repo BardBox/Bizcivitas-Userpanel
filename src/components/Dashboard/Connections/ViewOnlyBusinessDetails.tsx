@@ -17,10 +17,12 @@ interface ViewOnlyBusinessDetailsProps {
     mobile?: string;
     location?: string;
   };
+  isConnected?: boolean; // Add connection status to hide/show contact info
 }
 
 const ViewOnlyBusinessDetails: React.FC<ViewOnlyBusinessDetailsProps> = ({
   businessDetails,
+  isConnected = false, // Default to not connected
 }) => {
   const hasData = Object.values(businessDetails || {}).some(value => value);
 
@@ -104,23 +106,23 @@ const ViewOnlyBusinessDetails: React.FC<ViewOnlyBusinessDetailsProps> = ({
         </div>
       )}
 
-      {/* Contact Information */}
+      {/* Contact Information - Only show if connected or if data exists (means privacy is off) */}
       {(businessDetails?.email || businessDetails?.mobile) && (
         <div>
           <h4 className="font-semibold text-gray-900 mb-3">Business Contact</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {businessDetails?.email && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="text-sm text-gray-500">Email:</span>
-                <p className="font-medium break-all">{businessDetails.email}</p>
-              </div>
-            )}
-            {businessDetails?.mobile && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="text-sm text-gray-500">Phone:</span>
-                <p className="font-medium">{businessDetails.mobile}</p>
-              </div>
-            )}
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <span className="text-sm text-gray-500">Email:</span>
+              <p className="font-medium break-all">
+                {businessDetails.email || '•••••••••@••••••••'}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <span className="text-sm text-gray-500">Phone:</span>
+              <p className="font-medium">
+                {businessDetails.mobile || '•••••••••'}
+              </p>
+            </div>
           </div>
         </div>
       )}

@@ -140,10 +140,17 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     const user = connectionProfile as any; // Extended User type from API
     const profile = (user?.profile || {}) as any; // Extended profile with FullProfile fields
 
+    // Check privacy settings and connection status
+    // visibility.professionalDetails = true means RESTRICTED (hide from non-connections)
+    // visibility.professionalDetails = false means PUBLIC (show to everyone)
+    const isRestricted = profile?.visibility?.professionalDetails === true;
+    const isConnected = connectionStatus.status === "connected";
+    const canViewContactInfo = !isRestricted || isConnected; // Show if NOT restricted OR connected
+
     const businessData = {
       ...profile?.professionalDetails,
-      email: user?.email,
-      mobile: user?.mobile,
+      email: canViewContactInfo ? user?.email : undefined,
+      mobile: canViewContactInfo ? user?.mobile : undefined,
       location: user?.region,
       companyLogo: profile?.professionalDetails?.companyLogo,
       // Map companyAddress to businessAddress for compatibility
@@ -187,7 +194,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
         joiningDate: user?.joiningDate,
       },
     };
-  }, [connectionProfile]);
+  }, [connectionProfile, connectionStatus.status]);
 
   // Prepare personal card data
   const personalCardData = useMemo(() => {
@@ -211,6 +218,13 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       return `${baseUrl}/image/${logoPath}`;
     };
 
+    // Check privacy settings and connection status
+    // visibility.professionalDetails = true means RESTRICTED (hide from non-connections)
+    // visibility.professionalDetails = false means PUBLIC (show to everyone)
+    const isRestricted = profile?.visibility?.professionalDetails === true;
+    const isConnected = connectionStatus.status === "connected";
+    const canViewContactInfo = !isRestricted || isConnected; // Show if NOT restricted OR connected
+
     return {
       fname: user?.fname,
       lname: user?.lname,
@@ -218,10 +232,10 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       membershipType: user?.membershipType,
       avatar: user?.avatar,
       contact: {
-        personal: user?.mobile?.toString(),
-        professional: profile?.contactDetails?.mobileNumber,
-        email: user?.email,
-        website: profile?.contactDetails?.website,
+        personal: canViewContactInfo ? user?.mobile?.toString() : undefined,
+        professional: canViewContactInfo ? profile?.contactDetails?.mobileNumber : undefined,
+        email: canViewContactInfo ? user?.email : undefined,
+        website: profile?.contactDetails?.website, // Website is always visible
       },
       business: {
         name: profile?.professionalDetails?.companyName,
@@ -231,7 +245,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       isActive: user?.isActive,
       joiningDate: user?.joiningDate,
     };
-  }, [connectionProfile]);
+  }, [connectionProfile, connectionStatus.status]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -354,7 +368,10 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       key: "business",
       title: "Business Details",
       component: BusinessDetails,
-      props: { professionalDetails: normalizedData!.business },
+      props: { 
+        professionalDetails: normalizedData!.business,
+        isConnected: connectionStatus.status === "connected",
+      },
       hasData: Object.values(normalizedData!.business || {}).some(
         (value) => value
       ),

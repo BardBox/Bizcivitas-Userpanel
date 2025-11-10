@@ -124,11 +124,34 @@ export const requestForToken = async (): Promise<string | null> => {
     // Dynamically import getToken
     const { getToken } = await import("firebase/messaging");
 
-    // Firebase will automatically register the service worker at /firebase-messaging-sw.js
-    // with the correct scope: /firebase-cloud-messaging-push-scope
+    // Register and wait for the service worker to be ready
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+    // Wait for the service worker to be active
+    if (registration.installing) {
+      await new Promise((resolve) => {
+        registration.installing!.addEventListener('statechange', (e: Event) => {
+          const target = e.target as ServiceWorker;
+          if (target.state === 'activated') {
+            resolve(undefined);
+          }
+        });
+      });
+    } else if (registration.waiting) {
+      await new Promise((resolve) => {
+        registration.waiting!.addEventListener('statechange', (e: Event) => {
+          const target = e.target as ServiceWorker;
+          if (target.state === 'activated') {
+            resolve(undefined);
+          }
+        });
+      });
+    }
+
+    // Get FCM token with the active service worker
     const currentToken = await getToken(messagingInstance, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      serviceWorkerRegistration: await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      serviceWorkerRegistration: registration
     });
 
     if (currentToken) {

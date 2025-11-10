@@ -1,25 +1,28 @@
 "use client";
 
 /**
- * NotificationDropdown Component
+ * NotificationDropdown Component - API-Only Approach
  *
- * PERFORMANCE OPTIMIZATION:
- * - Removed 30-second polling interval that was causing constant API requests
- * - Now uses on-demand fetching: only refetches when dropdown opens
- * - Leverages Firebase real-time notifications for instant updates
- * - Significantly reduces server load and network traffic
+ * IMPLEMENTATION:
+ * - Uses on-demand fetching: only refetches when dropdown opens
+ * - No polling intervals to reduce server load
+ * - No FCM/push notifications (in-app notifications only)
+ * - Smart navigation based on notification metadata and type
+ * - Marks notifications as read automatically on click
  */
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import {
   useDeleteNotificationMutation,
   useGetUnreadNotificationsQuery,
   useMarkAllNotificationsAsReadMutation,
   useMarkNotificationAsReadMutation,
 } from "../../store/api/notificationApi";
-import { useFirebaseNotifications } from "@/hooks/useFirebaseNotifications";
+// FCM disabled - using API-only approach for in-app notifications
+// import { useFirebaseNotifications } from "@/hooks/useFirebaseNotifications";
 
 interface UserNotification {
   _id: string;
@@ -27,6 +30,24 @@ interface UserNotification {
   messageBody: string;
   type: string;
   action?: string;
+  metadata?: {
+    postId?: string;
+    wallFeedId?: string;
+    postType?: 'bizhub' | 'bizpulse';
+    eventIds?: string[];
+    meetingIds?: string[];
+    meetupIds?: string[];
+    senderId?: string;
+    receiverId?: string;
+    connectionStatus?: string;
+    commentId?: string;
+    chatId?: string;
+    messageId?: string;
+    collectionId?: string;
+    mediaId?: string;
+    collectionType?: string;
+    suggestedUserId?: string;
+  };
   createdAt: string;
 }
 
@@ -37,6 +58,7 @@ interface NotificationDropdownProps {
 export default function NotificationDropdown({
   className = "",
 }: NotificationDropdownProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -55,13 +77,13 @@ export default function NotificationDropdown({
   const [markAllAsRead] = useMarkAllNotificationsAsReadMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
 
-  // Firebase notifications hook
-  const {
-    fcmToken,
-    notificationPermission,
-    isFCMSupported,
-    requestNotificationPermission,
-  } = useFirebaseNotifications();
+  // Firebase notifications hook - DISABLED (using API-only approach)
+  // const {
+  //   fcmToken,
+  //   notificationPermission,
+  //   isFCMSupported,
+  //   requestNotificationPermission,
+  // } = useFirebaseNotifications();
 
   useEffect(() => {
     setIsMounted(true);
@@ -74,46 +96,11 @@ export default function NotificationDropdown({
     }
   }, [isOpen, isMounted, refetch]);
 
-  // ✅ PERFORMANCE FIX: Refetch notifications when Firebase receives a new notification
-  // This replaces the need for constant polling
-  useEffect(() => {
-    if (!isFCMSupported || !isMounted) return;
-
-    let timer: NodeJS.Timeout | null = null;
-    let unsubscribe: (() => void) | null = null;
-    let isActive = true;
-
-    (async () => {
-      try {
-        const { getMessagingInstance } = await import("@/lib/firebase");
-        if (!isActive) return;
-        const messagingInstance = await getMessagingInstance();
-        if (!isActive || !messagingInstance) return;
-        const { onMessage } = await import("firebase/messaging");
-        if (!isActive) return;
-        unsubscribe = onMessage(messagingInstance, () => {
-          if (!isActive) return;
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(() => {
-            if (isActive) refetch();
-          }, 500);
-        });
-      } catch (err) {
-        // Fail silently
-      }
-    })();
-
-    // Initial fetch when notifications are enabled
-    if (fcmToken && notificationPermission === "granted") {
-      refetch();
-    }
-
-    return () => {
-      isActive = false;
-      if (timer) clearTimeout(timer);
-      if (unsubscribe) unsubscribe();
-    };
-  }, [isFCMSupported, isMounted, fcmToken, notificationPermission, refetch]);
+  // FCM real-time listener - DISABLED (using API-only approach)
+  // useEffect(() => {
+  //   if (!isFCMSupported || !isMounted) return;
+  //   // ... FCM listener code
+  // }, [isFCMSupported, isMounted, fcmToken, notificationPermission, refetch]);
 
   const notifications = unreadData?.notifications || [];
   const unreadCount = unreadData?.count || 0;
@@ -122,12 +109,205 @@ export default function NotificationDropdown({
     try {
       await markAsRead(notification._id).unwrap();
 
-      // Handle notification action if present
-      if (notification.action) {
-        // You can add navigation logic here based on notification.action
+      // Smart navigation based on notification metadata
+      if (notification.metadata) {
+        // ⚠️ IMPORTANT: Check for poll notifications FIRST before generic post checks
+        // Poll notifications - Navigate to BizPulse and highlight specific poll
+        const messageBody = notification.messageBody.toLowerCase();
+        const messageTitle = notification.messageTitle.toLowerCase();
+        const isPoll =
+          notification.type === "poll" ||
+          messageBody.includes("poll") ||
+          messageTitle.includes("poll") ||
+          messageBody.includes("pulse poll") ||
+          messageTitle.includes("pulse poll");
+
+        if (isPoll && (notification.metadata.postId || notification.metadata.wallFeedId)) {
+          // Store poll ID in session storage
+          const pollId = notification.metadata.postId || notification.metadata.wallFeedId;
+          if (pollId) {
+            sessionStorage.setItem('highlightPollId', pollId);
+          }
+          router.push("/feeds/biz-pulse");
+          return;
+        }
+
+        // Post notification - use backend-provided postType
+        if (notification.metadata.postId) {
+          // Use postType from backend, default to bizhub if not specified
+          const postType = notification.metadata.postType || 'bizhub';
+          const postId = notification.metadata.postId;
+
+          console.log('🔔 Post Notification:', {
+            postId,
+            postType,
+            notificationType: notification.type,
+            hasCommentId: !!notification.metadata.commentId
+          });
+
+          const url = postType === 'bizpulse'
+            ? `/feeds/biz-pulse/${postId}`
+            : `/feeds/biz-hub/${postId}`;
+
+          // If notification is about a comment, store scroll intent in session storage
+          if (notification.metadata.commentId) {
+            sessionStorage.setItem('scrollToComments', 'true');
+          }
+
+          console.log('🔔 Navigating to:', url);
+          router.push(url);
+          return;
+        }
+
+        // Wall Feed notification - use backend-provided postType
+        if (notification.metadata.wallFeedId) {
+          // Use postType from backend, default to bizhub if not specified
+          const postType = notification.metadata.postType || 'bizhub';
+          const wallFeedId = notification.metadata.wallFeedId;
+
+          console.log('🔔 WallFeed Notification:', {
+            wallFeedId,
+            postType,
+            notificationType: notification.type,
+            hasCommentId: !!notification.metadata.commentId
+          });
+
+          const url = postType === 'bizpulse'
+            ? `/feeds/biz-pulse/${wallFeedId}`
+            : `/feeds/biz-hub/${wallFeedId}`;
+
+          // If notification is about a comment, store scroll intent in session storage
+          if (notification.metadata.commentId) {
+            sessionStorage.setItem('scrollToComments', 'true');
+          }
+
+          console.log('🔔 Navigating to:', url);
+          router.push(url);
+          return;
+        }
+
+        // Event notification - navigate to event detail
+        if (notification.metadata.eventIds && notification.metadata.eventIds.length > 0) {
+          router.push(`/feeds/events/${notification.metadata.eventIds[0]}`);
+          return;
+        }
+
+        // Meeting notification - navigate to meetings
+        if (notification.metadata.meetingIds && notification.metadata.meetingIds.length > 0) {
+          router.push(`/feeds/meetings`);
+          return;
+        }
+
+        // Meetup notification - navigate to meetups
+        if (notification.metadata.meetupIds && notification.metadata.meetupIds.length > 0) {
+          router.push(`/feeds/meetups`);
+          return;
+        }
+
+        // Match/Suggestion notification - navigate to connections page with user ID from member directory
+        if (notification.metadata.suggestedUserId) {
+          router.push(`/feeds/connections/${notification.metadata.suggestedUserId}?from=member-directory`);
+          return;
+        }
+
+        // Knowledge Hub Collection notification - delete notification instead of navigating
+        if (notification.metadata.collectionId) {
+          await deleteNotification(notification._id).unwrap();
+          refetch();
+          return; // Keep dropdown open, no navigation, no toast
+        }
       }
+
+      // Fallback: Navigation based on notification type and message content
+      const messageBody = notification.messageBody.toLowerCase();
+      const messageTitle = notification.messageTitle.toLowerCase();
+
+      // Knowledge Hub notifications (fallback if no metadata.collectionId) - delete instead of navigating
+      if (
+        notification.type === "knowledge" ||
+        notification.type === "collection" ||
+        messageBody.includes("collection") ||
+        messageBody.includes("document added") ||
+        messageBody.includes("video added") ||
+        messageTitle.includes("knowledge hub") ||
+        messageTitle.includes("new document") ||
+        messageTitle.includes("new video")
+      ) {
+        await deleteNotification(notification._id).unwrap();
+        refetch();
+        return; // Keep dropdown open, no navigation, no toast
+      }
+
+      // Close dropdown for all other notification types
+      setIsOpen(false);
+
+      // Connection notifications - Navigate to Requests > Received tab
+      if (notification.type === "connection" || messageBody.includes("connection request")) {
+        router.push("/feeds/connections?tab=requests&subtab=received");
+        return;
+      }
+
+      // Message/Chat notifications - Navigate to specific chat if senderId exists
+      if (notification.type === "message" || notification.type === "chat" ||
+          messageBody.includes("message") || messageBody.includes("chat")) {
+        // If metadata has senderId or chatId, open that specific chat
+        if (notification.metadata?.senderId) {
+          router.push(`/feeds/messages/${notification.metadata.senderId}`);
+        } else if (notification.metadata?.chatId) {
+          router.push(`/feeds/messages/${notification.metadata.chatId}`);
+        } else {
+          // Fallback to messages list
+          router.push("/feeds/messages");
+        }
+        return;
+      }
+
+      // Event notifications
+      if (notification.type === "event") {
+        router.push("/feeds/events");
+        return;
+      }
+
+      // Membership notifications
+      if (notification.type === "membership" || notification.type === "upgrade") {
+        router.push("/feeds/membership");
+        return;
+      }
+
+      // BizWin/TYFCB notifications
+      if (messageBody.includes("bizwin") || messageBody.includes("tyfcb")) {
+        router.push("/feeds/dash"); // Dashboard with BizWin chart
+        return;
+      }
+
+      // Referral notifications
+      if (messageBody.includes("referral") || messageBody.includes("referral slip")) {
+        router.push("/feeds/dash"); // Dashboard with referral chart
+        return;
+      }
+
+      // Meetup notifications
+      if (messageBody.includes("meetup")) {
+        router.push("/feeds/dash"); // Dashboard with meetup chart
+        return;
+      }
+
+      // Skill endorsement notifications - Navigate to user's own profile
+      if (
+        notification.type === "endorsement" ||
+        messageBody.includes("endorsed") ||
+        messageBody.includes("endorsement") ||
+        messageBody.includes("skill")
+      ) {
+        router.push("/feeds/myprofile");
+        return;
+      }
+
+      // Default: navigate to notifications page
+      router.push("/feeds/notifications");
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
+      toast.error("Failed to process notification");
     }
   };
 
@@ -153,21 +333,21 @@ export default function NotificationDropdown({
     }
   };
 
-  const handleEnableNotifications = async () => {
-    if (notificationPermission === "denied") {
-      toast.error(
-        "Notifications are blocked. Please enable them in your browser settings.",
-        { duration: 5000 }
-      );
-      return;
-    }
-
-    const success = await requestNotificationPermission();
-    if (success) {
-      toast.success("Notifications enabled successfully");
-      refetch();
-    }
-  };
+  // FCM notification enabler - DISABLED (not needed for API-only approach)
+  // const handleEnableNotifications = async () => {
+  //   if (notificationPermission === "denied") {
+  //     toast.error(
+  //       "Notifications are blocked. Please enable them in your browser settings.",
+  //       { duration: 5000 }
+  //     );
+  //     return;
+  //   }
+  //   const success = await requestNotificationPermission();
+  //   if (success) {
+  //     toast.success("Notifications enabled successfully");
+  //     refetch();
+  //   }
+  // };
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -260,20 +440,7 @@ export default function NotificationDropdown({
                 )}
               </div>
 
-              {/* Enable notifications prompt */}
-              {isFCMSupported && notificationPermission !== "granted" && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-xs text-yellow-800">
-                    Enable push notifications to stay updated
-                  </p>
-                  <button
-                    onClick={handleEnableNotifications}
-                    className="text-xs text-yellow-600 hover:text-yellow-800 underline"
-                  >
-                    Enable now
-                  </button>
-                </div>
-              )}
+              {/* FCM push notification prompt - REMOVED (using API-only approach) */}
             </div>
 
             {/* Notifications list */}
@@ -329,7 +496,7 @@ export default function NotificationDropdown({
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    // Navigate to notifications page if you have one
+                    router.push("/feeds/notifications");
                   }}
                   className="w-full text-sm text-blue-600 hover:text-blue-800"
                 >

@@ -34,14 +34,70 @@ class BizHubApiService {
 
   // Fetch single post by ID
   async fetchPostById(postId: string): Promise<any> {
+    const headers = this.getAuthHeaders();
+
+    console.log('🔍 Fetching post by ID:', {
+      postId,
+      url: `${this.baseUrl}/post/${postId}`,
+      headers: {
+        ...headers,
+        Authorization: headers.Authorization ? 'Bearer [TOKEN]' : 'MISSING'
+      }
+    });
+
     const response = await fetch(`${this.baseUrl}/post/${postId}`, {
-      headers: this.getAuthHeaders(),
+      headers,
       credentials: "include",
     });
+
+    console.log('📥 Response status:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch post: ${response.statusText}`);
+      // Try to get error details from response
+      let errorData: any = null;
+      let responseText = '';
+
+      try {
+        responseText = await response.text();
+        console.log('📄 Raw response text:', responseText);
+
+        if (responseText) {
+          try {
+            errorData = JSON.parse(responseText);
+            console.log('📦 Parsed error data:', errorData);
+          } catch (parseError) {
+            console.log('⚠️ Could not parse as JSON, using text as-is');
+          }
+        } else {
+          console.log('⚠️ Response body is empty');
+        }
+      } catch (readError) {
+        console.log('⚠️ Could not read response body:', readError);
+      }
+
+      // Handle specific 403 cases with user-friendly messages
+      if (response.status === 403) {
+        const errorMessage = errorData?.message || responseText || '';
+        if (errorMessage.includes('hidden') || errorMessage.includes('reported')) {
+          throw new Error('This post is no longer available. It may have been hidden or reported.');
+        }
+        if (errorData?.message) {
+          throw new Error(errorData.message);
+        }
+        throw new Error('You do not have permission to view this post.');
+      }
+
+      // Handle other error statuses
+      const errorMsg = errorData?.message || responseText || `Failed to fetch post: ${response.status} ${response.statusText}`;
+      throw new Error(errorMsg);
     }
+
     const json = await response.json();
+    console.log('✅ Post fetched successfully');
     // Backend returns post directly in data
     return json?.data || null;
   }

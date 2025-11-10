@@ -35,7 +35,7 @@ export const notificationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Get all notifications (read and unread)
     getAllNotifications: builder.query<NotificationsResponse, void>({
-      query: () => "/notifications/getAll",
+      query: () => "/notifications/getAllnotifications",
       providesTags: ["Notification"],
       transformResponse: (response: ApiResponse<NotificationsResponse>) =>
         response.data,
@@ -56,8 +56,8 @@ export const notificationApi = baseApi.injectEndpoints({
     // Mark a specific notification as read
     markNotificationAsRead: builder.mutation<Notification, string>({
       query: (notificationId) => ({
-        url: `/notifications/markRead/${notificationId}`,
-        method: "PATCH",
+        url: `/notifications/markAsRead/${notificationId}`,
+        method: "PUT",
       }),
       invalidatesTags: ["Notification"],
       transformResponse: (
@@ -71,7 +71,7 @@ export const notificationApi = baseApi.injectEndpoints({
       void
     >({
       query: () => ({
-        url: "/notifications/markAllRead",
+        url: "/notifications/mark-all-read",
         method: "PATCH",
       }),
       invalidatesTags: ["Notification"],
@@ -82,7 +82,7 @@ export const notificationApi = baseApi.injectEndpoints({
     // Delete a specific notification
     deleteNotification: builder.mutation<{ notificationId: string }, string>({
       query: (notificationId) => ({
-        url: `/notifications/delete/${notificationId}`,
+        url: `/notifications/notifications/${notificationId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Notification"],
@@ -93,7 +93,7 @@ export const notificationApi = baseApi.injectEndpoints({
     // Delete all notifications
     deleteAllNotifications: builder.mutation<{ deletedCount: number }, void>({
       query: () => ({
-        url: "/notifications/deleteAll",
+        url: "/notifications/notifications",
         method: "DELETE",
       }),
       invalidatesTags: ["Notification"],

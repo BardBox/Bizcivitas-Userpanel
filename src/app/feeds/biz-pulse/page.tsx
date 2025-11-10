@@ -8,7 +8,7 @@
  * ✅ Extracted conditional renders for better performance
  */
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../../store";
 import { fetchPosts } from "../../../../store/postsSlice";
@@ -24,6 +24,7 @@ export default function BizPulsePage() {
     (state: RootState) => state.posts
   );
   const showNotificationBanner = false; // temporarily hide the notifications banner
+  const [highlightedPollId, setHighlightedPollId] = useState<string | null>(null);
 
   // ✅ PERFORMANCE FIX: Memoize fetch function to prevent unnecessary effect triggers
   const handleFetchPosts = useCallback(() => {
@@ -45,6 +46,41 @@ export default function BizPulsePage() {
     // Fetch posts when component mounts or filters change
     handleFetchPosts();
   }, [handleFetchPosts]);
+
+  // Handle poll highlighting from notifications
+  useEffect(() => {
+    // Check if there's a poll ID to highlight from session storage
+    const pollIdToHighlight = sessionStorage.getItem('highlightPollId');
+
+    if (pollIdToHighlight && !loading && posts.length > 0) {
+      setHighlightedPollId(pollIdToHighlight);
+
+      // Wait for DOM to be ready, then scroll to the poll
+      setTimeout(() => {
+        const pollElement = document.querySelector(`[data-poll-id="${pollIdToHighlight}"]`);
+
+        if (pollElement) {
+          // Scroll to the poll with smooth behavior
+          pollElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+
+          // Add highlight animation
+          pollElement.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-50');
+
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            pollElement.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-50');
+            setHighlightedPollId(null);
+          }, 3000);
+        }
+
+        // Clear session storage after handling
+        sessionStorage.removeItem('highlightPollId');
+      }, 500);
+    }
+  }, [loading, posts]);
 
   // Show full page loading only on initial load when no posts exist
   if (loading && posts.length === 0) {

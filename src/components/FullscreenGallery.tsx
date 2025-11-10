@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface FullscreenGalleryProps {
   images: string[];
@@ -60,6 +61,42 @@ export default function FullscreenGallery({
     setIsZoomed(!isZoomed);
   };
 
+  const handleDownload = async () => {
+    const currentImage = images[currentIndex];
+
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading("Downloading image...");
+
+      // Fetch the image
+      const response = await fetch(currentImage);
+      const blob = await response.blob();
+
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Extract filename from URL or use a default name
+      const filename = currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
+      link.download = filename;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+
+      // Show success toast
+      toast.success("Image downloaded successfully!", { id: loadingToast });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download image. Please try again.");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center">
       {/* Close button */}
@@ -76,14 +113,26 @@ export default function FullscreenGallery({
         {currentIndex + 1} / {images.length}
       </div>
 
-      {/* Zoom toggle */}
-      <button
-        onClick={toggleZoom}
-        className="absolute top-4 left-1/2 -translate-x-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-        aria-label={isZoomed ? "Zoom out" : "Zoom in"}
-      >
-        {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
-      </button>
+      {/* Top center controls */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+        {/* Zoom toggle */}
+        <button
+          onClick={toggleZoom}
+          className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+          aria-label={isZoomed ? "Zoom out" : "Zoom in"}
+        >
+          {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
+        </button>
+
+        {/* Download button */}
+        <button
+          onClick={handleDownload}
+          className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+          aria-label="Download image"
+        >
+          <Download className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* Previous button */}
       {images.length > 1 && (

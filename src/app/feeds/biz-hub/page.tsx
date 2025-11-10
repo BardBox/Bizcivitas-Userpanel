@@ -91,30 +91,29 @@ export default function BizHubPage() {
             {categoryDescriptions[activeCategory]}
           </p>
 
-          {/* Posts List */}
-          <div className="space-y-4">
-            {loading && (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-500">Loading posts...</p>
-              </div>
-            )}
-            {error && (
-              <div className="text-center py-8">
-                <p className="text-red-500">{error}</p>
-              </div>
-            )}
-            {!loading && !error && filteredPosts.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No posts found.</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Try changing your filters or search query.
-                </p>
-              </div>
-            )}
-            {!loading &&
-              !error &&
-              filteredPosts.map((post) => (
+          {/* Posts Grid - Two Column Layout */}
+          {loading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-500">Loading posts...</p>
+            </div>
+          )}
+          {error && (
+            <div className="text-center py-8">
+              <p className="text-red-500">{error}</p>
+            </div>
+          )}
+          {!loading && !error && filteredPosts.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No posts found.</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Try changing your filters or search query.
+              </p>
+            </div>
+          )}
+          {!loading && !error && filteredPosts.length > 0 && (
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+              {filteredPosts.map((post) => (
                 <BizHubPostCard
                   key={post._id}
                   post={post}
@@ -122,7 +121,8 @@ export default function BizHubPage() {
                   userId={userId}
                 />
               ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

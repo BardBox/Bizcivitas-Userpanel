@@ -46,15 +46,6 @@ export default function BizPulseCard({
 }: BizPulseCardProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const getCategoryColor = (category: string) => {
     const colors = {
       "founders-desk": "bg-purple-100 text-purple-800",
@@ -86,18 +77,14 @@ export default function BizPulseCard({
         <div className="p-3 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              {/* Display user avatar or fallback to favicon for admin */}
-              <div className="relative w-8 h-8 flex-shrink-0">
-                <Image
-                  src={author.avatar || "/favicon.ico"}
+              {/* Display user avatar with proper circular shape */}
+              <div className="flex-shrink-0">
+                <Avatar
+                  src={author.avatar || undefined}
                   alt={author.name}
-                  width={32}
-                  height={32}
-                  className="rounded-full object-cover bg-gray-100"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/favicon.ico";
-                  }}
+                  size="sm"
+                  fallbackText={author.name}
+                  showMembershipBorder={false}
                 />
               </div>
               <div className="flex-1 min-w-0">

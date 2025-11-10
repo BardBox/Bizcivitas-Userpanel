@@ -25,6 +25,7 @@ import HtmlContent from "@/components/HtmlContent";
 import DeleteConfirmModal from "@/components/modals/DeleteConfirmModal";
 import ImageCarousel from "@/components/ImageCarousel";
 import Avatar from "@/components/ui/Avatar";
+import PostNotAvailable from "@/components/ui/PostNotAvailable";
 
 // Utility functions
 const getInitials = (name: string): string => {
@@ -96,6 +97,25 @@ export default function BizHubPostDetail() {
       }
     }
   }, []);
+
+  // Scroll to comments section if navigation came from a notification about a comment
+  useEffect(() => {
+    if (typeof window !== 'undefined' && post) {
+      const shouldScrollToComments = sessionStorage.getItem('scrollToComments');
+      if (shouldScrollToComments === 'true') {
+        // Remove the flag immediately to prevent re-scrolling on refresh
+        sessionStorage.removeItem('scrollToComments');
+
+        // Use a timeout to ensure the page has fully rendered
+        setTimeout(() => {
+          const commentsSection = document.getElementById('comments-section');
+          if (commentsSection) {
+            commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 500);
+      }
+    }
+  }, [post]);
 
   useEffect(() => {
     if (postId) {
@@ -238,16 +258,23 @@ export default function BizHubPostDetail() {
   }
 
   if (error) {
+    // Try to extract post info from error if available
+    const isHiddenOrReported = error.includes('hidden') || error.includes('reported');
+    const isPermissionDenied = error.includes('permission');
+    const isNotFound = error.includes('not found') || error.includes('Not Found');
+
+    // Determine reason for better UX
+    let reason: 'hidden' | 'reported' | 'permission' | 'not-found' = 'not-found';
+    if (isHiddenOrReported) reason = 'reported';
+    else if (isPermissionDenied) reason = 'permission';
+    else if (isNotFound) reason = 'not-found';
+
     return (
-      <div className="p-8 text-center">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={() => router.back()}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          Go Back
-        </button>
-      </div>
+      <PostNotAvailable
+        reason={reason}
+        errorMessage={error}
+        onGoBack={() => router.back()}
+      />
     );
   }
 
@@ -282,7 +309,7 @@ export default function BizHubPostDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with back button */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <button onClick={() => router.back()} className="flex items-center hover:text-blue-600 transition-colors">
@@ -443,8 +470,8 @@ export default function BizHubPostDetail() {
       </div>
 
       {/* Comments Section */}
-      <div className="bg-white rounded-lg shadow p-6 space-y-6">
-        <h2 className="text-xl font-bold text-gray-900">Comments</h2>
+      <div className="bg-white rounded-lg shadow p-6 space-y-6 mb-8">
+        <h2 id="comments-section" className="text-xl font-bold text-gray-900">Comments</h2>
 
         {/* Add Comment */}
         <div className="flex gap-3">
@@ -632,6 +659,7 @@ export default function BizHubPostDetail() {
           )}
         </div>
       </div>
+      </div>
 
       {/* Report Modal */}
       <ReportModal
@@ -654,7 +682,6 @@ export default function BizHubPostDetail() {
         message="Are you sure you want to delete this post? This action cannot be undone and the post will be permanently removed."
         isDeleting={isDeleting}
       />
-      </div>
     </div>
   );
 }

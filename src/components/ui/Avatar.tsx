@@ -85,20 +85,22 @@ const Avatar: React.FC<AvatarProps> = ({
       {/* Avatar container with optional membership border */}
       {showMembershipBorder ? (
         <div className={`${sizeClasses[size]} rounded-full ${borderClasses}`}>
-          <div className="w-full h-full rounded-full overflow-hidden">
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-200">
             {imageUrl && !imageError ? (
               <Image
                 src={imageUrl}
                 alt={alt}
                 fill
-                className="object-cover rounded-full"
+                sizes={`${sizeClasses[size]}`}
+                className="object-cover"
+                style={{ objectFit: 'cover' }}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
                   setImageError(true);
                 }}
               />
             ) : (
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <span
                   className={`text-white ${textSizeClasses[size]} font-semibold`}
                 >
@@ -109,20 +111,22 @@ const Avatar: React.FC<AvatarProps> = ({
           </div>
         </div>
       ) : (
-        <div className="w-full h-full rounded-full overflow-hidden">
+        <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-200">
           {imageUrl && !imageError ? (
             <Image
               src={imageUrl}
               alt={alt}
               fill
-              className="object-cover rounded-full"
+              sizes={`${sizeClasses[size]}`}
+              className="object-cover"
+              style={{ objectFit: 'cover' }}
               onLoad={() => setImageLoaded(true)}
               onError={() => {
                 setImageError(true);
               }}
             />
           ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <span
                 className={`text-white ${textSizeClasses[size]} font-semibold`}
               >

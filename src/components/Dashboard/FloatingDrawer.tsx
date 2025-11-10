@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Activity, Network, Clock } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 
 interface RecentPost {
   id: string;
@@ -174,12 +174,12 @@ export default function FloatingDrawer({
                         {/* Author and Time */}
                         <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
                           <div className="flex-shrink-0">
-                            <Image
-                              src={post.author.avatar || "/favicon.ico"}
+                            <Avatar
+                              src={post.author.avatar}
                               alt={post.author.name}
-                              width={18}
-                              height={18}
-                              className="rounded-full border border-gray-200"
+                              size="xs"
+                              fallbackText={post.author.name}
+                              showMembershipBorder={false}
                             />
                           </div>
                           <div className="flex items-center gap-1 text-[10px] text-gray-500 min-w-0">

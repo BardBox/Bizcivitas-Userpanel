@@ -9,7 +9,7 @@ import { useLogoutMutation } from "@/store/api";
 
 export default function DashboardHeader() {
   const [searchQuery, setSearchQuery] = useState("");
-  const showNotificationIcon = false; // temporarily hide notifications icon
+  const showNotificationIcon = true; // Enable notifications icon
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
   const router = useRouter();
 

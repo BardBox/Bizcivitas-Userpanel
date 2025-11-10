@@ -5,6 +5,7 @@ import React, {
   useMemo,
   Suspense,
   useCallback,
+  useEffect,
 } from "react";
 import {
   Search,
@@ -17,7 +18,7 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import UserCard from "../../../components/Dashboard/UserCard";
 import {
   useGetConnectionsQuery,
@@ -33,12 +34,25 @@ import ConnectionRequestCard from "@/components/Dashboard/Connections/SendAccept
 function ConnectionsPageContent() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const searchParams = useSearchParams();
 
-  // Default to "my-network" tab
+  // Default states
   const [activeTab, setActiveTab] = useState<"my-network" | "requests">("my-network");
-
-  // For requests tab - Sent/Received sub-tabs
   const [requestsSubTab, setRequestsSubTab] = useState<"sent" | "received">("received");
+
+  // Update tabs based on URL parameters
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const subtab = searchParams.get('subtab');
+
+    if (tab === 'requests') {
+      setActiveTab('requests');
+    }
+
+    if (subtab === 'received' || subtab === 'sent') {
+      setRequestsSubTab(subtab);
+    }
+  }, [searchParams]);
 
   const {
     data: connections,

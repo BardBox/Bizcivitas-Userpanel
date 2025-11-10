@@ -49,12 +49,31 @@ export default function BizPulseDetailPage() {
       if (referrer.includes('/feeds/biz-pulse')) {
         setBackButtonText('Back to Biz Pulse');
       } else if (referrer.includes('/feeds/biz-hub')) {
-        setBackButtonText('Back to Biz Hub');
+        setBackButtonText('Back to Biz Pulse');
       } else {
         setBackButtonText('Back to Feeds');
       }
     }
   }, []);
+
+  // Scroll to comments section if navigation came from a notification about a comment
+  useEffect(() => {
+    if (typeof window !== 'undefined' && post) {
+      const shouldScrollToComments = sessionStorage.getItem('scrollToComments');
+      if (shouldScrollToComments === 'true') {
+        // Remove the flag immediately to prevent re-scrolling on refresh
+        sessionStorage.removeItem('scrollToComments');
+
+        // Use a timeout to ensure the page has fully rendered
+        setTimeout(() => {
+          const commentsSection = document.getElementById('comments-section');
+          if (commentsSection) {
+            commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 500);
+      }
+    }
+  }, [post]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -69,7 +88,7 @@ export default function BizPulseDetailPage() {
   // Fetch post data if not in Redux (on page refresh)
   useEffect(() => {
     const fetchPostIfNeeded = async () => {
-      // Only fetch if post is not in Redux
+      
       if (!post && postId) {
         console.log("Fetching post with ID:", postId);
         setIsLoading(true);
@@ -101,7 +120,7 @@ export default function BizPulseDetailPage() {
     fetchPostIfNeeded();
   }, [postId, post, dispatch]);
 
-  // Show loading state while fetching
+  
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -335,7 +354,7 @@ export default function BizPulseDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with breadcrumb */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <button onClick={() => router.back()} className="flex items-center hover:text-blue-600 transition-colors">
@@ -482,7 +501,7 @@ export default function BizPulseDetailPage() {
 
     {/* Comments Section */}
     <div className="border-t border-gray-200 pt-8">
-      <h3 className="text-xl font-bold text-gray-900 mb-6">
+      <h3 id="comments-section" className="text-xl font-bold text-gray-900 mb-6">
         Comments ({post.stats.comments})
       </h3>
 

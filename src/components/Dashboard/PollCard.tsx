@@ -123,7 +123,9 @@ export default function PollCard({
   const getAuthorCompany = () => "BizCivitas Member";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-black overflow-hidden h-[420px] flex flex-col hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 transition-all duration-300">
+    <div
+      data-poll-id={post._id}
+      className="bg-white rounded-lg shadow-sm border border-black overflow-hidden h-[420px] flex flex-col hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 transition-all duration-300">
       {/* Poll Header - Compact */}
       <div className="p-2 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
         <div className="flex items-center justify-between">

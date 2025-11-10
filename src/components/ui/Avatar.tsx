@@ -67,6 +67,9 @@ const Avatar: React.FC<AvatarProps> = ({
     .toUpperCase()
     .slice(0, 2);
 
+  // Detect if this is a favicon/logo (should use contain instead of cover)
+  const isFavicon = imageUrl?.includes('favicon');
+
   const borderClasses = showMembershipBorder ? (isCoreMemeber ? "" : "") : "";
 
   // Reset error state when src changes
@@ -85,15 +88,15 @@ const Avatar: React.FC<AvatarProps> = ({
       {/* Avatar container with optional membership border */}
       {showMembershipBorder ? (
         <div className={`${sizeClasses[size]} rounded-full ${borderClasses}`}>
-          <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-200">
+          <div className={`relative w-full h-full rounded-full overflow-hidden ${isFavicon ? 'bg-white' : 'bg-gray-200'}`}>
             {imageUrl && !imageError ? (
               <Image
                 src={imageUrl}
                 alt={alt}
                 fill
                 sizes={`${sizeClasses[size]}`}
-                className="object-cover"
-                style={{ objectFit: 'cover' }}
+                className={isFavicon ? 'object-contain p-0.5' : 'object-cover'}
+                style={{ objectFit: isFavicon ? 'contain' : 'cover' }}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
                   setImageError(true);
@@ -111,15 +114,15 @@ const Avatar: React.FC<AvatarProps> = ({
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-full rounded-full overflow-hidden bg-gray-200">
+        <div className={`relative w-full h-full rounded-full overflow-hidden ${isFavicon ? 'bg-white' : 'bg-gray-200'}`}>
           {imageUrl && !imageError ? (
             <Image
               src={imageUrl}
               alt={alt}
               fill
               sizes={`${sizeClasses[size]}`}
-              className="object-cover"
-              style={{ objectFit: 'cover' }}
+              className={isFavicon ? 'object-contain p-0.5' : 'object-cover'}
+              style={{ objectFit: isFavicon ? 'contain' : 'cover' }}
               onLoad={() => setImageLoaded(true)}
               onError={() => {
                 setImageError(true);

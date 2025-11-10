@@ -131,7 +131,7 @@ export function transformBizPulsePostToMock(
   if (isWallFeedPost(post)) {
     const transformedPost = {
       id: post._id || (post as any).id || String(Date.now()),
-      title: post.title || "Untitled Post",
+      title: post.title || post.poll?.question || "Untitled Post",
       content: Array.isArray(post.description)
         ? post.description
             .map((desc) => desc.trim())

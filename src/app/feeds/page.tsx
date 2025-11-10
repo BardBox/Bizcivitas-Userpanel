@@ -105,11 +105,13 @@ export default function DashboardPage() {
         .slice(0, 8)
         .map(post => ({
           id: post.id,
-          title: post.title,
+          title: post.title || post.poll?.question || "Untitled Post",
           description: post.content?.substring(0, 100),
           author: post.author,
           timeAgo: post.timeAgo,
-          postSource: post.postSource
+          postSource: post.postSource,
+          category: post.category,
+          isPoll: !!(post.poll || post.category === "pulse-polls")
         }));
 
       setRecentPosts(mixedPosts);

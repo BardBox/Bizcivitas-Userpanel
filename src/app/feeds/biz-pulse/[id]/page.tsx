@@ -145,7 +145,6 @@ export default function BizPulseDetailPage() {
     );
   }
 
-  // Return null while loading (shouldn't reach here but safety check)
   if (!post) {
     return null;
   }

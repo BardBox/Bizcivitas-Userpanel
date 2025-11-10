@@ -85,7 +85,6 @@ export default function BizPulseDetailPage() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [openMenuId]);
 
-  // Fetch post data if not in Redux (on page refresh)
   useEffect(() => {
     const fetchPostIfNeeded = async () => {
       

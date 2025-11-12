@@ -89,17 +89,13 @@ export default function BizPulseDetailPage() {
     const fetchPostIfNeeded = async () => {
       
       if (!post && postId) {
-        console.log("Fetching post with ID:", postId);
         setIsLoading(true);
         try {
           const response = await bizpulseApi.fetchWallFeedById(postId);
-          console.log("API Response:", response);
           if (response.success && response.data) {
             // Extract wallFeed from response.data (API wraps it in wallFeed property)
             const postData = (response.data as any).wallFeed || response.data;
-            console.log("Post data to transform:", postData);
             const transformedPost = transformBizPulsePostToMock(postData);
-            console.log("Transformed post:", transformedPost);
             dispatch(updatePost(transformedPost));
           } else {
             console.error("API returned success=false");
@@ -112,7 +108,6 @@ export default function BizPulseDetailPage() {
           setIsLoading(false);
         }
       } else {
-        console.log("Post already in Redux or no postId", { post: !!post, postId });
       }
     };
 

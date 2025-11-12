@@ -68,7 +68,6 @@ export default function MessagesPage() {
   // Debug: Log member count and search for "pritesh"
   useEffect(() => {
     if (allMembers && allMembers.length > 0) {
-      console.log(`✅ Total members fetched: ${allMembers.length}`);
 
       // Search for "pritesh" in the members list
       const priteshUsers = allMembers.filter((member) => {
@@ -77,17 +76,9 @@ export default function MessagesPage() {
       });
 
       if (priteshUsers.length > 0) {
-        console.log(`✅ Found ${priteshUsers.length} user(s) with "pritesh" in name:`);
         priteshUsers.forEach((user) => {
-          console.log(`   - Name: ${user.fname} ${user.lname}, ID: ${user._id || user.id}`);
+          // Process user
         });
-      } else {
-        console.log(`❌ No users found with "pritesh" in name`);
-        console.log(`📋 Sample of first 5 users:`, allMembers.slice(0, 5).map(u => ({
-          fname: u.fname,
-          lname: u.lname,
-          id: u._id || u.id
-        })));
       }
     }
   }, [allMembers]);
@@ -135,7 +126,6 @@ export default function MessagesPage() {
           const other = (existingChat.users || existingChat.participants || []).find((u) => u._id !== currentUserId);
           if (other?._id) {
             markAsRead({ chatId: existingChat._id, targetUserId: other._id }).catch((err) => {
-              console.log("Could not mark as read:", err);
             });
           }
           
@@ -369,7 +359,6 @@ export default function MessagesPage() {
       if (other?._id) {
         // Mark as read by sending targetUserId or chatId
         markAsRead({ chatId: c._id, targetUserId: other._id }).catch((err) => {
-          console.log("Could not mark as read:", err);
         });
       }
     }

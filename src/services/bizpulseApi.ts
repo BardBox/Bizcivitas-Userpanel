@@ -153,8 +153,6 @@ class BizPulseApiService {
     wallfeedId: string,
     optionIndex: number
   ): Promise<SingleWallFeedResponse> {
-    console.log("Voting on poll:", { wallfeedId, optionIndex });
-    console.log("Auth headers:", this.getAuthHeaders());
 
     try {
       const response = await fetch(
@@ -189,7 +187,6 @@ class BizPulseApiService {
       }
 
       const result = await response.json();
-      console.log("Vote successful:", result);
       return result;
     } catch (error) {
       console.error("Vote error:", error);

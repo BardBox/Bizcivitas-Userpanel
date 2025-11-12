@@ -72,7 +72,6 @@ export function transformBizPulsePostToMock(
   post: WallFeedPost | BizPulsePost
 ): BizPulseMockPost {
   // Debug: log the incoming post structure
-  console.log("Transform input post:", post);
 
   // Base URL for images - fail fast if env var is missing
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -151,22 +150,18 @@ export function transformBizPulsePostToMock(
         // Try to get image from images array
         if (Array.isArray(post.images) && post.images.length > 0) {
           const imageUrl = getImageUrl(post.images[0], "post");
-          console.log("Image from post.images[0]:", post.images[0], "-> URL:", imageUrl);
           return imageUrl;
         }
         // Try to get from article image
         if (post.article?.image) {
           const imageUrl = getImageUrl(post.article.image, "post");
-          console.log("Image from post.article.image:", post.article.image, "-> URL:", imageUrl);
           return imageUrl;
         }
         // Try to get from direct image field
         if ((post as any).image) {
           const imageUrl = getImageUrl((post as any).image, "post");
-          console.log("Image from post.image:", (post as any).image, "-> URL:", imageUrl);
           return imageUrl;
         }
-        console.log("No image found in post. images:", post.images, "article:", post.article);
         return undefined;
       })(),
       images: (() => {

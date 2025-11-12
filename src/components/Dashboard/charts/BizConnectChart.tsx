@@ -117,10 +117,6 @@ export default function BizConnectChart({
 
   const currentData = getData();
 
-  // Debug logging
-  console.log("BizConnect Chart - Selected Range:", selectedRange);
-  console.log("BizConnect Chart - Current Data:", currentData);
-
   // Get the appropriate data array based on the response structure
   const getDataArray = () => {
     if (currentData?.dailyCounts) return currentData.dailyCounts;
@@ -130,7 +126,6 @@ export default function BizConnectChart({
   };
 
   const dataArray = getDataArray();
-  console.log("BizConnect Chart - Data Array:", dataArray);
 
   // Transform API data to chart format - handle different field names
   let chartData = dataArray.map((item: any) => ({
@@ -158,15 +153,6 @@ export default function BizConnectChart({
       { date: "Total Received", given: 0, received: totalReceived },
     ];
   }
-
-  console.log("BizConnect Chart - Transformed Chart Data:", chartData);
-
-  console.log(
-    "BizConnect Chart - Total Given:",
-    totalGiven,
-    "Total Received:",
-    totalReceived
-  );
 
   return (
     <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">

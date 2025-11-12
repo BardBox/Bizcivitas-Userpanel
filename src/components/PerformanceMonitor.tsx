@@ -37,7 +37,6 @@ const PerformanceMonitor = memo(function PerformanceMonitor() {
       const startTime = performance.now();
       const url = args[0]?.toString() || "Unknown URL";
 
-      console.log(`🌐 API Call: ${url}`);
 
       try {
         const response = await originalFetch(...args);
@@ -209,11 +208,10 @@ const PerformanceMonitor = memo(function PerformanceMonitor() {
         <button
           onClick={() => {
             console.clear();
-            console.log("📊 Performance Stats:", {
+            console.log({
               ...stats,
               renderCount: renderCountRef.current,
             });
-            console.log("🌐 Network Logs:", networkLogs);
           }}
           className="w-full bg-gray-600 text-white py-1 px-2 rounded hover:bg-gray-700 text-xs"
         >

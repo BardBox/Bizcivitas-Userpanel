@@ -26,8 +26,7 @@ export default function BillingAddressPage() {
   useEffect(() => {
     if (profile?.addresses?.billing && Object.keys(profile.addresses.billing).length > 0) {
       const billing = profile.addresses.billing;
-      console.log("🔍 Raw billing data from backend:", billing);
-      
+
       setAddressLine1(billing.addressLine1 || "");
       setAddressLine2(billing.addressLine2 || "");
       setPincode(billing.pincode?.toString() || "");
@@ -44,25 +43,19 @@ export default function BillingAddressPage() {
           (c) => c.name.toLowerCase() === billing.country?.toLowerCase()
         );
         countryISO = countryObj?.isoCode || "";
-        console.log("🌍 Country:", billing.country, "→ ISO:", countryISO);
-        
+
         // Find state by name and get its ISO code
         if (billing.state && countryISO) {
           const stateObj = State.getStatesOfCountry(countryISO).find(
             (s) => s.name.toLowerCase() === billing.state?.toLowerCase()
           );
           stateISO = stateObj?.isoCode || "";
-          console.log("📍 State:", billing.state, "→ ISO:", stateISO);
         }
       }
-      
-      console.log("📝 Setting dropdown values:", { countryISO, stateISO, cityName });
       
       setCountry(countryISO);
       setState(stateISO);
       setCity(cityName);
-    } else {
-      console.log("❌ No billing data found in profile");
     }
   }, [profile]);
 
@@ -83,8 +76,6 @@ export default function BillingAddressPage() {
         setUseBusinessAddress(false); // Uncheck the checkbox
         return;
       }
-
-      console.log("📋 Copying from personal address:", personalAddress);
 
       // Validate that we have required fields
       if (!personalAddress.addressLine1 || !personalAddress.country || !personalAddress.state || !personalAddress.city) {
@@ -119,14 +110,6 @@ export default function BillingAddressPage() {
           addressStateISO = stateObj?.isoCode || "";
         }
       }
-
-      console.log("📝 Setting form fields:", {
-        country: personalAddress.country,
-        countryISO: addressCountryISO,
-        state: personalAddress.state,
-        stateISO: addressStateISO,
-        city: addressCityName
-      });
 
       setCountry(addressCountryISO);
       setState(addressStateISO);
@@ -219,12 +202,10 @@ export default function BillingAddressPage() {
       if (country) {
         const countryObj = Country.getCountryByCode(country);
         countryName = countryObj?.name || "";
-        console.log("🌍 Saving - Country ISO:", country, "→ Name:", countryName);
-        
+
         if (state) {
           const stateObj = State.getStateByCodeAndCountry(state, country);
           stateName = stateObj?.name || "";
-          console.log("📍 Saving - State ISO:", state, "→ Name:", stateName);
         }
       }
       

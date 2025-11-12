@@ -107,12 +107,6 @@ export default function VisitorInvitationChart({
   const currentData = getData();
 
   // Debug logging
-  console.log('🟠 Visitor Chart - Selected Range:', selectedRange);
-  console.log('🟠 Visitor Chart - Current Data:', currentData);
-  console.log('🟠 Visitor Chart - 15 Days Data:', data15Days);
-  console.log('🟠 Visitor Chart - 3 Months Data:', data3Months);
-  console.log('🟠 Visitor Chart - 6 Months Data:', data6Months);
-  console.log('🟠 Visitor Chart - Till Date Data:', dataTillDate);
 
   // Get the appropriate data array based on the response structure
   const getDataArray = () => {
@@ -123,7 +117,6 @@ export default function VisitorInvitationChart({
   };
 
   const dataArray = getDataArray();
-  console.log('🟠 Visitor Chart - Data Array:', dataArray);
 
   // Transform API data to chart format - handle different field names
   let chartData = dataArray.map((item: any) => ({
@@ -137,8 +130,6 @@ export default function VisitorInvitationChart({
       ? currentData?.last15DaysCount || 0
       : currentData?.allTimeCount || currentData?.totalInvitedPeopleCount || 0;
 
-  console.log('🟠 Visitor Chart - Total Count:', totalCount);
-  console.log('🟠 Visitor Chart - Chart Data:', chartData);
 
   // For "Till Date", create a summary chart with total since there's no daily/period data
   if (selectedRange === "tilldate" && chartData.length === 0 && totalCount > 0) {

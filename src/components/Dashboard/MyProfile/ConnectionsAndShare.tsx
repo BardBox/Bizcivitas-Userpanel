@@ -85,26 +85,17 @@ const ConnectionsAndShare: React.FC<ConnectionsAndShareProps> = ({
   };
 
   const handleConnect = () => {
-    console.log("Connection icon clicked!", {
-      isOwnProfile,
-      userId,
-      customConnect: !!customConnect,
-    });
-
     if (isOwnProfile) {
       // For own profile, navigate to connections page
-      console.log("Navigating to own connections:", "/feeds/connections");
       router.push("/feeds/connections");
     } else if (userId) {
       // For other users, navigate to their connections page (prioritize navigation over connection actions)
       const targetUrl = `/feeds/connections/${userId}/connections`;
-      console.log("Navigating to user connections:", targetUrl);
       router.push(targetUrl);
     } else if (customConnect) {
       // Fall back to custom connect handler if no userId
       customConnect();
     } else {
-      console.log("No userId provided, showing toast");
       dispatch(
         addToast({
           type: "info",

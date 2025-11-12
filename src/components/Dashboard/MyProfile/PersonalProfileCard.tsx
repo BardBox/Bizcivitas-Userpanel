@@ -62,7 +62,6 @@ const PersonalProfileCard: React.FC<PersonalProfileCardProps> = ({
             currentLogo={profile.business?.logo}
             onLogoUpdate={(logoUrl) => {
               // Optional: Handle logo update callback if needed
-              console.log("Logo updated:", logoUrl);
             }}
           />
           <h3 className="font-semibold text-gray-900 text-sm sm:text-base">

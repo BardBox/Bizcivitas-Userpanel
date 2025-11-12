@@ -29,9 +29,6 @@ function HomePageContent() {
     e.preventDefault();
     e.stopPropagation();
 
-    console.log("🔥 handleSubmit called!");
-    console.log("📋 Form data:", formData);
-
     setLoading(true);
     setError("");
 
@@ -59,13 +56,6 @@ function HomePageContent() {
       debugApiCall(loginUrl, requestOptions, "Login Request");
 
       const response = await fetch(loginUrl, requestOptions);
-
-      console.log("🔍 Login Response:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        url: response.url,
-      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -105,8 +95,6 @@ function HomePageContent() {
         if (fcmToken) {
           const existingToken = localStorage.getItem("fcmToken");
           if (existingToken !== fcmToken) {
-            console.log("New FCM token detected, updating...");
-
             try {
               const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -140,8 +128,6 @@ function HomePageContent() {
             } catch (error) {
               console.error("Error managing FCM token:", error);
             }
-          } else {
-            console.log("Using existing FCM token");
           }
         }
       }

@@ -135,28 +135,42 @@ export const connectionsApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Connections"],
       transformResponse: (response: any): User[] => {
+        console.log('Search API Response:', response);
+
         // Handle the response structure from /users/search
         // Response format: { success: boolean, data: User[] }
         if (response?.data && Array.isArray(response.data)) {
-          return response.data.map((user: any) => ({
-            _id: user._id || user.id,
-            fname: user.fname || '',
-            lname: user.lname || '',
-            email: user.email || '',
-            avatar: user.avatar || '',
-            classification: user.classification || 'Business Professional',
-            companyName: user.companyName || '',
-            profile: user.profile,
-            role: user.role || 'user',
-            membershipType: user.membershipType || '',
-            business: user.business || '',
-            businessSubcategory: user.businessSubcategory || '',
-            region: user.region || '',
-            city: user.city || '',
-            state: user.state || '',
-            country: user.country || '',
-            connectionStatus: 'not-connected',
-          }));
+          const users = response.data.map((user: any) => {
+            // Process avatar URL to ensure it's a full URL
+            let avatarUrl = user.avatar || '';
+            if (avatarUrl && !avatarUrl.startsWith('http')) {
+              const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend.bizcivitas.com/api/v1';
+              avatarUrl = `${baseUrl}/image/${avatarUrl}?width=40&height=40&format=webp`;
+            }
+
+            return {
+              _id: user._id || user.id,
+              fname: user.fname || user.name?.split(' ')[0] || '',
+              lname: user.lname || user.name?.split(' ').slice(1).join(' ') || '',
+              email: user.email || '',
+              avatar: avatarUrl,
+              classification: user.classification || user.businessCategory || 'Business Professional',
+              companyName: user.companyName || user.company || '',
+              profile: user.profile,
+              role: user.role || 'user',
+              membershipType: user.membershipType || '',
+              business: user.business || user.Business || user.myBusiness || '',
+              businessSubcategory: user.businessSubcategory || '',
+              region: user.region || user.city || '',
+              city: user.city || '',
+              state: user.state || '',
+              country: user.country || '',
+              connectionStatus: 'not-connected',
+            };
+          });
+
+          console.log('Transformed users:', users);
+          return users;
         }
         return [];
       },

@@ -37,31 +37,17 @@ export const debugApiCall = (
   label?: string
 ) => {
   console.group(`🌐 API Call Debug: ${label || url}`);
-  console.log("URL:", url);
-  console.log("Method:", options.method || "GET");
-  console.log("Headers:", options.headers);
-  console.log("Body:", options.body);
-  console.log("Credentials:", options.credentials);
   console.groupEnd();
 };
 
 // Login Debug
 export const debugLogin = (credentials: any, apiUrl: string) => {
   console.group("🔑 Login Debug");
-  console.log("Login attempt at:", new Date().toISOString());
-  console.log("API URL:", apiUrl);
-  console.log("Email:", credentials.email || "Not provided");
-  console.log(
-    "Password:",
-    credentials.password ? "✅ PROVIDED" : "❌ NOT PROVIDED"
-  );
-  console.log("Remember Me:", credentials.rememberMe || false);
+  console.log("Password:", credentials.password ? "✅ PROVIDED" : "❌ NOT PROVIDED");
 
   // Check if we're in production
   if (process.env.NODE_ENV === "production") {
     console.warn("🚨 Running in PRODUCTION mode");
-  } else {
-    console.log("🔧 Running in DEVELOPMENT mode");
   }
 
   console.groupEnd();
@@ -73,8 +59,6 @@ export const debugCors = async (apiUrl: string) => {
 
   try {
     const testUrl = new URL("/api/v1/users/login", apiUrl).toString();
-    console.log("Testing CORS for:", testUrl);
-    console.log("Origin:", window.location.origin);
 
     // Test OPTIONS preflight request
     const response = await fetch(testUrl, {
@@ -86,8 +70,6 @@ export const debugCors = async (apiUrl: string) => {
       },
     });
 
-    console.log("CORS Response Status:", response.status);
-    console.log("CORS Response Headers:");
 
     const corsHeaders = {
       "Access-Control-Allow-Origin": response.headers.get(
@@ -107,7 +89,6 @@ export const debugCors = async (apiUrl: string) => {
     console.table(corsHeaders);
 
     if (response.status === 200 || response.status === 204) {
-      console.log("✅ CORS preflight successful");
     } else {
       console.error("❌ CORS preflight failed");
     }
@@ -121,20 +102,12 @@ export const debugCors = async (apiUrl: string) => {
 // Network Debug
 export const debugNetwork = () => {
   console.group("🌐 Network Debug");
-  console.log("User Agent:", navigator.userAgent);
-  console.log("Online:", navigator.onLine);
-  console.log(
-    "Connection:",
-    (navigator as any).connection?.effectiveType || "Unknown"
-  );
-  console.log("Current URL:", window.location.href);
-  console.log("Origin:", window.location.origin);
+  console.log("Connection:", (navigator as any).connection?.effectiveType || "Unknown");
   console.groupEnd();
 };
 
 // Full Debug Suite
 export const runFullDebug = async () => {
-  console.log("🚀 Starting Full Debug Suite...");
 
   debugEnvVars();
   debugNetwork();
@@ -146,7 +119,6 @@ export const runFullDebug = async () => {
     console.error("❌ NEXT_PUBLIC_BACKEND_URL not set!");
   }
 
-  console.log("✅ Debug suite completed");
 };
 
 // CORS Workaround for development/testing
@@ -166,8 +138,6 @@ export const testLoginWithProxy = async (credentials: any) => {
     const originalUrl = `${backendUrl}/users/login`;
     const proxyUrl = createCorsProxyUrl(originalUrl);
 
-    console.log("Original URL:", originalUrl);
-    console.log("Proxy URL:", proxyUrl);
 
     const response = await fetch(proxyUrl, {
       method: "POST",
@@ -178,9 +148,7 @@ export const testLoginWithProxy = async (credentials: any) => {
       body: JSON.stringify(credentials),
     });
 
-    console.log("Proxy Response Status:", response.status);
     const result = await response.json();
-    console.log("Proxy Response Data:", result);
 
     return result;
   } catch (error) {
@@ -199,7 +167,7 @@ export const shouldUseCorsProxy = () => {
     window.location.hostname === "bizcivitas-user-panel.vercel.app";
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  console.log("🔍 CORS Proxy Check:", {
+  console.log({
     isProduction,
     hostname: window.location.hostname,
     backendUrl,
@@ -214,14 +182,7 @@ export const shouldUseCorsProxy = () => {
 
 // Quick debug function for development
 export const quickDebug = () => {
-  console.log("🔧 Quick Debug Info:");
-  console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
-  console.log("Environment:", process.env.NODE_ENV);
-  console.log(
-    "Origin:",
-    typeof window !== "undefined" ? window.location.origin : "Server-side"
-  );
   if (typeof window !== "undefined") {
-    console.log("Should Use CORS Proxy:", shouldUseCorsProxy());
+    console.log("Origin:", window.location.origin);
   }
 };

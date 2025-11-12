@@ -23,8 +23,6 @@ const PostsGrid = memo(function PostsGrid() {
 
   // Debug log user info
   useEffect(() => {
-    console.log("User from Redux:", user);
-    console.log("Current User ID:", currentUserId);
   }, [user, currentUserId]);
 
   // Handle like functionality
@@ -65,7 +63,6 @@ const PostsGrid = memo(function PostsGrid() {
         const isLiked = response.data.isLiked;
         toast.success(isLiked ? "Post liked!" : "Post unliked!");
 
-        console.log("Like successful, Redux updated:", transformedPost);
       }
     } catch (error: any) {
       console.error("Failed to like post:", error);
@@ -153,7 +150,6 @@ const PostsGrid = memo(function PostsGrid() {
                   updatedPost,
                 ])[0];
                 dispatch(updatePost(transformedPost));
-                console.log("Vote successful, Redux updated:", transformedPost);
               }}
               onLike={handleLike}
             />

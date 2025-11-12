@@ -134,7 +134,6 @@ export default function ChatPage() {
   useEffect(() => {
     if (chatId && currentUserId) {
       markAsRead({ chatId: chatId }).catch((err) => {
-        console.log("Could not mark as read:", err);
       });
     }
   }, [chatId, currentUserId, markAsRead]);

@@ -62,7 +62,6 @@ const MyBioSection: React.FC<MyBioSectionProps> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
-    console.log("Attempting to save bio section:", data);
     try {
       // Transform array fields back to string arrays
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,16 +92,13 @@ const MyBioSection: React.FC<MyBioSectionProps> = ({
         ...(professionalInterests.length > 0 && { professionalInterests }),
       };
 
-      console.log("Cleaned data to send:", cleanedData);
 
       // Backend expects myBio wrapper
       const backendData = {
         myBio: cleanedData,
       };
 
-      console.log("Backend format data:", backendData);
       const result = await updateMyBio(backendData).unwrap();
-      console.log("Save successful:", result);
       onEditStateChange?.(false);
     } catch (err) {
       console.error("Failed to update bio section:", err);

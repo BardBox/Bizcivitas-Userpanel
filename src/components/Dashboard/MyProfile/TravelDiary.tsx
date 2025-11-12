@@ -75,7 +75,6 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
     businessBucketList?: { value: string }[];
     dealsOnWheels?: { value: string }[];
   }) => {
-    console.log("Attempting to save travel diary:", data);
     try {
       // Transform array fields back to string arrays
       const myFootprints =
@@ -110,10 +109,8 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
         ...(dealsOnWheels.length > 0 && { dealsOnWheels }),
       };
 
-      console.log("Cleaned data to send:", cleanedData);
 
       const result = await updateTravelDiary(cleanedData).unwrap();
-      console.log("Save successful:", result);
       onEditStateChange?.(false);
     } catch (err) {
       console.error("Failed to update travel diary:", err);

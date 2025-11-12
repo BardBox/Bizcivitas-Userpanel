@@ -19,7 +19,6 @@ import { Activity, Network, Sparkles } from "lucide-react";
 // --- Component ---
 export default function DashboardPage() {
   if (process.env.NODE_ENV !== "production") {
-    console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
   }
 
   const router = useRouter();

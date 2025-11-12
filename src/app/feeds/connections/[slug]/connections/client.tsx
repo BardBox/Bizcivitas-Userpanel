@@ -212,7 +212,6 @@ const ConnectionsViewPage: React.FC<ConnectionsViewPageProps> = ({ slug }) => {
         id: loadingToast,
       });
 
-      console.log("✅ Connection request sent successfully:", result);
     } catch (error: any) {
       setRequestStates((prev) => ({ ...prev, [userId]: "idle" }));
 

@@ -35,17 +35,14 @@ export const initializeSocket = (userId: string): Socket => {
     });
 
     socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket?.id);
       // Emit setup event with user ID (authentication)
       socket?.emit("setup", userId);
     });
 
     socket.on("connected", () => {
-      console.log("✅ Socket setup complete for user:", userId);
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
     });
 
     socket.on("connect_error", (error) => {
@@ -70,7 +67,6 @@ export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
     socket = null;
-    console.log("🔌 Socket disconnected manually");
   }
 };
 

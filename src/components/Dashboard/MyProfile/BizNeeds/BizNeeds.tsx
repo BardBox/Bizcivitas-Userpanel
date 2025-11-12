@@ -69,7 +69,6 @@ const BizNeeds: React.FC<BizNeedsProps> = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (data: any) => {
-    console.log("Attempting to save business needs:", data);
     try {
       // Transform data back to the myAsk format
       const myAskArray = [];
@@ -106,10 +105,8 @@ const BizNeeds: React.FC<BizNeedsProps> = ({
         },
       };
 
-      console.log("Cleaned data to send:", cleanedData);
 
       const result = await updateMyBio(cleanedData).unwrap();
-      console.log("Save successful:", result);
       onEditStateChange?.(false);
     } catch (err) {
       console.error("Failed to update business needs:", err);

@@ -113,7 +113,6 @@ export default function BizConnectDetailModal({
   // Fetch data when modal opens or filters change
   useEffect(() => {
     if (isOpen) {
-      console.log("BizConnect Modal: Fetching data for date range:", dateRange);
       fetchData();
     }
   }, [isOpen, dateRange]);
@@ -144,7 +143,6 @@ export default function BizConnectDetailModal({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Invite data received:", data.data);
         setGivenData(data.data.referralsGiven || []);
         setReceivedData(data.data.referralsReceived || []);
       } else {
@@ -159,7 +157,6 @@ export default function BizConnectDetailModal({
 
   const handleDownloadPDF = () => {
     // TODO: Implement PDF generation
-    console.log("Downloading PDF report...");
     alert("PDF download functionality will be implemented");
   };
 
@@ -316,7 +313,6 @@ export default function BizConnectDetailModal({
                     ? (record.toUserDetails || record.to)
                     : (record.fromUserDetails || record.from);
 
-                  console.log("Record:", record, "Display User:", displayUser);
 
                   // Get user name from various possible sources
                   let userName = "Unknown User";

@@ -99,7 +99,6 @@ export default function BizWinDetailModal({
 
   useEffect(() => {
     if (isOpen) {
-      console.log("BizWin Modal: Fetching data for date range:", dateRange);
       fetchData();
     }
   }, [isOpen, dateRange]);
@@ -111,7 +110,6 @@ export default function BizWinDetailModal({
       setStartDate(start);
       setEndDate(end);
 
-      console.log("📅 Sending dates to API:", { startDate: start, endDate: end });
 
       const backendUrl = (process as any).env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -133,24 +131,14 @@ export default function BizWinDetailModal({
 
       const data = await response.json();
 
-      console.log("BizWin API Response:", data);
-      console.log("BizWin Response OK:", response.ok);
-      console.log("BizWin Success:", data.success);
 
       if (response.ok && data.success) {
-        console.log("BizWin data received:", data.data);
-        console.log("Records Given:", data.data.tyfcbGiven);
-        console.log("Records Received:", data.data.tyfcbReceived);
 
         setGivenData(data.data.tyfcbGiven || []);
         setReceivedData(data.data.tyfcbReceived || []);
         setTotalGivenAmount(data.data.totalGivenAmount || 0);
         setTotalReceivedAmount(data.data.totalReceivedAmount || 0);
 
-        console.log("Given data set to:", data.data.tyfcbGiven?.length || 0, "records");
-        console.log("Received data set to:", data.data.tyfcbReceived?.length || 0, "records");
-        console.log("Total Given Amount:", data.data.totalGivenAmount);
-        console.log("Total Received Amount:", data.data.totalReceivedAmount);
       } else {
         console.error("BizWin API error:", data);
       }
@@ -184,7 +172,6 @@ export default function BizWinDetailModal({
   };
 
   const handleDownloadPDF = () => {
-    console.log("Downloading BizWin PDF report...");
     alert("PDF download functionality will be implemented");
   };
 
@@ -193,18 +180,6 @@ export default function BizWinDetailModal({
   const currentData = activeTab === "given" ? givenData : receivedData;
   const totalAmount = activeTab === "given" ? totalGivenAmount : totalReceivedAmount;
   const totalCount = currentData.length;
-
-  console.log("🔍 Modal Display State:", {
-    activeTab,
-    dateRange,
-    givenDataLength: givenData.length,
-    receivedDataLength: receivedData.length,
-    totalGivenAmount,
-    totalReceivedAmount,
-    currentDataLength: currentData.length,
-    displayedTotalAmount: totalAmount,
-    displayedTotalCount: totalCount
-  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

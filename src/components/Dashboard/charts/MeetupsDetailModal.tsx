@@ -91,7 +91,6 @@ export default function MeetupsDetailModal({
   // Fetch data when modal opens or filters change
   useEffect(() => {
     if (isOpen) {
-      console.log("Meetups Modal: Fetching data for date range:", dateRange);
       fetchData();
     }
   }, [isOpen, dateRange]);
@@ -122,7 +121,6 @@ export default function MeetupsDetailModal({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log("Meetups data received:", data.data);
         setMeetupsData(data.data.meetups || []);
       } else {
         console.error("API error:", data);
@@ -135,7 +133,6 @@ export default function MeetupsDetailModal({
   };
 
   const handleDownloadPDF = () => {
-    console.log("Downloading Meetups PDF report...");
     alert("PDF download functionality will be implemented");
   };
 

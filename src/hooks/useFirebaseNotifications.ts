@@ -195,7 +195,6 @@ export const useFirebaseNotifications = () => {
     if (currentToken) {
       try {
         await removeFcmToken({ fcmToken: currentToken }).unwrap();
-        console.log("FCM token removed from backend");
       } catch (error) {
         console.error("Failed to remove FCM token from backend:", error);
       }

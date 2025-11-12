@@ -48,7 +48,6 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
     weeklyPresentationLink?: string;
     presentationDate?: string;
   }) => {
-    console.log("Attempting to save weekly presentation:", data);
     try {
       // Clean the data - remove empty strings and undefined values
       const presentationData = {
@@ -68,10 +67,8 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
         weeklyPresentation: presentationData,
       };
 
-      console.log("Cleaned data to send:", cleanedData);
 
       const result = await updateProfile(cleanedData as any).unwrap();
-      console.log("Save successful:", result);
       onEditStateChange?.(false);
     } catch (err) {
       console.error("Failed to update weekly presentation:", err);

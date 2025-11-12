@@ -141,13 +141,6 @@ export default function NotificationDropdown({
           const postType = notification.metadata.postType || 'bizhub';
           const postId = notification.metadata.postId;
 
-          console.log('🔔 Post Notification:', {
-            postId,
-            postType,
-            notificationType: notification.type,
-            hasCommentId: !!notification.metadata.commentId
-          });
-
           const url = postType === 'bizpulse'
             ? `/feeds/biz-pulse/${postId}`
             : `/feeds/biz-hub/${postId}`;
@@ -157,7 +150,6 @@ export default function NotificationDropdown({
             sessionStorage.setItem('scrollToComments', 'true');
           }
 
-          console.log('🔔 Navigating to:', url);
           router.push(url);
           return;
         }
@@ -168,13 +160,6 @@ export default function NotificationDropdown({
           const postType = notification.metadata.postType || 'bizhub';
           const wallFeedId = notification.metadata.wallFeedId;
 
-          console.log('🔔 WallFeed Notification:', {
-            wallFeedId,
-            postType,
-            notificationType: notification.type,
-            hasCommentId: !!notification.metadata.commentId
-          });
-
           const url = postType === 'bizpulse'
             ? `/feeds/biz-pulse/${wallFeedId}`
             : `/feeds/biz-hub/${wallFeedId}`;
@@ -184,7 +169,6 @@ export default function NotificationDropdown({
             sessionStorage.setItem('scrollToComments', 'true');
           }
 
-          console.log('🔔 Navigating to:', url);
           router.push(url);
           return;
         }
@@ -386,11 +370,12 @@ export default function NotificationDropdown({
       >
         <Image
           src="/dashboard/sidebaricons/notification.svg"
-          width={24}
-          height={24}
+          width={60}
+          height={60}
           alt="Notification Icon"
           className="object-contain"
-          style={{ width: "40px", height: "40px" }}
+          
+
         />
       </button>
     );
@@ -402,7 +387,6 @@ export default function NotificationDropdown({
 
     // Dispatch custom event to close FloatingDrawer when notification dropdown opens
     if (newIsOpen) {
-      console.log("🔔 Notification dropdown opened - dispatching event");
       window.dispatchEvent(new Event("notificationDropdownOpened"));
     }
   };
@@ -419,7 +403,7 @@ export default function NotificationDropdown({
           height={24}
           alt="Notification Icon"
           className="object-contain"
-          style={{ width: "40px", height: "40px" }}
+          style={{ width: "60px", height: "60px" }}
         />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">

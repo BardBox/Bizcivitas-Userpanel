@@ -18,12 +18,10 @@ export function initializeAuth() {
       // Only dispatch if we have a valid user ID
       if (user._id || user.id) {
         store.dispatch(setUser(user));
-        console.log("Auth initialized with user:", user);
       } else {
         console.warn("No valid user ID found in stored data");
       }
     } else {
-      console.log("No stored user data found");
     }
   } catch (error) {
     console.error("Error initializing auth:", error);

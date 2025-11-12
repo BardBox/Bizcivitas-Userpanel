@@ -112,9 +112,6 @@ export default function MeetupsChart({
   const currentData = getData();
 
   // Debug logging
-  console.log('🟣 Meetups Chart - Selected Range:', selectedRange);
-  console.log('🟣 Meetups Chart - Current Data:', currentData);
-  console.log('🟣 Meetups Chart - Till Date Data:', dataTillDate);
 
   // Get the appropriate data array based on the response structure
   const getDataArray = () => {
@@ -133,16 +130,12 @@ export default function MeetupsChart({
   }));
 
   // Handle different field names from backend (tilldate uses totalMeetupCount)
-  console.log('🟣 DEBUG - last15DaysMeetupCount:', currentData?.last15DaysMeetupCount);
-  console.log('🟣 DEBUG - allTimeCount:', currentData?.allTimeCount);
-  console.log('🟣 DEBUG - totalMeetupCount:', currentData?.totalMeetupCount);
 
   const totalCount =
     selectedRange === "15days"
       ? currentData?.last15DaysMeetupCount || 0
       : currentData?.totalMeetupCount || currentData?.allTimeCount || 0;
 
-  console.log('🟣 Meetups Chart - Total Count:', totalCount);
 
   // For "Till Date", create a summary chart with total since there's no daily/period data
   if (selectedRange === "tilldate" && chartData.length === 0 && totalCount > 0) {

@@ -113,7 +113,7 @@ export default function MessageInputDemo() {
                 Small Size
               </h3>
               <MessageInput
-                onSendMessage={async (msg) => console.log("Small:", msg)}
+                onSendMessage={async (msg) => {}}
                 size="sm"
                 placeholder="Small input..."
               />
@@ -128,7 +128,7 @@ export default function MessageInputDemo() {
                 Medium Size (Default)
               </h3>
               <MessageInput
-                onSendMessage={async (msg) => console.log("Medium:", msg)}
+                onSendMessage={async (msg) => {}}
                 size="md"
                 placeholder="Medium input..."
               />
@@ -143,7 +143,7 @@ export default function MessageInputDemo() {
                 Large Size
               </h3>
               <MessageInput
-                onSendMessage={async (msg) => console.log("Large:", msg)}
+                onSendMessage={async (msg) => {}}
                 size="lg"
                 placeholder="Large input..."
               />
@@ -165,7 +165,7 @@ export default function MessageInputDemo() {
                 Fully rounded input and button - perfect for modern chat interfaces
               </p>
               <MessageInput
-                onSendMessage={async (msg) => console.log("Rounded:", msg)}
+                onSendMessage={async (msg) => {}}
                 variant="rounded"
                 placeholder="Rounded variant..."
               />
@@ -180,7 +180,7 @@ export default function MessageInputDemo() {
                 Slightly rounded corners - great for comment sections and forms
               </p>
               <MessageInput
-                onSendMessage={async (msg) => console.log("Square:", msg)}
+                onSendMessage={async () => {}}
                 variant="square"
                 placeholder="Square variant..."
               />
@@ -200,9 +200,7 @@ export default function MessageInputDemo() {
                 With File Upload
               </h3>
               <MessageInput
-                onSendMessage={async (msg, files) =>
-                  console.log("Files:", msg, files)
-                }
+                onSendMessage={async () => {}}
                 showFileUpload={true}
                 allowImages={true}
                 placeholder="Attach files..."
@@ -216,7 +214,7 @@ export default function MessageInputDemo() {
                 Simple (No Emoji Picker)
               </h3>
               <MessageInput
-                onSendMessage={async (msg) => console.log("Simple:", msg)}
+                onSendMessage={async () => {}}
                 showEmojiPicker={false}
                 placeholder="Simple input..."
               />
@@ -260,9 +258,7 @@ export default function MessageInputDemo() {
                 </div>
 
                 <MessageInput
-                  onSendMessage={async (msg) =>
-                    console.log("Comment:", msg)
-                  }
+                  onSendMessage={async () => {}}
                   placeholder="Write a comment..."
                   size="sm"
                   variant="square"
@@ -279,9 +275,7 @@ export default function MessageInputDemo() {
               </div>
               <div className="p-6">
                 <MessageInput
-                  onSendMessage={async (msg, files) =>
-                    console.log("Contact:", msg, files)
-                  }
+                  onSendMessage={async () => {}}
                   placeholder="Write your message to us..."
                   showFileUpload={true}
                   allowImages={true}
@@ -301,8 +295,6 @@ export default function MessageInputDemo() {
 
 function MyComponent() {
   const handleSend = async (message: string, files?: File[]) => {
-    console.log("Message:", message);
-    console.log("Files:", files);
     // Your send logic here
   };
 

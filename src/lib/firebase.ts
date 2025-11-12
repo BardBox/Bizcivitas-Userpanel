@@ -155,7 +155,6 @@ export const requestForToken = async (): Promise<string | null> => {
     });
 
     if (currentToken) {
-      console.log('FCM token retrieved successfully');
     } else {
       console.warn('No registration token available');
     }

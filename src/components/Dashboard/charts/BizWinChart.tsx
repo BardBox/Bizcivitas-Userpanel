@@ -130,12 +130,6 @@ export default function BizWinChart({
   const currentData = getData();
 
   // Debug logging
-  console.log('🔵 BizWin Chart - Selected Range:', selectedRange);
-  console.log('🔵 BizWin Chart - Current Data:', currentData);
-  console.log('🔵 BizWin Chart - 15 Days Data:', data15Days);
-  console.log('🔵 BizWin Chart - 3 Months Data:', data3Months);
-  console.log('🔵 BizWin Chart - 6 Months Data:', data6Months);
-  console.log('🔵 BizWin Chart - Till Date Data:', dataTillDate);
 
   // Get the appropriate data array based on the response structure
   const getDataArray = () => {
@@ -161,19 +155,14 @@ export default function BizWinChart({
   const totalReceived = currentData?.overallReceived || currentData?.totalReceived || currentData?.totalReceivedAmount ||
     chartData.reduce((sum, item) => sum + item.received, 0);
 
-  console.log('🔵 BizWin Chart - Total Given:', totalGiven);
-  console.log('🔵 BizWin Chart - Total Received:', totalReceived);
-  console.log('🔵 BizWin Chart - Chart Data Length:', chartData.length);
 
   // For "Till Date", create a summary chart with totals since there's no daily/period data
   if (selectedRange === "tilldate" && chartData.length === 0 && (totalGiven > 0 || totalReceived > 0)) {
-    console.log('✅ BizWin Chart - Creating Till Date summary chart');
     chartData = [
       { date: "Total Given", given: totalGiven, received: 0 },
       { date: "Total Received", given: 0, received: totalReceived },
     ];
   } else if (selectedRange === "tilldate" && chartData.length === 0) {
-    console.log('❌ BizWin Chart - Till Date has NO DATA (totalGiven:', totalGiven, 'totalReceived:', totalReceived, ')');
   }
 
   return (

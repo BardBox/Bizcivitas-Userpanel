@@ -36,24 +36,9 @@ class BizHubApiService {
   async fetchPostById(postId: string): Promise<any> {
     const headers = this.getAuthHeaders();
 
-    console.log('🔍 Fetching post by ID:', {
-      postId,
-      url: `${this.baseUrl}/post/${postId}`,
-      headers: {
-        ...headers,
-        Authorization: headers.Authorization ? 'Bearer [TOKEN]' : 'MISSING'
-      }
-    });
-
     const response = await fetch(`${this.baseUrl}/post/${postId}`, {
       headers,
       credentials: "include",
-    });
-
-    console.log('📥 Response status:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
     });
 
     if (!response.ok) {
@@ -63,20 +48,15 @@ class BizHubApiService {
 
       try {
         responseText = await response.text();
-        console.log('📄 Raw response text:', responseText);
 
         if (responseText) {
           try {
             errorData = JSON.parse(responseText);
-            console.log('📦 Parsed error data:', errorData);
           } catch (parseError) {
-            console.log('⚠️ Could not parse as JSON, using text as-is');
           }
         } else {
-          console.log('⚠️ Response body is empty');
         }
       } catch (readError) {
-        console.log('⚠️ Could not read response body:', readError);
       }
 
       // Handle specific 403 cases with user-friendly messages
@@ -97,7 +77,6 @@ class BizHubApiService {
     }
 
     const json = await response.json();
-    console.log('✅ Post fetched successfully');
     // Backend returns post directly in data
     return json?.data || null;
   }

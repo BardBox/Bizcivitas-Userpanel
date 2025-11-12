@@ -28,6 +28,11 @@ interface DateFilterButton {
   label: string;
 }
 
+interface BizWinChartProps {
+  selectedRange?: DateRange;
+  onRangeChange?: (range: DateRange) => void;
+}
+
 const dateFilters: DateFilterButton[] = [
   { id: "15days", label: "15 Days" },
   { id: "3months", label: "3 Months" },
@@ -47,8 +52,21 @@ function formatCurrency(value: number): string {
   return `₹${value.toFixed(2)}`;
 }
 
-export default function BizWinChart() {
-  const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+export default function BizWinChart({
+  selectedRange: externalRange,
+  onRangeChange,
+}: BizWinChartProps = {}) {
+  const [internalRange, setInternalRange] = useState<DateRange>("15days");
+  const selectedRange = externalRange || internalRange;
+
+  const handleRangeChange = (range: DateRange) => {
+    if (onRangeChange) {
+      onRangeChange(range);
+    } else {
+      setInternalRange(range);
+    }
+  };
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -174,7 +192,7 @@ export default function BizWinChart() {
           {dateFilters.map((filter) => (
             <button
               key={filter.id}
-              onClick={() => setSelectedRange(filter.id)}
+              onClick={() => handleRangeChange(filter.id)}
               className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
                 selectedRange === filter.id
                   ? "bg-[#4A62AD] text-white shadow-md"

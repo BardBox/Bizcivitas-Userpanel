@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../store/store";
 import DashboardCard from "@/components/Dashboard/DashboardCard";
 import BizConnectChart from "@/components/Dashboard/charts/BizConnectChart";
 import BizWinChart from "@/components/Dashboard/charts/BizWinChart";
@@ -13,14 +15,46 @@ import {
   useGetMeetingsLast15DaysInvitedCountQuery,
 } from "../../../../store/api/dashboardApi";
 
+type DateRange = "15days" | "3months" | "6months" | "tilldate";
+
+// Helper function to get period label based on date range
+const getPeriodLabel = (range: DateRange): string => {
+  switch (range) {
+    case "15days":
+      return "Fortnight Overview";
+    case "3months":
+      return "Quarterly Overview";
+    case "6months":
+      return "Half-Yearly Overview";
+    case "tilldate":
+      return "All Time Overview";
+    default:
+      return "Fortnight Overview";
+  }
+};
+
 export default function DashboardPage() {
   const [activeChartIndex, setActiveChartIndex] = useState(0);
+  const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+
+  // Get user membership type from Redux store
+  const user = useSelector((state: RootState) => state.auth.user);
+  const membershipType = user?.membershipType?.toLowerCase() || "";
+
+  // Check if user can see Visitor Invitation (only core, flagship, industria)
+  // Membership types can be: "Core Membership", "Flagship", "Industria", "Digital"
+  const canSeeVisitorInvitation =
+    membershipType.includes("core") ||
+    membershipType.includes("flagship") ||
+    membershipType.includes("industria");
 
   // Fetch dashboard data for cards
-  const { data: bizConnectData, isLoading: bizConnectLoading } = useGetReferralsMonthlyCountQuery();
+  const { data: bizConnectData, isLoading: bizConnectLoading} = useGetReferralsMonthlyCountQuery();
   const { data: bizWinData, isLoading: bizWinLoading } = useGetRecordLast15DaysCountsQuery();
   const { data: meetupsData, isLoading: meetupsLoading } = useGetMeetupsMeetingCountQuery();
-  const { data: visitorData, isLoading: visitorLoading } = useGetMeetingsLast15DaysInvitedCountQuery();
+  const { data: visitorData, isLoading: visitorLoading } = useGetMeetingsLast15DaysInvitedCountQuery(undefined, {
+    skip: !canSeeVisitorInvitation, // Skip fetching if user can't see visitor invitation
+  });
 
   // Calculate values for dashboard cards
   const bizConnectCount = bizConnectData?.totalReferralsCount || 0;
@@ -30,11 +64,14 @@ export default function DashboardPage() {
 
   const isLoading = bizConnectLoading || bizWinLoading || meetupsLoading || visitorLoading;
 
-  // Dashboard cards configuration with dynamic data
-  const dashboardCards = [
+  // Get period label for card titles
+  const periodLabel = getPeriodLabel(selectedRange);
+
+  // Dashboard cards configuration with dynamic data and titles
+  const baseDashboardCards = [
     {
       id: "1",
-      title: "Fortnight Overview: BizConnect",
+      title: `${periodLabel}: BizConnect`,
       value: isLoading ? "..." : String(bizConnectCount),
       icon: "/dashboard/dash/bizconnect.svg",
       bgColor: "bg-white",
@@ -42,7 +79,7 @@ export default function DashboardPage() {
     },
     {
       id: "2",
-      title: "Last Fortnight's BizWin",
+      title: `${periodLabel.replace('Overview', '')}: BizWin`,
       value: isLoading ? "..." : bizWinCount,
       icon: "/dashboard/dash/bizwin.svg",
       bgColor: "bg-white",
@@ -50,23 +87,34 @@ export default function DashboardPage() {
     },
     {
       id: "3",
-      title: "Last Fortnight's Meet-ups",
+      title: `${periodLabel.replace('Overview', '')}: Meet-ups`,
       value: isLoading ? "..." : String(meetupsCount),
       icon: "/dashboard/dash/meetup.svg",
       bgColor: "bg-white",
       iconColor: "text-dashboard-gray",
     },
-    {
-      id: "4",
-      title: "Visitor Invitation",
-      value: isLoading ? "..." : String(visitorCount),
-      icon: "/dashboard/dash/invite.svg",
-      bgColor: "bg-white",
-      iconColor: "text-dashboard-gray",
-    },
   ];
 
-  const chartComponents = [BizConnectChart, BizWinChart, MeetupsChart, VisitorInvitationChart];
+  // Conditionally add Visitor Invitation card only for core, flagship, and industria members
+  const dashboardCards = canSeeVisitorInvitation
+    ? [
+        ...baseDashboardCards,
+        {
+          id: "4",
+          title: `Visitor Invitation`,
+          value: isLoading ? "..." : String(visitorCount),
+          icon: "/dashboard/dash/invite.svg",
+          bgColor: "bg-white",
+          iconColor: "text-dashboard-gray",
+        },
+      ]
+    : baseDashboardCards;
+
+  // Conditionally add VisitorInvitationChart only for eligible members
+  const chartComponents = canSeeVisitorInvitation
+    ? [BizConnectChart, BizWinChart, MeetupsChart, VisitorInvitationChart]
+    : [BizConnectChart, BizWinChart, MeetupsChart];
+
   const ActiveChart = chartComponents[activeChartIndex];
 
   return (
@@ -97,7 +145,10 @@ export default function DashboardPage() {
 
         {/* Chart Section */}
         <div className="mt-4 md:mt-6">
-          <ActiveChart />
+          <ActiveChart
+            selectedRange={selectedRange}
+            onRangeChange={setSelectedRange}
+          />
         </div>
       </div>
     </div>

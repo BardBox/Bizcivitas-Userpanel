@@ -20,7 +20,7 @@ export default function BizPulseDetailPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const postId = params?.id as string;
-  const enableCommentReporting = false; // temporarily disable reporting UI
+  const enableCommentReporting = false; 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

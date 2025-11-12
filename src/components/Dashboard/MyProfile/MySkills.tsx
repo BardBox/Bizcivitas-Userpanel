@@ -77,30 +77,21 @@ const MySkills: React.FC<MySkillsProps> = ({
     }
 
     try {
-      const result = await endorseSkill({
+      await endorseSkill({
         skillId: skillId,
         targetUserId: targetUserId!,
       }).unwrap();
 
-      // Update local state only after successful API call
-      // Use the result from API to determine the new state
-      setLocalSkills(prevSkills => 
-        prevSkills.map((skill) => {
-          if (skill._id === skillId) {
-            const newEndorsedState = !endorsedByMe;
-            return {
-              ...skill,
-              endorsedByMe: newEndorsedState,
-              score: newEndorsedState ? skill.score + 1 : Math.max(0, skill.score - 1),
-            };
-          }
-          return skill;
-        })
+      // Success - The RTK Query mutation will automatically invalidate and refetch the profile
+      // which will give us the updated endorsedByMe status from the backend
+      toast.success(
+        endorsedByMe
+          ? "Endorsement removed successfully!"
+          : "Skill endorsed successfully!"
       );
-
-      toast.success(endorsedByMe ? "Endorsement removed!" : "Skill endorsed!");
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to endorse skill");
+      console.error("Endorse skill error:", error);
+      toast.error(error?.data?.message || "Failed to update endorsement");
     }
   };
   // Sync with external prop changes

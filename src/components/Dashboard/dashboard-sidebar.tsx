@@ -222,15 +222,23 @@ export default function DashboardSidebar({
               )}
               {(open || isCollapsed) && (
                 <ul className={`${!isCollapsed ? "ml-4" : ""} space-y-1`}>
-                  {items.map((item) => (
-                    <SidebarLink
-                      key={item.href}
-                      {...item}
-                      isActive={pathname === item.href}
-                      isCollapsed={isCollapsed}
-                      onClick={onNavigate}
-                    />
-                  ))}
+                  {items.map((item) => {
+                    // Check if current path matches or is a child route
+                    // For exact match on home page, only match /feeds exactly
+                    const isActive = item.href === "/feeds"
+                      ? pathname === "/feeds"
+                      : pathname.startsWith(item.href);
+
+                    return (
+                      <SidebarLink
+                        key={item.href}
+                        {...item}
+                        isActive={isActive}
+                        isCollapsed={isCollapsed}
+                        onClick={onNavigate}
+                      />
+                    );
+                  })}
                 </ul>
               )}
             </div>

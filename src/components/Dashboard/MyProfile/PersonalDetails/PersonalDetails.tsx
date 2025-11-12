@@ -52,20 +52,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [newSkillName, setNewSkillName] = useState("");
   const [endorseSkill, { isLoading: isEndorsing }] = useEndorseSkillMutation();
 
-  // Track when last endorsement action occurred to prevent immediate sync overwrite
-  const [lastEndorsementTime, setLastEndorsementTime] = useState<number>(0);
-
-  // Track endorsement state locally for persistence
-  const [endorsementState, setEndorsementState] = useState<
-    Record<string, boolean>
-  >(() => {
-    // Load from localStorage if available
-    if (typeof window !== "undefined" && targetUserId) {
-      const stored = localStorage.getItem(`endorsements_${targetUserId}`);
-      return stored ? JSON.parse(stored) : {};
-    }
-    return {};
-  });
+  // No localStorage needed - API is the source of truth
 
   const defaultValues = {
     hobbiesAndInterests: personalDetails?.hobbiesAndInterests || "",
@@ -85,60 +72,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   // Sync localSkills when mySkillItems prop changes (only when not editing)
   React.useEffect(() => {
     if (!isEditing) {
-      // Skip sync if endorsement just occurred (within 3 seconds)
-      // This prevents the API data from immediately overwriting our optimistic update
-      const timeSinceLastEndorsement = Date.now() - lastEndorsementTime;
-      if (timeSinceLastEndorsement < 3000 && lastEndorsementTime > 0) {
-        return;
-      }
-
-      // Load persisted endorsement state from localStorage
-      const persistedState =
-        typeof window !== "undefined" && targetUserId
-          ? (() => {
-              const stored = localStorage.getItem(`endorsements_${targetUserId}`);
-              return stored ? JSON.parse(stored) : {};
-            })()
-          : {};
-
-      // Merge API data with persisted localStorage state
-      // Prioritize localStorage for endorsedByMe (user's actions should persist)
-      // But use API data for score (server is source of truth for counts)
-      const skillsWithEndorsementStatus = mySkillItems.map((skill) => {
-        const skillId = skill._id;
-
-        // Check if we have a persisted endorsement state for this skill
-        const hasPersistedState = skillId in persistedState;
-
-        // Use persisted state if available, otherwise use API data
-        const isEndorsed = hasPersistedState
-          ? Boolean(persistedState[skillId])
-          : Boolean(skill.endorsedByMe);
-
-        return {
-          ...skill,
-          endorsedByMe: isEndorsed,
-          // Always use API score as it's the source of truth
-          score: skill.score,
-        };
-      });
-
+      // Ensure each skill has the endorsedByMe field properly set
+      const skillsWithEndorsementStatus = mySkillItems.map(skill => ({
+        ...skill,
+        endorsedByMe: Boolean(skill.endorsedByMe) // Ensure it's always boolean
+      }));
       setLocalSkills(skillsWithEndorsementStatus);
-
-      // Only update localStorage if API data has changed OR we don't have persisted state
-      if (typeof window !== "undefined" && targetUserId) {
-        const newState: Record<string, boolean> = {};
-        skillsWithEndorsementStatus.forEach((skill) => {
-          newState[skill._id] = Boolean(skill.endorsedByMe);
-        });
-        setEndorsementState(newState);
-        localStorage.setItem(
-          `endorsements_${targetUserId}`,
-          JSON.stringify(newState)
-        );
-      }
     }
-  }, [isEditing, mySkillItems, targetUserId, lastEndorsementTime]);
+  }, [isEditing, mySkillItems]);
 
   const handleAddSkill = () => {
     if (!newSkillName.trim()) return;
@@ -166,66 +107,82 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       return;
     }
 
-    try {
-      // Store the CURRENT state before making API call
-      const wasEndorsed = Boolean(endorsedByMe);
+    // Get the old score and state BEFORE making the API call
+    const oldScore = localSkills.find(s => s._id === skillId)?.score || 0;
+    const wasEndorsed = endorsedByMe || false;
 
-      // Call API to endorse/un-endorse (API toggles the state)
+    // Optimistic update - toggle state immediately for instant feedback
+    const optimisticEndorsedState = !wasEndorsed;
+    const optimisticScore = optimisticEndorsedState ? oldScore + 1 : Math.max(0, oldScore - 1);
+
+    setLocalSkills(prevSkills =>
+      prevSkills.map((skill) => {
+        if (skill._id === skillId) {
+          return {
+            ...skill,
+            endorsedByMe: optimisticEndorsedState,
+            score: optimisticScore,
+          };
+        }
+        return skill;
+      })
+    );
+
+    try {
       const result = await endorseSkill({
         skillId: skillId,
         targetUserId: targetUserId!,
       }).unwrap();
 
-      // New state is opposite of what it WAS
-      const newEndorsedState = !wasEndorsed;
+      // IMPORTANT: Backend /increment endpoint is a toggle
+      // It increments if not endorsed, decrements if already endorsed
+      // The optimistic state matches what backend did
+      if (result.success && result.data) {
+        const newScore = result.data.score;
 
-      // Mark the time when endorsement occurred to prevent immediate sync overwrite
-      setLastEndorsementTime(Date.now());
+        // Update with the actual score from API
+        // Keep the optimistic endorsedByMe state since backend is a toggle
+        setLocalSkills(prevSkills =>
+          prevSkills.map((skill) => {
+            if (skill._id === skillId) {
+              return {
+                ...skill,
+                // Keep optimistic state - backend toggles, so if we toggled to true, it's true
+                endorsedByMe: optimisticEndorsedState,
+                score: newScore, // Always use score from API
+              };
+            }
+            return skill;
+          })
+        );
 
-      // Update local endorsement state for persistence
-      setEndorsementState((prev) => {
-        const newState = {
-          ...prev,
-          [skillId]: newEndorsedState,
-        };
+        // Show appropriate message based on the toggle
+        toast.success(
+          optimisticEndorsedState
+            ? "Skill endorsed successfully!"
+            : "Endorsement removed successfully!"
+        );
+      } else {
+        // Fallback if API doesn't return expected data
+        toast.success(result.message || "Action completed");
+      }
+    } catch (error: any) {
+      console.error("Endorse skill error:", error);
+      toast.error(error?.data?.message || "Failed to update endorsement");
 
-        // Save to localStorage
-        if (typeof window !== "undefined" && targetUserId) {
-          localStorage.setItem(
-            `endorsements_${targetUserId}`,
-            JSON.stringify(newState)
-          );
-        }
-
-        return newState;
-      });
-
-      // Update local skills state optimistically
-      setLocalSkills((prevSkills) =>
+      // Revert optimistic update on error
+      setLocalSkills(prevSkills =>
         prevSkills.map((skill) => {
           if (skill._id === skillId) {
             return {
               ...skill,
-              endorsedByMe: newEndorsedState,
-              // Calculate score optimistically based on action
-              score: newEndorsedState
-                ? skill.score + 1
-                : Math.max(0, skill.score - 1),
+              endorsedByMe: wasEndorsed,
+              score: oldScore,
             };
           }
           return skill;
         })
       );
-
-      // Show correct toast message based on what it WAS (not what it is now)
-      toast.success(wasEndorsed ? "Endorsement removed!" : "Skill endorsed!");
-    } catch (error: any) {
-      // Handle specific 409 error (trying to remove endorsement when score is 0)
-      if (error?.status === 409) {
-        toast.error("Cannot remove endorsement: skill score is already at 0");
-      } else {
-        toast.error(error?.data?.message || "Failed to endorse skill");
-      }
     }
   };
 

@@ -107,6 +107,9 @@ export default function NotificationDropdown({
 
   const handleNotificationClick = async (notification: UserNotification) => {
     try {
+      // Close dropdown immediately when notification is clicked
+      setIsOpen(false);
+
       await markAsRead(notification._id).unwrap();
 
       // Smart navigation based on notification metadata
@@ -393,10 +396,21 @@ export default function NotificationDropdown({
     );
   }
 
+  const handleToggleDropdown = () => {
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+
+    // Dispatch custom event to close FloatingDrawer when notification dropdown opens
+    if (newIsOpen) {
+      console.log("🔔 Notification dropdown opened - dispatching event");
+      window.dispatchEvent(new Event("notificationDropdownOpened"));
+    }
+  };
+
   return (
     <div className={`relative ${className}`}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggleDropdown}
         className="text-white hover:bg-blue-600 rounded-lg transition-colors relative"
       >
         <Image

@@ -62,7 +62,7 @@ export default function ChatPage() {
   const [deleteMessage] = useDeleteMessageMutation();
   const [markAsRead] = useMarkMessagesAsReadMutation();
 
-  // Combine API messages with Redux messages
+  // Combine API messages with Redux messages (sorted newest to oldest for reverse display)
   const allMessages = [
     ...messages,
     ...reduxMessages.filter(
@@ -70,7 +70,7 @@ export default function ChatPage() {
     ),
   ].sort(
     (a, b) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   // Filter messages by search query
@@ -139,9 +139,15 @@ export default function ChatPage() {
     }
   }, [chatId, currentUserId, markAsRead]);
 
-  // Auto-scroll to bottom on new messages
+  // Only scroll on new real-time messages (not on initial load)
+  const previousMessageCountRef = useRef(0);
+
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll if messages were added (new message received), not on initial load
+    if (allMessages.length > previousMessageCountRef.current && previousMessageCountRef.current > 0) {
+      scrollToBottom();
+    }
+    previousMessageCountRef.current = allMessages.length;
   }, [allMessages]);
 
   const scrollToBottom = () => {
@@ -377,7 +383,7 @@ export default function ChatPage() {
 
       {/* Messages Area with background */}
       <div
-        className="flex-1 overflow-y-auto p-4 space-y-2"
+        className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-2"
         style={{
           backgroundImage: "url('/chatbg.png')",
           backgroundSize: "cover",
@@ -404,11 +410,13 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            {searchQuery.trim() && (
-              <div className="bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-lg mb-4 text-center">
-                {filteredMessages.length} result
-                {filteredMessages.length !== 1 ? "s" : ""} found
-              </div>
+            {/* Anchor for scrolling - appears at bottom visually due to flex-col-reverse */}
+            <div ref={messagesEndRef} />
+
+            {isTyping && (
+              <p className="text-sm italic text-gray-600 px-4 py-2">
+                Someone is typing...
+              </p>
             )}
 
             {filteredMessages.map((message) => {
@@ -454,13 +462,12 @@ export default function ChatPage() {
               );
             })}
 
-            {isTyping && (
-              <p className="text-sm italic text-gray-600 px-4 py-2">
-                Someone is typing...
-              </p>
+            {searchQuery.trim() && (
+              <div className="bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-lg text-center">
+                {filteredMessages.length} result
+                {filteredMessages.length !== 1 ? "s" : ""} found
+              </div>
             )}
-
-            <div ref={messagesEndRef} />
           </>
         )}
       </div>

@@ -7,6 +7,7 @@ interface User {
   lname?: string;
   email?: string;
   avatar?: string;
+  membershipType?: string;
 }
 
 interface AuthState {

@@ -355,22 +355,30 @@ export default function BizWinDetailModal({
                         {/* Avatar */}
                         <div className="flex-shrink-0">
                           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                            {displayUser?.avatar && displayUser.avatar.startsWith('http') ? (
-                              <img
-                                src={displayUser.avatar}
-                                alt={userName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextSibling) {
-                                    (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : null}
+                            {(() => {
+                              const avatarUrl = displayUser?.avatar
+                                ? displayUser.avatar.startsWith('http')
+                                  ? displayUser.avatar
+                                  : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${displayUser.avatar}`
+                                : null;
+
+                              return avatarUrl ? (
+                                <img
+                                  src={avatarUrl}
+                                  alt={userName}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    if (e.currentTarget.nextSibling) {
+                                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                              ) : null;
+                            })()}
                             <div
                               className="w-full h-full flex items-center justify-center bg-green-600 text-white font-bold text-lg"
-                              style={{ display: displayUser?.avatar && displayUser.avatar.startsWith('http') ? 'none' : 'flex' }}
+                              style={{ display: displayUser?.avatar ? 'none' : 'flex' }}
                             >
                               {userInitials}
                             </div>

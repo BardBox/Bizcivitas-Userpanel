@@ -26,6 +26,11 @@ interface DateFilterButton {
   label: string;
 }
 
+interface VisitorInvitationChartProps {
+  selectedRange?: DateRange;
+  onRangeChange?: (range: DateRange) => void;
+}
+
 const dateFilters: DateFilterButton[] = [
   { id: "15days", label: "15 Days" },
   { id: "3months", label: "3 Months" },
@@ -33,8 +38,20 @@ const dateFilters: DateFilterButton[] = [
   { id: "tilldate", label: "Till Date" },
 ];
 
-export default function VisitorInvitationChart() {
-  const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+export default function VisitorInvitationChart({
+  selectedRange: externalRange,
+  onRangeChange,
+}: VisitorInvitationChartProps = {}) {
+  const [internalRange, setInternalRange] = useState<DateRange>("15days");
+  const selectedRange = externalRange || internalRange;
+
+  const handleRangeChange = (range: DateRange) => {
+    if (onRangeChange) {
+      onRangeChange(range);
+    } else {
+      setInternalRange(range);
+    }
+  };
 
   // Conditional API calls based on selected range
   const {
@@ -144,7 +161,7 @@ export default function VisitorInvitationChart() {
           {dateFilters.map((filter) => (
             <button
               key={filter.id}
-              onClick={() => setSelectedRange(filter.id)}
+              onClick={() => handleRangeChange(filter.id)}
               className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
                 selectedRange === filter.id
                   ? "bg-[#4A62AD] text-white shadow-md"

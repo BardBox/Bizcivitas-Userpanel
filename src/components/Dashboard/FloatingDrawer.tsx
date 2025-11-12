@@ -53,6 +53,18 @@ export default function FloatingDrawer({
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [onToggle, manuallyToggled]);
 
+  // Listen for notification dropdown open event to close drawer
+  useEffect(() => {
+    const handleNotificationOpen = () => {
+      setIsOpen(false);
+      setManuallyToggled(true); // Mark as manually toggled to prevent auto-reopening
+      onToggle?.(false);
+    };
+
+    window.addEventListener("notificationDropdownOpened", handleNotificationOpen);
+    return () => window.removeEventListener("notificationDropdownOpened", handleNotificationOpen);
+  }, [onToggle]);
+
   const toggleDrawer = () => {
     const newState = !isOpen;
     setIsOpen(newState);

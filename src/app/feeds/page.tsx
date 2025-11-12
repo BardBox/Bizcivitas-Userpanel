@@ -47,6 +47,16 @@ export default function DashboardPage() {
     return () => window.removeEventListener("resize", updateDrawer);
   }, []);
 
+  // Listen for notification dropdown open event to close drawer
+  useEffect(() => {
+    const handleNotificationOpen = () => {
+      setIsDrawerOpen(false);
+    };
+
+    window.addEventListener("notificationDropdownOpened", handleNotificationOpen);
+    return () => window.removeEventListener("notificationDropdownOpened", handleNotificationOpen);
+  }, []);
+
   // Handler to change tab and update URL
   const handleTabChange = useCallback((tab: "all" | "bizpulse" | "bizhub") => {
     setActiveTab(tab);
@@ -147,7 +157,7 @@ export default function DashboardPage() {
         }`}
         style={{ height: "100vh", overflow: "auto" }}
       >
-        <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-4">
+        <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-3">
           {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
             <button

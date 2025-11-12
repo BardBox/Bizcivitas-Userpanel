@@ -19,12 +19,18 @@ import {
 } from "../../../../store/api/dashboardApi";
 import { Plus } from "lucide-react";
 import CreateMeetupForm from "../forms/CreateMeetupForm";
+import MeetupsDetailModal from "./MeetupsDetailModal";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
 interface DateFilterButton {
   id: DateRange;
   label: string;
+}
+
+interface MeetupsChartProps {
+  selectedRange?: DateRange;
+  onRangeChange?: (range: DateRange) => void;
 }
 
 const dateFilters: DateFilterButton[] = [
@@ -34,9 +40,23 @@ const dateFilters: DateFilterButton[] = [
   { id: "tilldate", label: "Till Date" },
 ];
 
-export default function MeetupsChart() {
-  const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+export default function MeetupsChart({
+  selectedRange: externalRange,
+  onRangeChange,
+}: MeetupsChartProps = {}) {
+  const [internalRange, setInternalRange] = useState<DateRange>("15days");
+  const selectedRange = externalRange || internalRange;
+
+  const handleRangeChange = (range: DateRange) => {
+    if (onRangeChange) {
+      onRangeChange(range);
+    } else {
+      setInternalRange(range);
+    }
+  };
+
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Conditional API calls based on selected range
   const {
@@ -145,7 +165,7 @@ export default function MeetupsChart() {
           {dateFilters.map((filter) => (
             <button
               key={filter.id}
-              onClick={() => setSelectedRange(filter.id)}
+              onClick={() => handleRangeChange(filter.id)}
               className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
                 selectedRange === filter.id
                   ? "bg-[#4A62AD] text-white shadow-md"
@@ -167,7 +187,10 @@ export default function MeetupsChart() {
 
       {/* Stats Card */}
       <div className="mb-8">
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 px-6 py-4 rounded-xl border border-purple-200">
+        <div
+          onClick={() => setIsDetailModalOpen(true)}
+          className="bg-gradient-to-br from-purple-50 to-purple-100 px-6 py-4 rounded-xl border border-purple-200 cursor-pointer hover:shadow-lg transition-shadow"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-purple-700 mb-1 font-medium">Total Meetups</p>
@@ -257,6 +280,8 @@ export default function MeetupsChart() {
                   radius={[8, 8, 0, 0]}
                   name="Meetups"
                   maxBarSize={60}
+                  onClick={() => setIsDetailModalOpen(true)}
+                  cursor="pointer"
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -269,6 +294,13 @@ export default function MeetupsChart() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSuccess={() => window.location.reload()}
+      />
+
+      {/* Meetups Detail Modal */}
+      <MeetupsDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        initialDateRange={selectedRange}
       />
     </div>
   );

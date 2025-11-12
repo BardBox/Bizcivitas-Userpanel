@@ -454,13 +454,24 @@ export default function BizHubPostDetail() {
           className="text-gray-700 leading-relaxed"
         />
 
-        {/* Stats Display (Read-only) */}
+        {/* Interactive Stats Display */}
         <div className="flex items-center gap-6 pt-4 border-t text-gray-700">
-          {/* Likes Count */}
-          <div className="flex items-center gap-2">
-            <ThumbsUp className="w-5 h-5 text-gray-400" />
+          {/* Like Button */}
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-2 transition-all hover:scale-105 ${
+              post.isLiked
+                ? "text-blue-600"
+                : "text-gray-700 hover:text-blue-600"
+            }`}
+          >
+            <ThumbsUp
+              className={`w-5 h-5 ${
+                post.isLiked ? "fill-current" : ""
+              }`}
+            />
             <span className="font-medium">{post.likeCount || 0} Likes</span>
-          </div>
+          </button>
           {/* Comments Count */}
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-gray-400" />

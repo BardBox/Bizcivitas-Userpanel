@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { WallFeedPost, PollOption } from "@/types/bizpulse.types";
 import { bizpulseApi } from "@/services/bizpulseApi";
 import { Calendar, ThumbsUp, X, Activity } from "lucide-react";
@@ -125,18 +126,23 @@ export default function PollCard({
   return (
     <div
       data-poll-id={post._id}
-      className="bg-white rounded-lg shadow-sm border border-black overflow-hidden h-[420px] flex flex-col hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 transition-all duration-300">
+      className="bg-gray-50 rounded-lg shadow-sm border border-gray-300 overflow-hidden h-full flex flex-col hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 transition-all duration-300">
       {/* Poll Header - Compact */}
       <div className="p-2 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500">
-              <Activity className="w-3 h-3 text-white" />
+          <Link
+            href="/feeds/biz-pulse?category=pulse-polls"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-2 cursor-pointer group">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500 group-hover:bg-green-600 transition-colors">
+                <Activity className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full border border-green-200 group-hover:bg-green-200 group-hover:scale-105 transition-all">
+                Pulse Polls
+              </span>
             </div>
-            <span className="text-xs font-semibold text-gray-700">
-              Pulse Poll
-            </span>
-          </div>
+          </Link>
           <span className="text-xs text-gray-500">
             {post.timeAgo || new Date(post.createdAt).toLocaleDateString()}
           </span>

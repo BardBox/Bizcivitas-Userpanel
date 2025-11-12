@@ -10,8 +10,9 @@
 
 import { useEffect, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "next/navigation";
 import { RootState, AppDispatch } from "../../../../store";
-import { fetchPosts } from "../../../../store/postsSlice";
+import { fetchPosts, setActiveCategory } from "../../../../store/postsSlice";
 import TabNavigation from "@/components/Dashboard/TabNavigation";
 import SearchBar from "@/components/Dashboard/SearchBar";
 import PostsGrid from "@/components/Dashboard/PostsGrid";
@@ -20,11 +21,20 @@ import NotificationPromptBanner from "@/components/Dashboard/NotificationPromptB
 
 export default function BizPulsePage() {
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
   const { activeCategory, searchQuery, loading, error, posts } = useSelector(
     (state: RootState) => state.posts
   );
   const showNotificationBanner = false; // temporarily hide the notifications banner
   const [highlightedPollId, setHighlightedPollId] = useState<string | null>(null);
+
+  // Handle URL category parameter
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl && categoryFromUrl !== activeCategory) {
+      dispatch(setActiveCategory(categoryFromUrl as any));
+    }
+  }, [searchParams, dispatch, activeCategory]);
 
   // ✅ PERFORMANCE FIX: Memoize fetch function to prevent unnecessary effect triggers
   const handleFetchPosts = useCallback(() => {

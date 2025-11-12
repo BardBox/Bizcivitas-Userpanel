@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ThumbsUp, MessageSquare, Activity, Network } from "lucide-react";
 import Link from "next/link";
+import Avatar from "@/components/ui/Avatar";
 
 interface PostCardProps {
   title: string;
@@ -42,7 +43,6 @@ export default function PostCard({
   onLike,
   isLiked: initialIsLiked = false,
 }: PostCardProps) {
-  const [avatarError, setAvatarError] = useState(false);
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(stats.likes || 0);
 
@@ -135,15 +135,14 @@ export default function PostCard({
         <div className="p-4 sm:p-5 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 flex-1 min-w-0">
-              {/* Display user avatar or fallback to favicon for admin */}
-              <div className="relative w-10 h-10 flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
-                <Image
-                  src={avatarError || !author.avatar ? "/favicon.ico" : author.avatar}
+              {/* Display user avatar - favicon for BizPulse, actual avatar for BizHub */}
+              <div className="relative flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+                <Avatar
+                  src={sourceType === "bizpulse" ? "/favicon.ico" : (author.avatar || undefined)}
                   alt={author.name}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover bg-gray-100 group-hover:shadow-lg transition-shadow duration-300"
-                  onError={() => setAvatarError(true)}
+                  size="md"
+                  fallbackText={author.name}
+                  showMembershipBorder={false}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -191,17 +190,26 @@ export default function PostCard({
       )}
 
       <div className="p-4 sm:p-5">
-        {/* Category/Type Tag */}
+        {/* Category/Type Tag - Clickable */}
         {tagValue && (
           <div className="mb-3">
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 group-hover:shadow-md ${getCategoryColor(
-                tagValue,
-                sourceType
-              )}`}
+            <Link
+              href={
+                isBizPulse
+                  ? `/feeds/biz-pulse?category=${tagValue}`
+                  : `/feeds/biz-hub?type=${tagValue}`
+              }
+              onClick={(e) => e.stopPropagation()}
             >
-              {getCategoryLabel(tagValue)}
-            </span>
+              <span
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer hover:scale-110 hover:shadow-lg ${getCategoryColor(
+                  tagValue,
+                  sourceType
+                )}`}
+              >
+                {getCategoryLabel(tagValue)}
+              </span>
+            </Link>
           </div>
         )}
 

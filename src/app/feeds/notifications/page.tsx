@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import toast from "react-hot-toast";
 import {
   useGetAllNotificationsQuery,
@@ -340,41 +339,52 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-5">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Notifications
+              </h1>
+            </div>
             <button
               onClick={() => router.back()}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-all"
             >
-              ✕
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <button
               onClick={() => setActiveTab("all")}
-              className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-3 px-2 text-sm font-semibold border-b-2 transition-all ${
                 activeTab === "all"
                   ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              All ({data?.totalCount || 0})
+              All <span className="ml-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full">{data?.totalCount || 0}</span>
             </button>
             <button
               onClick={() => setActiveTab("unread")}
-              className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-3 px-2 text-sm font-semibold border-b-2 transition-all ${
                 activeTab === "unread"
                   ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              Unread ({data?.unreadCount || 0})
+              Unread <span className={`ml-1 text-xs px-2 py-0.5 rounded-full ${activeTab === "unread" ? "bg-blue-100 text-blue-700" : "bg-gray-100"}`}>{data?.unreadCount || 0}</span>
             </button>
           </div>
         </div>
@@ -382,25 +392,25 @@ export default function NotificationsPage() {
 
       {/* Actions Bar */}
       {displayNotifications.length > 0 && (
-        <div className="bg-white border-b">
+        <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm font-medium text-gray-600">
                 {displayNotifications.length} notification
                 {displayNotifications.length !== 1 ? "s" : ""}
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 {data && data.unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="text-sm text-blue-600 hover:text-blue-800"
+                    className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
                   >
-                    Mark all as read
+                    Mark all read
                   </button>
                 )}
                 <button
                   onClick={handleDeleteAll}
-                  className="text-sm text-red-600 hover:text-red-800"
+                  className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
                 >
                   Delete all
                 </button>
@@ -411,38 +421,44 @@ export default function NotificationsPage() {
       )}
 
       {/* Notifications List */}
-      <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="max-w-4xl mx-auto px-4 py-6">
         {isLoading ? (
-          <div className="bg-white rounded-lg p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading notifications...</p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 text-center shadow-md">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600"></div>
+            <p className="mt-4 text-gray-600 font-medium">Loading notifications...</p>
           </div>
         ) : displayNotifications.length === 0 ? (
-          <div className="bg-white rounded-lg p-12 text-center">
-            <div className="text-6xl mb-4">🔔</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-16 text-center shadow-md">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-purple-50 mb-6">
+              <div className="text-5xl">🔔</div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
               {activeTab === "unread"
-                ? "No unread notifications"
-                : "No notifications"}
+                ? "All caught up!"
+                : "No notifications yet"}
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 max-w-sm mx-auto">
               {activeTab === "unread"
-                ? "All caught up! Check back later for updates."
-                : "You'll see notifications here when you get them."}
+                ? "You've read all your notifications. Great job staying on top of things!"
+                : "We'll notify you when something important happens."}
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {displayNotifications.map((notification) => (
               <div
                 key={notification._id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`bg-white rounded-lg p-4 cursor-pointer hover:shadow-md transition-all group ${
-                  notification.isUnread ? "border-l-4 border-blue-600" : ""
+                className={`bg-white/80 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group border ${
+                  notification.isUnread
+                    ? "border-l-4 border-l-blue-500 border-r border-t border-b border-blue-100 shadow-md"
+                    : "border-gray-200 hover:border-blue-200"
                 }`}
               >
                 <div className="flex items-start space-x-3">
-                  <div className="text-2xl flex-shrink-0">
+                  <div className={`text-2xl flex-shrink-0 p-2 rounded-lg ${
+                    notification.isUnread ? "bg-blue-50" : "bg-gray-50"
+                  }`}>
                     {getNotificationIcon(notification.type)}
                   </div>
 
@@ -450,7 +466,7 @@ export default function NotificationsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <h4
-                          className={`text-sm font-medium ${
+                          className={`text-sm font-semibold leading-tight ${
                             notification.isUnread
                               ? "text-gray-900"
                               : "text-gray-700"
@@ -459,7 +475,7 @@ export default function NotificationsPage() {
                           {notification.messageTitle}
                         </h4>
                         <p
-                          className={`text-sm mt-1 ${
+                          className={`text-sm mt-1.5 line-clamp-2 ${
                             notification.isUnread
                               ? "text-gray-700"
                               : "text-gray-600"
@@ -467,12 +483,12 @@ export default function NotificationsPage() {
                         >
                           {notification.messageBody}
                         </p>
-                        <div className="flex items-center mt-2 space-x-3">
-                          <span className="text-xs text-gray-400">
+                        <div className="flex items-center mt-2.5 space-x-3">
+                          <span className="text-xs font-medium text-gray-500">
                             {formatTimeAgo(notification.createdAt)}
                           </span>
                           {notification.isUnread && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
                               New
                             </span>
                           )}
@@ -483,11 +499,11 @@ export default function NotificationsPage() {
                         onClick={(e) =>
                           handleDeleteNotification(notification._id, e)
                         }
-                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity ml-2"
+                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all ml-2"
                         title="Delete notification"
                       >
                         <svg
-                          className="w-5 h-5"
+                          className="w-4 h-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"

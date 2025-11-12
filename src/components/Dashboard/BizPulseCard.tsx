@@ -77,10 +77,10 @@ export default function BizPulseCard({
         <div className="p-3 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              {/* Display user avatar with proper circular shape */}
+              {/* Display favicon for all BizPulse posts */}
               <div className="flex-shrink-0">
                 <Avatar
-                  src={author.avatar || undefined}
+                  src="/favicon.ico"
                   alt={author.name}
                   size="sm"
                   fallbackText={author.name}

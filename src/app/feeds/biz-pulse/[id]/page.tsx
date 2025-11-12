@@ -424,14 +424,26 @@ export default function BizPulseDetailPage() {
       <div dangerouslySetInnerHTML={{ __html: post.content }} />
     </div>
 
-    {/* Stats Display (Read-only) */}
+    {/* Interactive Stats Display */}
     <div className="py-6 border-y border-gray-200">
       <div className="flex items-center gap-6 text-gray-700">
-        {/* Likes Count */}
-        <div className="flex items-center space-x-2">
-          <ThumbsUp className="w-5 h-5 text-gray-400" />
+        {/* Like Button */}
+        <button
+          onClick={handleLike}
+          disabled={isLiking}
+          className={`flex items-center space-x-2 transition-all hover:scale-105 ${
+            isLiked
+              ? "text-blue-600"
+              : "text-gray-700 hover:text-blue-600"
+          } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          <ThumbsUp
+            className={`w-5 h-5 ${
+              isLiked ? "fill-current" : ""
+            }`}
+          />
           <span className="font-medium">{post.stats.likes || 0} Likes</span>
-        </div>
+        </button>
         {/* Comments Count */}
         <div className="flex items-center space-x-2">
           <MessageSquare className="w-5 h-5 text-gray-400" />

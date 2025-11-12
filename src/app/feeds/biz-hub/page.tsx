@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import BizHubTabNavigation from "@/components/Dashboard/BizHubTabNavigation";
 import BizHubPostCard from "@/components/Dashboard/Bizhub/BizHubPostCard";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import {
   fetchBizHubPosts,
   setSearchQuery,
   likeBizHubPost,
+  setActiveCategory,
   type BizHubCategory,
 } from "../../../../store/bizhubSlice";
 
@@ -28,9 +30,18 @@ const categoryDescriptions: Record<BizHubCategory, string> = {
 
 export default function BizHubPage() {
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
   const { filteredPosts, activeCategory, searchQuery, loading, error } =
     useSelector((state: RootState) => state.bizhub);
   const userId = useSelector((state: RootState) => state.auth.user?._id);
+
+  // Handle URL type parameter
+  useEffect(() => {
+    const typeFromUrl = searchParams.get('type');
+    if (typeFromUrl && typeFromUrl !== activeCategory) {
+      dispatch(setActiveCategory(typeFromUrl as BizHubCategory));
+    }
+  }, [searchParams, dispatch, activeCategory]);
 
   useEffect(() => {
     dispatch(fetchBizHubPosts());

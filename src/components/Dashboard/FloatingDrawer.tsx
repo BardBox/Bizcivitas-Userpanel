@@ -62,7 +62,6 @@ export default function FloatingDrawer({
 
   return (
     <>
-    
       <button
         onClick={toggleDrawer}
         className={`fixed top-1/2 transform -translate-y-1/2 z-50 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-l-lg shadow-lg transition-all duration-300 ${
@@ -183,7 +182,7 @@ export default function FloatingDrawer({
                         <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
                           <div className="flex-shrink-0">
                             <Avatar
-                              src={post.author.name.toLowerCase().includes("admin") || !post.author.avatar || post.author.avatar === "/favicon.ico" ? "/favicon.ico" : post.author.avatar}
+                              src={post.postSource === "bizpulse" ? "/favicon.ico" : (post.author.avatar || undefined)}
                               alt={post.author.name}
                               size="xs"
                               fallbackText={post.author.name}

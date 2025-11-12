@@ -83,7 +83,21 @@ export default function EventsPage() {
       });
     }
 
-    return filtered;
+    // Sort events by date (create a new array to avoid mutation)
+    const sorted = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.eventDate).getTime();
+      const dateB = new Date(b.eventDate).getTime();
+
+      // If showing past events, show most recent first (descending)
+      if (activeFilter === "past") {
+        return dateB - dateA;
+      }
+
+      // For "all" and "upcoming", show nearest events first (ascending)
+      return dateA - dateB;
+    });
+
+    return sorted;
   }, [events, searchQuery, activeFilter, priceFilter]);
 
   // Loading state

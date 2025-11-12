@@ -9,6 +9,7 @@ import { useLogoutMutation } from "@/store/api";
 import { useLazySearchUsersQuery } from "@/store/api/connectionsApi";
 import { bizpulseApi } from "../../services/bizpulseApi";
 import { bizhubApi } from "../../services/bizhubApi";
+import { useGetAllEventsQuery } from "../../../store/api/eventsApi.latest";
 
 type SearchCategory = "members" | "posts" | "events";
 
@@ -25,6 +26,16 @@ interface SearchPost {
   category?: string;
 }
 
+interface SearchEvent {
+  id: string;
+  title: string;
+  description: string;
+  eventDate: string;
+  venue: string;
+  isFree: boolean;
+  accessMode: string;
+}
+
 export default function DashboardHeader() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<SearchCategory>("members");
@@ -33,6 +44,8 @@ export default function DashboardHeader() {
   const [searchUsers, { data: searchResults, isLoading: isSearching }] = useLazySearchUsersQuery();
   const [postResults, setPostResults] = useState<SearchPost[]>([]);
   const [isSearchingPosts, setIsSearchingPosts] = useState(false);
+  const [eventResults, setEventResults] = useState<SearchEvent[]>([]);
+  const { data: allEvents = [] } = useGetAllEventsQuery();
   const searchRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
   const showNotificationIcon = true; // Enable notifications icon

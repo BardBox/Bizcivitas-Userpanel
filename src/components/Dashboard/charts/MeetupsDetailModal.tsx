@@ -216,16 +216,16 @@ export default function MeetupsDetailModal({
         {/* Records List */}
         <div className="overflow-y-auto max-h-[55vh] p-6 bg-gray-50 pb-8">
           {loading ? (
-            <div key="loading" className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
             </div>
           ) : meetupsData.length === 0 ? (
-            <div key="empty" className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500">
               <p className="text-lg font-medium">No meetups found</p>
               <p className="text-sm">Try selecting a different date range</p>
             </div>
           ) : (
-            <div key="data" className="space-y-4 pb-4">
+            <div className="space-y-4 pb-4">
               {meetupsData.map((meetup) => {
                 // Get creator details
                 const creator = meetup.creatorDetails ||
@@ -267,6 +267,7 @@ export default function MeetupsDetailModal({
                         <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200">
                           {avatarUrl ? (
                             <img
+                              key={`avatar-img-${meetup._id}`}
                               src={avatarUrl}
                               alt={creatorName}
                               className="w-full h-full object-cover"
@@ -277,13 +278,14 @@ export default function MeetupsDetailModal({
                                 }
                               }}
                             />
-                          ) : null}
-                          <div
-                            className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-bold text-lg"
-                            style={{ display: avatarUrl ? 'none' : 'flex' }}
-                          >
-                            {creatorInitials}
-                          </div>
+                          ) : (
+                            <div
+                              key={`avatar-initials-${meetup._id}`}
+                              className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-bold text-lg"
+                            >
+                              {creatorInitials}
+                            </div>
+                          )}
                         </div>
                       </div>
 

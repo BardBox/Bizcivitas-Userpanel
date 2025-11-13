@@ -12,7 +12,7 @@ import { bizpulseApi } from "../../services/bizpulseApi";
 import { bizhubApi } from "../../services/bizhubApi";
 import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
 import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
-import { Activity, Network, Sparkles } from "lucide-react";
+import { Activity, Network, Sparkles, Filter } from "lucide-react";
 
 // removed unused dummy utilities
 
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const updateDrawer = () => setIsDrawerOpen(window.innerWidth >= 768);
@@ -157,42 +158,59 @@ export default function DashboardPage() {
         style={{ height: "100vh", overflow: "auto" }}
       >
         <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-3">
-          {/* Tab Navigation */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2">
+          {/* Filter Toggle Button */}
+          <div className="flex justify-end">
             <button
-              onClick={() => handleTabChange("all")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
-                activeTab === "all"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                showFilters
                   ? "bg-orange-500 text-white shadow-md"
-                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200"
               }`}
             >
-              <Sparkles className="w-5 h-5" />
-              <span className="font-medium">All</span>
-            </button>
-            <button
-              onClick={() => handleTabChange("bizpulse")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
-                activeTab === "bizpulse"
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Activity className="w-5 h-5" />
-              <span className="font-medium">BizPulse</span>
-            </button>
-            <button
-              onClick={() => handleTabChange("bizhub")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
-                activeTab === "bizhub"
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Network className="w-5 h-5" />
-              <span className="font-medium">BizHub</span>
+              <Filter className="w-5 h-5" />
+              <span className="font-medium">Filter</span>
             </button>
           </div>
+
+          {/* Tab Navigation - Show/Hide based on showFilters */}
+          {showFilters && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2 animate-in slide-in-from-top duration-200">
+              <button
+                onClick={() => handleTabChange("all")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
+                  activeTab === "all"
+                    ? "bg-orange-500 text-white shadow-md"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Sparkles className="w-5 h-5" />
+                <span className="font-medium">All</span>
+              </button>
+              <button
+                onClick={() => handleTabChange("bizpulse")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
+                  activeTab === "bizpulse"
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Activity className="w-5 h-5" />
+                <span className="font-medium">BizPulse</span>
+              </button>
+              <button
+                onClick={() => handleTabChange("bizhub")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
+                  activeTab === "bizhub"
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Network className="w-5 h-5" />
+                <span className="font-medium">BizHub</span>
+              </button>
+            </div>
+          )}
 
           <InfiniteScroll
             dataLength={posts.length}

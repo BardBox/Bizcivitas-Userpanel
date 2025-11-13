@@ -9,7 +9,7 @@ import ProfileSection from "./ProfileSection";
 
 const Arrow = ({ collapsed }: { collapsed: boolean }) => (
   <svg
-    className="w-4 h-4 text-orange-500 group-hover:text-white"
+    className="w-4 h-4 text-white"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -165,7 +165,7 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`h-full fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 ${
+      className={`h-full fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${
         isCollapsed ? "w-24" : "w-72"
       }`}
     >
@@ -191,7 +191,7 @@ export default function DashboardSidebar({
       {!isMobile && (
         <button
           onClick={handleToggle}
-          className={`absolute top-24 -right-4 z-50 transition-all duration-300 bg-white border-2 border-orange-400 hover:bg-orange-400 text-orange-500 hover:text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
+          className={`absolute top-1/2 -translate-y-1/2 -right-4 z-50 transition-all duration-300 bg-orange-500  text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           <Arrow collapsed={isCollapsed} />
@@ -199,7 +199,7 @@ export default function DashboardSidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 pb-6">
+      <nav className="flex-1 overflow-y-auto px-4 pb-6 scrollbar-thin">
         {navigationSections.map(({ title, items }, i) => {
           const open = expanded.has(title);
           return (

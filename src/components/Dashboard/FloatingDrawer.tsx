@@ -65,6 +65,18 @@ export default function FloatingDrawer({
     return () => window.removeEventListener("notificationDropdownOpened", handleNotificationOpen);
   }, [onToggle]);
 
+  // Listen for user dropdown open event to close drawer
+  useEffect(() => {
+    const handleUserDropdownOpen = () => {
+      setIsOpen(false);
+      setManuallyToggled(true); // Mark as manually toggled to prevent auto-reopening
+      onToggle?.(false);
+    };
+
+    window.addEventListener("userDropdownOpened", handleUserDropdownOpen);
+    return () => window.removeEventListener("userDropdownOpened", handleUserDropdownOpen);
+  }, [onToggle]);
+
   const toggleDrawer = () => {
     const newState = !isOpen;
     setIsOpen(newState);
@@ -98,7 +110,7 @@ export default function FloatingDrawer({
 
       {/* Floating Drawer */}
       <div
-        className={`fixed top-18 w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
+        className={`fixed top-20 w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

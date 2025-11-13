@@ -53,10 +53,12 @@ interface UserNotification {
 
 interface NotificationDropdownProps {
   className?: string;
+  iconPath?: string;
 }
 
 export default function NotificationDropdown({
   className = "",
+  iconPath = "/dashboard/sidebaricons/notification.svg",
 }: NotificationDropdownProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -87,6 +89,18 @@ export default function NotificationDropdown({
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Close notification dropdown when user dropdown opens
+  useEffect(() => {
+    const handleUserDropdownOpened = () => {
+      setIsOpen(false);
+    };
+
+    window.addEventListener("userDropdownOpened", handleUserDropdownOpened);
+    return () => {
+      window.removeEventListener("userDropdownOpened", handleUserDropdownOpened);
+    };
   }, []);
 
   // ✅ PERFORMANCE FIX: Refetch when dropdown opens (user-initiated action)
@@ -349,33 +363,84 @@ export default function NotificationDropdown({
   };
 
   const getNotificationIcon = (type: string) => {
+    // Return icon background color classes and SVG icon based on type
     switch (type) {
       case "event":
-        return "📅";
+        return {
+          bg: "bg-purple-100",
+          text: "text-purple-600",
+          svg: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          )
+        };
       case "message":
-        return "💬";
+        return {
+          bg: "bg-blue-100",
+          text: "text-blue-600",
+          svg: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          )
+        };
       case "membership":
-        return "👑";
+        return {
+          bg: "bg-yellow-100",
+          text: "text-yellow-600",
+          svg: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          )
+        };
       case "system":
-        return "⚙️";
+        return {
+          bg: "bg-gray-100",
+          text: "text-gray-600",
+          svg: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )
+        };
+      case "connection":
+        return {
+          bg: "bg-green-100",
+          text: "text-green-600",
+          svg: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          )
+        };
       default:
-        return "🔔";
+        return {
+          bg: "bg-blue-100",
+          text: "text-blue-600",
+          svg: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          )
+        };
     }
   };
 
   if (!isMounted) {
     return (
       <button
-        className={`text-white hover:bg-blue-600 rounded-lg transition-colors ${className}`}
+        className={`flex items-center justify-center transition-transform hover:scale-110 bg-transparent ${className}`}
+        style={{ padding: "8px" }}
       >
         <Image
-          src="/dashboard/sidebaricons/notification.svg"
-          width={60}
-          height={60}
+          src={iconPath}
+          width={40}
+          height={40}
           alt="Notification Icon"
-          className="object-contain"
-          
-
+          style={{ width: "40px", height: "40px", display: "block", filter: "brightness(0) saturate(100%) invert(64%) sepia(98%) saturate(378%) hue-rotate(86deg) brightness(118%) contrast(119%)" }}
         />
       </button>
     );
@@ -395,15 +460,15 @@ export default function NotificationDropdown({
     <div className={`relative ${className}`}>
       <button
         onClick={handleToggleDropdown}
-        className="text-white hover:bg-blue-600 rounded-lg transition-colors relative"
+        className="flex items-center justify-center transition-transform hover:scale-110 relative bg-transparent"
+        style={{ padding: "8px" }}
       >
         <Image
-          src="/dashboard/sidebaricons/notification.svg"
-          width={24}
-          height={24}
+          src={iconPath}
+          width={40}
+          height={40}
           alt="Notification Icon"
-          className="object-contain"
-          style={{ width: "60px", height: "60px" }}
+          style={{ width: "40px", height: "40px", display: "block", filter: "brightness(0) saturate(100%) invert(64%) sepia(98%) saturate(378%) hue-rotate(86deg) brightness(118%) contrast(119%)" }}
         />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -442,49 +507,63 @@ export default function NotificationDropdown({
             </div>
 
             {/* Notifications list */}
-            <div className="max-h-64 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto">
               {isLoading ? (
-                <div className="p-4 text-center text-gray-500">
-                  Loading notifications...
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Loading notifications...</p>
                 </div>
               ) : notifications.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  <div className="text-4xl mb-2">🔔</div>
-                  <p>No new notifications</p>
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">No new notifications</p>
+                  <p className="text-xs text-gray-500 mt-1">You're all caught up!</p>
                 </div>
               ) : (
-                notifications.map((notification) => (
-                  <div
-                    key={notification._id}
-                    className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer group"
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="text-lg">
-                        {getNotificationIcon(notification.type)}
+                notifications.map((notification) => {
+                  const iconData = getNotificationIcon(notification.type);
+                  return (
+                    <div
+                      key={notification._id}
+                      className="p-3 border-b border-gray-100 hover:bg-blue-50/50 cursor-pointer group transition-colors"
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-full ${iconData.bg} flex items-center justify-center flex-shrink-0`}>
+                          <span className={iconData.text}>
+                            {iconData.svg}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {notification.messageTitle}
+                          </p>
+                          <p className="text-sm text-gray-600 line-clamp-2 mt-0.5">
+                            {notification.messageBody}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1.5">
+                            {formatTimeAgo(notification.createdAt)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) =>
+                            handleDeleteNotification(notification._id, e)
+                          }
+                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full hover:bg-red-100 flex items-center justify-center text-gray-400 hover:text-red-600 transition-all"
+                          title="Delete notification"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {notification.messageTitle}
-                        </p>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {notification.messageBody}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatTimeAgo(notification.createdAt)}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) =>
-                          handleDeleteNotification(notification._id, e)
-                        }
-                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                      >
-                        ✕
-                      </button>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 

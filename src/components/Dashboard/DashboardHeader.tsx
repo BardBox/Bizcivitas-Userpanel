@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Search, User as UserIcon, Building2, MapPin, X, ChevronDown } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
+import UserProfileDropdown from "@/components/UserProfileDropdown";
 import { useLogoutMutation } from "@/store/api";
 import { useLazySearchUsersQuery } from "@/store/api/connectionsApi";
 import { bizpulseApi } from "../../services/bizpulseApi";
@@ -541,33 +542,11 @@ export default function DashboardHeader() {
           </div>
         </form>
         <div className="flex items-center ml-4">
-          {/* Notification Dropdown (disabled) */}
-          {showNotificationIcon && <NotificationDropdown />}
+          {/* Notification Dropdown - Updated with new icon */}
+          {showNotificationIcon && <NotificationDropdown iconPath="/notification.svg" />}
 
-          {/* Settings Gear Icon */}
-          {showNotificationIcon && (
-            <button
-              onClick={() => router.push("/feeds/account-settings")}
-              className="text-white hover:bg-blue-600 rounded-lg transition-colors ml-2"
-            >
-              <Image
-                src="/dashboard/sidebaricons/settings.svg"
-                width={24}
-                height={24}
-                alt="Settings Icon"
-                className="object-contain"
-                style={{ width: "60px", height: "60px" }}
-              />
-            </button>
-          )} 
-          {/* Logout Button */}
-          <button
-            className="ml-4 px-4 py-2 bg-red-500 text-white rounded-lg  transition-colors"
-            onClick={handleLogout}
-            disabled={logoutLoading}
-          >
-            {logoutLoading ? "Logging out..." : "Logout"}
-          </button>
+          {/* User Profile Dropdown - Settings & Logout */}
+          {showNotificationIcon && <UserProfileDropdown className="ml-2" />}
         </div>
       </div>
     </header>

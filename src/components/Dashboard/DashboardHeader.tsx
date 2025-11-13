@@ -180,8 +180,17 @@ export default function DashboardHeader() {
     if (searchQuery.trim().length >= 2) {
       const timer = setTimeout(() => {
         if (searchCategory === "members") {
-          // Search by keyword - backend should search across name, company, etc.
-          searchUsers({ keyword: searchQuery.trim() });
+          // Split search query to handle full names (fname + lname)
+          const nameParts = searchQuery.trim().split(/\s+/);
+          const searchParams: any = { keyword: searchQuery.trim() };
+
+          // If there are 2+ words, also search by fname and lname
+          if (nameParts.length >= 2) {
+            searchParams.fname = nameParts[0];
+            searchParams.lname = nameParts.slice(1).join(' ');
+          }
+
+          searchUsers(searchParams);
         } else if (searchCategory === "posts") {
           searchPosts(searchQuery.trim());
         }
@@ -214,11 +223,20 @@ export default function DashboardHeader() {
     e.preventDefault();
     if (searchQuery.trim().length >= 2) {
       if (searchCategory === "members") {
-        // Search by keyword (name) and companyName
-        searchUsers({
+        // Split search query to handle full names (fname + lname)
+        const nameParts = searchQuery.trim().split(/\s+/);
+        const searchParams: any = {
           keyword: searchQuery.trim(),
           companyName: searchQuery.trim()
-        });
+        };
+
+        // If there are 2+ words, also search by fname and lname
+        if (nameParts.length >= 2) {
+          searchParams.fname = nameParts[0];
+          searchParams.lname = nameParts.slice(1).join(' ');
+        }
+
+        searchUsers(searchParams);
       } else if (searchCategory === "posts") {
         searchPosts(searchQuery.trim());
       }
@@ -316,81 +334,85 @@ export default function DashboardHeader() {
       
         {/* Center Search */}
         <div className="flex-1 flex justify-center">
-          <form onSubmit={handleSearch} className={`w-full max-w-4xl transition-opacity duration-300 ${showSearchBar ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className="flex gap-2">
-            {/* Category Dropdown */}
-            <div className="relative" ref={categoryRef}>
-              <button
-                type="button"
-                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-              >
-                <CategoryIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-gray-900 font-medium">{selectedCategory?.label}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
+          <form onSubmit={handleSearch} className={`relative max-w-2xl transition-opacity duration-300 ${showSearchBar ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Combined Search Bar with Pill Design */}
+            <div className="relative flex items-center bg-white rounded-full border border-gray-300 shadow-sm hover:shadow-md transition-shadow" ref={searchRef}>
+              {/* Category Dropdown Inside Pill */}
+              <div className="relative" ref={categoryRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  className="flex items-center gap-2 px-5 py-2.5 hover:bg-gray-50 rounded-l-full transition-colors border-r border-gray-300"
+                >
+                  <span className={`font-medium text-sm ${
+                    searchCategory === "members" ? "text-blue-600" :
+                    searchCategory === "posts" ? "text-green-600" :
+                    searchCategory === "events" ? "text-purple-600" :
+                    "text-gray-900"
+                  }`}>{selectedCategory?.label}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                </button>
 
-              {/* Category Dropdown Menu */}
-              {isCategoryDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-[100]" onClick={() => setIsCategoryDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border z-[110] py-1">
-                    {categories.map((category) => {
-                      const Icon = category.icon;
-                      return (
-                        <button
-                          key={category.value}
-                          type="button"
-                          onClick={() => handleCategoryChange(category.value)}
-                          className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
-                            searchCategory === category.value ? "bg-blue-50 text-blue-600" : "text-gray-900"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="font-medium">{category.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
+                {/* Category Dropdown Menu */}
+                {isCategoryDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[100]" onClick={() => setIsCategoryDropdownOpen(false)} />
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-[110] py-1">
+                      {categories.map((category) => {
+                        const Icon = category.icon;
+                        return (
+                          <button
+                            key={category.value}
+                            type="button"
+                            onClick={() => handleCategoryChange(category.value)}
+                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
+                              searchCategory === category.value ? "bg-blue-50 text-blue-600" : "text-gray-900"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            <span className="font-medium">{category.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Search Icon */}
+              <div className="pl-3">
+                <Search className="w-5 h-5 text-gray-500" />
+              </div>
+
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder={`Search for ${selectedCategory?.label.toLowerCase()}`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-3 py-2.5 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none text-sm"
+              />
+
+              {/* Clear Button */}
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="pr-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={18} />
+                </button>
               )}
             </div>
 
-            {/* Search Input */}
-            <div className="relative flex-1" ref={searchRef}>
-              <input
-                type="text"
-                placeholder={`Search ${selectedCategory?.label.toLowerCase()}...`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 h-full py-2 rounded-lg text-gray-900 placeholder-gray-500 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 border border-gray-200"
-              />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={18} />
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <Search size={20} />
-                </button>
-              </div>
+            {/* Search Results Dropdown - Outside the pill */}
+            {isSearchOpen && (
+              <>
+                {/* Backdrop */}
+                <div className="fixed inset-0 z-30" onClick={() => setIsSearchOpen(false)} />
 
-              {/* Search Results Dropdown */}
-              {isSearchOpen && (
-                <>
-                  {/* Backdrop */}
-                  <div className="fixed inset-0 z-30" onClick={() => setIsSearchOpen(false)} />
-
-                  {/* Results */}
-                  <div className="absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border z-40 max-h-96 overflow-y-auto">
+                {/* Results */}
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-lg shadow-lg border z-40 max-h-96 overflow-y-auto">
                     {/* POSTS SEARCH RESULTS */}
                     {searchCategory === "posts" && isSearchingPosts ? (
                       <div className="p-4 text-center text-gray-500">
@@ -569,9 +591,7 @@ export default function DashboardHeader() {
                   </div>
                 </>
               )}
-            </div>
-          </div>
-        </form>
+          </form>
         </div>
 
         {/* Right Side Icons */}

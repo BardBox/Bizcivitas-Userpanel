@@ -134,13 +134,13 @@ export const connectionsApi = baseApi.injectEndpoints({
         params: params || {},
       }),
       providesTags: ["Connections"],
-      transformResponse: (response: any): User[] => {
+      transformResponse: (response: any, meta, arg): User[] => {
         console.log('Search API Response:', response);
 
         // Handle the response structure from /users/search
         // Response format: { success: boolean, data: User[] }
         if (response?.data && Array.isArray(response.data)) {
-          const users = response.data.map((user: any) => {
+          let users = response.data.map((user: any) => {
             // Process avatar URL to ensure it's a full URL
             let avatarUrl = user.avatar || '';
             if (avatarUrl && !avatarUrl.startsWith('http')) {
@@ -168,6 +168,19 @@ export const connectionsApi = baseApi.injectEndpoints({
               connectionStatus: 'not-connected',
             };
           });
+
+          // Filter to only show users where the keyword matches name fields
+          const keyword = (arg as UserSearchParams)?.keyword?.toLowerCase().trim();
+          if (keyword) {
+            users = users.filter((user: User) => {
+              const fullName = `${user.fname} ${user.lname}`.toLowerCase();
+              const fname = user.fname.toLowerCase();
+              const lname = user.lname.toLowerCase();
+
+              // Only return users where keyword matches name
+              return fullName.includes(keyword) || fname.includes(keyword) || lname.includes(keyword);
+            });
+          }
 
           console.log('Transformed users:', users);
           return users;

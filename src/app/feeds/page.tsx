@@ -149,17 +149,16 @@ export default function DashboardPage() {
   }, [activeTab, allPosts]);
 
   return (
-    <div className="relative min-h-screen ">
+    <div className="relative min-h-screen">
       {/* Main content */}
       <div
         className={`transition-all duration-300 no-scrollbar ${
           isDrawerOpen ? "xl:mr-80 lg:mr-20" : "mr-0"
         }`}
-        style={{ height: "100vh", overflow: "auto" }}
       >
-        <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto md:p-6 space-y-3">
+        <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto  space-y-3">
           {/* Filter Toggle Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-12">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -217,7 +216,7 @@ export default function DashboardPage() {
             next={() => {}}
             hasMore={hasMore}
             loader={
-              <div className="text-center py-8 flex justify-center items-center">
+              <div className="text-center flex justify-center items-center">
                 {loading && (
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
                 )}

@@ -31,6 +31,7 @@ export default function FloatingDrawer({
   const [isOpen, setIsOpen] = useState(false);
   const [manuallyToggled, setManuallyToggled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   // Set initial state based on screen size
   useEffect(() => {
@@ -52,6 +53,26 @@ export default function FloatingDrawer({
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [onToggle, manuallyToggled]);
+
+  // Listen for header visibility changes
+  useEffect(() => {
+    const handleScroll = (event: Event) => {
+      const customEvent = event as CustomEvent<{ scrollY: number; lastScrollY: number }>;
+      const { scrollY: currentScrollY, lastScrollY } = customEvent.detail;
+
+      // Show at middle when scrolling up or near top
+      if (currentScrollY < lastScrollY || currentScrollY < 50) {
+        setIsHeaderVisible(true);
+      }
+      // Move to top when scrolling down past threshold
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHeaderVisible(false);
+      }
+    };
+
+    window.addEventListener("mainScroll", handleScroll);
+    return () => window.removeEventListener("mainScroll", handleScroll);
+  }, []);
 
   // Listen for notification dropdown open event to close drawer
   useEffect(() => {
@@ -88,7 +109,7 @@ export default function FloatingDrawer({
     <>
       <button
         onClick={toggleDrawer}
-        className={`fixed top-1/2 transform -translate-y-1/2 z-50 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-l-lg shadow-lg transition-all duration-300 ${
+        className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-l-lg shadow-lg transition-all duration-300 ${
           isOpen ? "right-96" : "right-0"
         }`}
         title={isOpen ? "Close drawer" : "Open drawer"}
@@ -110,8 +131,10 @@ export default function FloatingDrawer({
 
       {/* Floating Drawer */}
       <div
-        className={`fixed top-20 w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
+        className={`fixed w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
           isOpen ? "translate-x-0" : "translate-x-full"
+        } ${
+          isHeaderVisible ? "top-20" : "top-4"
         }`}
       >
         <div className="h-full overflow-y-auto custom-scrollbar">

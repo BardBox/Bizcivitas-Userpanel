@@ -53,7 +53,7 @@ const ProfileSection = memo(function ProfileSection({
   const getGreeting = () => {
     if (!isMounted || isLoading) return "Hello!"; // Consistent render until data loads
     if (!user) return "Hello!";
-    return `${getUserFullName(user)}!`;
+    return `${getUserFullName(user)}`;
   };
 
   const getUserInitials = () => {

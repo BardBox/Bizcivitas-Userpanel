@@ -73,16 +73,21 @@ export default function UserProfileDropdown({
   if (!isMounted) {
     return (
       <button
-        className={`flex items-center justify-center transition-transform hover:scale-110 bg-transparent ${className}`}
-        style={{ padding: "8px" }}
+        className={`flex items-center justify-center transition-colors hover:bg-gray-200 rounded-lg p-2 ${className}`}
       >
-        <Image
-          src="/user.svg"
-          width={40}
-          height={40}
-          alt="User Profile Icon"
-          style={{ width: "40px", height: "40px", display: "block", filter: "brightness(0) saturate(100%) invert(64%) sepia(98%) saturate(378%) hue-rotate(86deg) brightness(118%) contrast(119%)" }}
-        />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="#1db212"
+          strokeWidth={2.5}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
+        </svg>
       </button>
     );
   }
@@ -91,16 +96,21 @@ export default function UserProfileDropdown({
     <div className={`relative ${className}`}>
       <button
         onClick={handleToggleDropdown}
-        className="flex items-center justify-center transition-transform hover:scale-110 relative bg-transparent"
-        style={{ padding: "8px" }}
+        className="flex items-center justify-center transition-colors hover:bg-gray-200 relative rounded-lg p-2"
       >
-        <Image
-          src="/user.svg"
-          width={40}
-          height={40}
-          alt="User Profile Icon"
-          style={{ width: "40px", height: "40px", display: "block", filter: "brightness(0) saturate(100%) invert(64%) sepia(98%) saturate(378%) hue-rotate(86deg) brightness(118%) contrast(119%)" }}
-        />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="#1db212"
+          strokeWidth={2.5}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
+        </svg>
       </button>
 
       {isOpen && (

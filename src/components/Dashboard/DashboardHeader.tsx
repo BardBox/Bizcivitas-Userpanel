@@ -282,10 +282,41 @@ export default function DashboardHeader() {
     window.location.href = "/";
   };
 
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+
+  // Auto-hide header on scroll
+  useEffect(() => {
+    const handleScroll = (event: Event) => {
+      const customEvent = event as CustomEvent<{ scrollY: number; lastScrollY: number }>;
+      const { scrollY: currentScrollY, lastScrollY } = customEvent.detail;
+
+      // Show header when scrolling up or near top
+      if (currentScrollY < lastScrollY || currentScrollY < 50) {
+        setIsHeaderVisible(true);
+      }
+      // Hide header when scrolling down past threshold
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHeaderVisible(false);
+        setShowSearchBar(false); // Close search bar when hiding header
+      }
+    };
+
+    window.addEventListener("mainScroll", handleScroll);
+    return () => window.removeEventListener("mainScroll", handleScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-20 bg-blue-500 shadow-sm">
+    <header
+      className={`fixed top-0 left-0 right-0 z-10 bg-[#FCFFF7] shadow-sm transition-transform duration-300 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       <div className="flex items-center justify-between px-6 py-3">
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+      
+        {/* Center Search */}
+        <div className="flex-1 flex justify-center">
+          <form onSubmit={handleSearch} className={`w-full max-w-4xl transition-opacity duration-300 ${showSearchBar ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="flex gap-2">
             {/* Category Dropdown */}
             <div className="relative" ref={categoryRef}>
@@ -302,8 +333,8 @@ export default function DashboardHeader() {
               {/* Category Dropdown Menu */}
               {isCategoryDropdownOpen && (
                 <>
-                  <div className="fixed inset-0 z-30" onClick={() => setIsCategoryDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border z-40 py-1">
+                  <div className="fixed inset-0 z-[100]" onClick={() => setIsCategoryDropdownOpen(false)} />
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border z-[110] py-1">
                     {categories.map((category) => {
                       const Icon = category.icon;
                       return (
@@ -332,7 +363,7 @@ export default function DashboardHeader() {
                 placeholder={`Search ${selectedCategory?.label.toLowerCase()}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-20 py-2 rounded-lg text-gray-900 placeholder-gray-500 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 border border-gray-200"
+                className="w-full pl-4 h-full py-2 rounded-lg text-gray-900 placeholder-gray-500 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 border border-gray-200"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                 {searchQuery && (
@@ -541,12 +572,24 @@ export default function DashboardHeader() {
             </div>
           </div>
         </form>
-        <div className="flex items-center ml-4">
+        </div>
+
+        {/* Right Side Icons */}
+        <div className="flex items-center gap-3">
+          {/* Search Icon Button */}
+          <button
+            type="button"
+            onClick={() => setShowSearchBar(!showSearchBar)}
+            className="flex items-center justify-center transition-colors hover:bg-gray-200 rounded-lg p-2"
+          >
+            <Search className="w-6 h-6" style={{ color: '#1db212' }} strokeWidth={2.5} />
+          </button>
+
           {/* Notification Dropdown - Updated with new icon */}
           {showNotificationIcon && <NotificationDropdown iconPath="/notification.svg" />}
 
           {/* User Profile Dropdown - Settings & Logout */}
-          {showNotificationIcon && <UserProfileDropdown className="ml-2" />}
+          {showNotificationIcon && <UserProfileDropdown className="" />}
         </div>
       </div>
     </header>

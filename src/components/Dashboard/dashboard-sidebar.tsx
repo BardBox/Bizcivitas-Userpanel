@@ -191,7 +191,7 @@ export default function DashboardSidebar({
       {!isMobile && (
         <button
           onClick={handleToggle}
-          className={`absolute top-1/2 -translate-y-1/2 -right-4 z-50 transition-all duration-300 bg-orange-500  text-white p-2 rounded-full shadow-md hover:shadow-lg group`}
+          className="absolute top-1/2 -translate-y-1/2 -right-10 z-50 transition-all duration-300 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-r-lg shadow-lg"
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           <Arrow collapsed={isCollapsed} />

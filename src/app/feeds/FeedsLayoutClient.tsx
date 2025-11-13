@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef, useEffect } from "react";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import NavigationLoader from "@/components/NavigationLoader";
@@ -12,11 +12,35 @@ export default function FeedsLayoutClient({
   children: React.ReactNode;
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const mainElement = mainRef.current;
+    if (!mainElement) return;
+
+    const handleScroll = () => {
+      const currentScrollY = mainElement.scrollTop;
+
+      // Dispatch custom event with scroll data
+      window.dispatchEvent(new CustomEvent('mainScroll', {
+        detail: {
+          scrollY: currentScrollY,
+          lastScrollY: lastScrollY.current,
+        }
+      }));
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    mainElement.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainElement.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="flex h-screen bg-dashboard-primary overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block relative">
+      <div className="hidden md:block relative z-30">
         <DashboardSidebar isMobile={false} />
       </div>
 
@@ -55,7 +79,7 @@ export default function FeedsLayoutClient({
         onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
       >
         <DashboardHeader />
-        <main className="p-3 md:p-6 relative flex-1 overflow-y-auto">
+        <main ref={mainRef} className="relative flex-1 overflow-y-auto pt-16">
           <NavigationLoader />
           <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
         </main>

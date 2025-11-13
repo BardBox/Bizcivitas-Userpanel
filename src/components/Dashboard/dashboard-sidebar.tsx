@@ -199,7 +199,7 @@ export default function DashboardSidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 pb-6 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto px-2 pb-6 scrollbar-thin">
         {navigationSections.map(({ title, items }, i) => {
           const open = expanded.has(title);
           return (
@@ -221,7 +221,7 @@ export default function DashboardSidebar({
                 </button>
               )}
               {(open || isCollapsed) && (
-                <ul className={`${!isCollapsed ? "ml-4" : ""} space-y-1`}>
+                <ul className={`${!isCollapsed ? "ml-4" : ""} space-y-2`}>
                   {items.map((item) => {
                     // Check if current path matches or is a child route
                     // For exact match on home page, only match /feeds exactly

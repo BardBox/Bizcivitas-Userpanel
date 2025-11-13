@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import NavigationLoader from "@/components/NavigationLoader";
@@ -14,6 +15,11 @@ export default function FeedsLayoutClient({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
+  const pathname = usePathname();
+
+  // Pages that should NOT have padding (main feed pages)
+  const noPaddingPages = ['/feeds'];
+  const shouldHavePadding = !noPaddingPages.includes(pathname);
 
   useEffect(() => {
     const mainElement = mainRef.current;
@@ -79,7 +85,7 @@ export default function FeedsLayoutClient({
         onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
       >
         <DashboardHeader />
-        <main ref={mainRef} className="relative flex-1 overflow-y-auto pt-16">
+        <main ref={mainRef} className={`relative flex-1 overflow-y-auto pt-16 ${shouldHavePadding ? 'p-12' : ''}`}>
           <NavigationLoader />
           <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
         </main>

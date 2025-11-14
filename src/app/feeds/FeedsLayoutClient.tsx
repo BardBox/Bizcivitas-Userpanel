@@ -18,7 +18,7 @@ export default function FeedsLayoutClient({
   const pathname = usePathname();
 
   // Pages that should NOT have padding (main feed pages)
-  const noPaddingPages = ['/feeds'];
+  const noPaddingPages = ["/feeds"];
   const shouldHavePadding = !noPaddingPages.includes(pathname);
 
   useEffect(() => {
@@ -29,55 +29,68 @@ export default function FeedsLayoutClient({
       const currentScrollY = mainElement.scrollTop;
 
       // Dispatch custom event with scroll data
-      window.dispatchEvent(new CustomEvent('mainScroll', {
-        detail: {
-          scrollY: currentScrollY,
-          lastScrollY: lastScrollY.current,
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("mainScroll", {
+          detail: {
+            scrollY: currentScrollY,
+            lastScrollY: lastScrollY.current,
+          },
+        })
+      );
 
       lastScrollY.current = currentScrollY;
     };
 
-    mainElement.addEventListener('scroll', handleScroll, { passive: true });
-    return () => mainElement.removeEventListener('scroll', handleScroll);
+    mainElement.addEventListener("scroll", handleScroll, { passive: true });
+    return () => mainElement.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Listen for hamburger menu toggle from header
+  useEffect(() => {
+    const handleToggleMobileMenu = () => {
+      setIsMobileMenuOpen((prev) => {
+        const newState = !prev;
+        // Notify header about menu state change
+        window.dispatchEvent(
+          new CustomEvent("mobileMenuStateChanged", {
+            detail: { isOpen: newState },
+          })
+        );
+        return newState;
+      });
+    };
+
+    window.addEventListener("toggleMobileMenu", handleToggleMobileMenu);
+    return () =>
+      window.removeEventListener("toggleMobileMenu", handleToggleMobileMenu);
+  }, []);
+
+  // Notify header of initial state and changes
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("mobileMenuStateChanged", {
+        detail: { isOpen: isMobileMenuOpen },
+      })
+    );
+  }, [isMobileMenuOpen]);
+
   return (
-    <div className="flex h-screen bg-dashboard-primary overflow-hidden">
+    <div className="flex h-screen bg-dashboard-primary overflow-hidden px-4 md:p-0">
       {/* Desktop Sidebar */}
       <div className="hidden md:block relative z-30">
         <DashboardSidebar isMobile={false} />
       </div>
 
-      {/* Mobile Drawer Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
       {/* Mobile Drawer */}
-      <div
-        className={`fixed left-0 top-0 h-full w-64 bg-dashboard-primary z-50 transform transition-transform duration-300 ease-in-out md:hidden
-        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Menu</h2>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 hover:bg-dashboard-primary rounded-lg"
-          >
-            <X className="h-5 w-5" />
-          </button>
+      {isMobileMenuOpen && (
+        <div className="fixed left-0 top-16 h-full w-64 bg-dashboard-primary z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0">
+          <DashboardSidebar
+            onNavigate={() => setIsMobileMenuOpen(false)}
+            onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            isMobile={true}
+          />
         </div>
-        <DashboardSidebar
-          onNavigate={() => setIsMobileMenuOpen(false)}
-          onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          isMobile={true}
-        />
-      </div>
+      )}
 
       {/* Main Content */}
       <div
@@ -85,14 +98,19 @@ export default function FeedsLayoutClient({
         onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
       >
         <DashboardHeader />
-        <main ref={mainRef} className={`relative flex-1 overflow-y-auto pt-16 ${shouldHavePadding ? 'p-12' : ''}`}>
+        <main
+          ref={mainRef}
+          className={`relative flex-1 overflow-y-auto pt-16 ${
+            shouldHavePadding ? "p-12" : ""
+          }`}
+        >
           <NavigationLoader />
           <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
         </main>
       </div>
 
-      {/* Mobile Floating Button */}
-      {!isMobileMenuOpen && (
+      {/* Mobile Floating Button - Hidden since hamburger is now in header */}
+      {/* {!isMobileMenuOpen && (
         <button
           onClick={() => setIsMobileMenuOpen(true)}
           className="fixed top-20 left-4 md:hidden bg-orange-400 hover:bg-orange-500 text-white p-3 rounded-full shadow-lg transition-all duration-300 z-30"
@@ -111,7 +129,7 @@ export default function FeedsLayoutClient({
             />
           </svg>
         </button>
-      )}
+      )} */}
     </div>
   );
 }

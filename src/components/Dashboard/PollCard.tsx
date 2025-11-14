@@ -277,7 +277,20 @@ export default function PollCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <button
-              onClick={() => onLike?.(post._id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("[PollCard] Like button clicked for post:", post._id);
+                console.log("[PollCard] Current isLiked state:", post.isLiked);
+                console.log("[PollCard] Current likeCount:", post.likeCount);
+                console.log("[PollCard] onLike callback exists?", typeof onLike, onLike);
+                if (onLike) {
+                  console.log("[PollCard] Calling onLike callback...");
+                  onLike(post._id);
+                  console.log("[PollCard] onLike callback called");
+                } else {
+                  console.error("[PollCard] onLike callback is undefined!");
+                }
+              }}
               className={`flex items-center space-x-1 text-xs transition-colors ${
                 post.isLiked
                   ? "text-blue-600 font-medium"

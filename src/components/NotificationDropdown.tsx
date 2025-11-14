@@ -33,7 +33,7 @@ interface UserNotification {
   metadata?: {
     postId?: string;
     wallFeedId?: string;
-    postType?: 'bizhub' | 'bizpulse';
+    postType?: "bizhub" | "bizpulse";
     eventIds?: string[];
     meetingIds?: string[];
     meetupIds?: string[];
@@ -99,7 +99,10 @@ export default function NotificationDropdown({
 
     window.addEventListener("userDropdownOpened", handleUserDropdownOpened);
     return () => {
-      window.removeEventListener("userDropdownOpened", handleUserDropdownOpened);
+      window.removeEventListener(
+        "userDropdownOpened",
+        handleUserDropdownOpened
+      );
     };
   }, []);
 
@@ -139,11 +142,15 @@ export default function NotificationDropdown({
           messageBody.includes("pulse poll") ||
           messageTitle.includes("pulse poll");
 
-        if (isPoll && (notification.metadata.postId || notification.metadata.wallFeedId)) {
+        if (
+          isPoll &&
+          (notification.metadata.postId || notification.metadata.wallFeedId)
+        ) {
           // Store poll ID in session storage
-          const pollId = notification.metadata.postId || notification.metadata.wallFeedId;
+          const pollId =
+            notification.metadata.postId || notification.metadata.wallFeedId;
           if (pollId) {
-            sessionStorage.setItem('highlightPollId', pollId);
+            sessionStorage.setItem("highlightPollId", pollId);
           }
           router.push("/feeds/biz-pulse");
           return;
@@ -152,16 +159,17 @@ export default function NotificationDropdown({
         // Post notification - use backend-provided postType
         if (notification.metadata.postId) {
           // Use postType from backend, default to bizhub if not specified
-          const postType = notification.metadata.postType || 'bizhub';
+          const postType = notification.metadata.postType || "bizhub";
           const postId = notification.metadata.postId;
 
-          const url = postType === 'bizpulse'
-            ? `/feeds/biz-pulse/${postId}`
-            : `/feeds/biz-hub/${postId}`;
+          const url =
+            postType === "bizpulse"
+              ? `/feeds/biz-pulse/${postId}`
+              : `/feeds/biz-hub/${postId}`;
 
           // If notification is about a comment, store scroll intent in session storage
           if (notification.metadata.commentId) {
-            sessionStorage.setItem('scrollToComments', 'true');
+            sessionStorage.setItem("scrollToComments", "true");
           }
 
           router.push(url);
@@ -171,16 +179,17 @@ export default function NotificationDropdown({
         // Wall Feed notification - use backend-provided postType
         if (notification.metadata.wallFeedId) {
           // Use postType from backend, default to bizhub if not specified
-          const postType = notification.metadata.postType || 'bizhub';
+          const postType = notification.metadata.postType || "bizhub";
           const wallFeedId = notification.metadata.wallFeedId;
 
-          const url = postType === 'bizpulse'
-            ? `/feeds/biz-pulse/${wallFeedId}`
-            : `/feeds/biz-hub/${wallFeedId}`;
+          const url =
+            postType === "bizpulse"
+              ? `/feeds/biz-pulse/${wallFeedId}`
+              : `/feeds/biz-hub/${wallFeedId}`;
 
           // If notification is about a comment, store scroll intent in session storage
           if (notification.metadata.commentId) {
-            sessionStorage.setItem('scrollToComments', 'true');
+            sessionStorage.setItem("scrollToComments", "true");
           }
 
           router.push(url);
@@ -188,26 +197,37 @@ export default function NotificationDropdown({
         }
 
         // Event notification - navigate to event detail
-        if (notification.metadata.eventIds && notification.metadata.eventIds.length > 0) {
+        if (
+          notification.metadata.eventIds &&
+          notification.metadata.eventIds.length > 0
+        ) {
           router.push(`/feeds/events/${notification.metadata.eventIds[0]}`);
           return;
         }
 
         // Meeting notification - navigate to meetings
-        if (notification.metadata.meetingIds && notification.metadata.meetingIds.length > 0) {
+        if (
+          notification.metadata.meetingIds &&
+          notification.metadata.meetingIds.length > 0
+        ) {
           router.push(`/feeds/meetings`);
           return;
         }
 
         // Meetup notification - navigate to meetups
-        if (notification.metadata.meetupIds && notification.metadata.meetupIds.length > 0) {
+        if (
+          notification.metadata.meetupIds &&
+          notification.metadata.meetupIds.length > 0
+        ) {
           router.push(`/feeds/meetups`);
           return;
         }
 
         // Match/Suggestion notification - navigate to connections page with user ID from member directory
         if (notification.metadata.suggestedUserId) {
-          router.push(`/feeds/connections/${notification.metadata.suggestedUserId}?from=member-directory`);
+          router.push(
+            `/feeds/connections/${notification.metadata.suggestedUserId}?from=member-directory`
+          );
           return;
         }
 
@@ -243,14 +263,21 @@ export default function NotificationDropdown({
       setIsOpen(false);
 
       // Connection notifications - Navigate to Requests > Received tab
-      if (notification.type === "connection" || messageBody.includes("connection request")) {
+      if (
+        notification.type === "connection" ||
+        messageBody.includes("connection request")
+      ) {
         router.push("/feeds/connections?tab=requests&subtab=received");
         return;
       }
 
       // Message/Chat notifications - Navigate to specific chat if senderId exists
-      if (notification.type === "message" || notification.type === "chat" ||
-          messageBody.includes("message") || messageBody.includes("chat")) {
+      if (
+        notification.type === "message" ||
+        notification.type === "chat" ||
+        messageBody.includes("message") ||
+        messageBody.includes("chat")
+      ) {
         // If metadata has senderId or chatId, open that specific chat
         if (notification.metadata?.senderId) {
           router.push(`/feeds/messages/${notification.metadata.senderId}`);
@@ -270,7 +297,10 @@ export default function NotificationDropdown({
       }
 
       // Membership notifications
-      if (notification.type === "membership" || notification.type === "upgrade") {
+      if (
+        notification.type === "membership" ||
+        notification.type === "upgrade"
+      ) {
         router.push("/feeds/membership");
         return;
       }
@@ -282,7 +312,10 @@ export default function NotificationDropdown({
       }
 
       // Referral notifications
-      if (messageBody.includes("referral") || messageBody.includes("referral slip")) {
+      if (
+        messageBody.includes("referral") ||
+        messageBody.includes("referral slip")
+      ) {
         router.push("/feeds/dash"); // Dashboard with referral chart
         return;
       }
@@ -370,83 +403,138 @@ export default function NotificationDropdown({
           bg: "bg-purple-100",
           text: "text-purple-600",
           svg: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
-          )
+          ),
         };
       case "message":
         return {
           bg: "bg-blue-100",
           text: "text-blue-600",
           svg: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
             </svg>
-          )
+          ),
         };
       case "membership":
         return {
           bg: "bg-yellow-100",
           text: "text-yellow-600",
           svg: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+              />
             </svg>
-          )
+          ),
         };
       case "system":
         return {
           bg: "bg-gray-100",
           text: "text-gray-600",
           svg: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
-          )
+          ),
         };
       case "connection":
         return {
           bg: "bg-green-100",
           text: "text-green-600",
           svg: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
             </svg>
-          )
+          ),
         };
       default:
         return {
           bg: "bg-blue-100",
           text: "text-blue-600",
           svg: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
             </svg>
-          )
+          ),
         };
     }
   };
 
   if (!isMounted) {
     return (
-      <button
-        className={`flex items-center justify-center transition-colors hover:bg-gray-200 rounded-lg p-2 ${className}`}
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="#1db212"
-          strokeWidth={2.5}
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
+      <button className={className}>
+        <img
+          src="/Notification.svg"
+          alt="Notifications"
+          className="!w-[32px] !h-[32px] transition-all hover:drop-shadow-lg"
+        />
       </button>
     );
   }
@@ -463,23 +551,12 @@ export default function NotificationDropdown({
 
   return (
     <div className={`relative ${className}`}>
-      <button
-        onClick={handleToggleDropdown}
-        className="flex items-center justify-center transition-colors hover:bg-gray-200 relative rounded-lg p-2"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="#1db212"
-          strokeWidth={2.5}
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
+      <button onClick={handleToggleDropdown} className="relative">
+        <img
+          src="/Notification.svg"
+          alt="Notifications"
+          className="!w-[32px] !h-[32px] transition-all hover:drop-shadow-lg"
+        />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -521,17 +598,33 @@ export default function NotificationDropdown({
               {isLoading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Loading notifications...</p>
+                  <p className="text-sm text-gray-500">
+                    Loading notifications...
+                  </p>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    <svg
+                      className="w-8 h-8 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">No new notifications</p>
-                  <p className="text-xs text-gray-500 mt-1">You're all caught up!</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    No new notifications
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    You're all caught up!
+                  </p>
                 </div>
               ) : (
                 notifications.map((notification) => {
@@ -543,10 +636,10 @@ export default function NotificationDropdown({
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-full ${iconData.bg} flex items-center justify-center flex-shrink-0`}>
-                          <span className={iconData.text}>
-                            {iconData.svg}
-                          </span>
+                        <div
+                          className={`w-10 h-10 rounded-full ${iconData.bg} flex items-center justify-center flex-shrink-0`}
+                        >
+                          <span className={iconData.text}>{iconData.svg}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">
@@ -566,8 +659,18 @@ export default function NotificationDropdown({
                           className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full hover:bg-red-100 flex items-center justify-center text-gray-400 hover:text-red-600 transition-all"
                           title="Delete notification"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </div>

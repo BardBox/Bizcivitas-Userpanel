@@ -14,7 +14,7 @@ const Arrow = ({ collapsed }: { collapsed: boolean }) => (
     stroke="currentColor"
     viewBox="0 0 24 24"
   >
-    <path
+    <path 
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
@@ -169,18 +169,20 @@ export default function DashboardSidebar({
         isCollapsed ? "w-24" : "w-72"
       }`}
     >
-      {/* Logo */}
-      <div className="pt-6 px-5 mb-6 flex justify-center">
-        <Link href="/feeds" className="transition-transform hover:scale-105">
-          <Image
-            src={isCollapsed ? "/favicon.ico" : "/bizcivitas.svg"}
-            width={150}
-            height={40}
-            alt="BizCivitas"
-            priority
-          />
-        </Link>
-      </div>
+      {/* Logo - Hidden on mobile */}
+      {!isMobile && (
+        <div className="pt-6 px-5 mb-6 flex justify-center">
+          <Link href="/feeds" className="transition-transform hover:scale-105">
+            <Image
+              src={isCollapsed ? "/favicon.ico" : "/bizcivitas.svg"}
+              width={150}
+              height={40}
+              alt="BizCivitas"
+              priority
+            />
+          </Link>
+        </div>
+      )}
 
       {/* Profile */}
       <ProfileSection isCollapsed={isCollapsed} onNavigate={onNavigate} />
@@ -225,9 +227,10 @@ export default function DashboardSidebar({
                   {items.map((item) => {
                     // Check if current path matches or is a child route
                     // For exact match on home page, only match /feeds exactly
-                    const isActive = item.href === "/feeds"
-                      ? pathname === "/feeds"
-                      : pathname.startsWith(item.href);
+                    const isActive =
+                      item.href === "/feeds"
+                        ? pathname === "/feeds"
+                        : pathname.startsWith(item.href);
 
                     return (
                       <SidebarLink

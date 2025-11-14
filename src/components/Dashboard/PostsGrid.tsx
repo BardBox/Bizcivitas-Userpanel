@@ -21,14 +21,17 @@ const PostsGrid = memo(function PostsGrid() {
   const user = useSelector((state: RootState) => state.auth.user);
   const currentUserId = user?._id || user?.id || "";
 
-  // Debug log user info
-  useEffect(() => {
-  }, [user, currentUserId]);
-
   // Handle like functionality
   const handleLike = async (postId: string) => {
+    console.log("[PostsGrid] ========== HANDLELIKE FUNCTION CALLED ==========");
+    console.log("[PostsGrid] Liking post:", postId);
+    console.log("[PostsGrid] Current user ID:", currentUserId);
+
     try {
+      console.log("[PostsGrid] Calling bizpulseApi.likeWallFeed...");
       const response = await bizpulseApi.likeWallFeed(postId);
+      console.log("[PostsGrid] Like response:", response);
+
       if (response.success && response.data) {
         // Find existing post to preserve any missing data
         const existingPost = filteredPosts.find((p) => p.id === postId);
@@ -37,6 +40,9 @@ const PostsGrid = memo(function PostsGrid() {
           response.data,
         ])[0];
 
+        console.log("[PostsGrid] Transformed post:", transformedPost);
+        console.log("[PostsGrid] Existing post:", existingPost);
+
         if (!existingPost) {
           console.warn(
             `Post with ID ${postId} not found in filteredPosts. This could indicate a stale UI state.`
@@ -44,28 +50,30 @@ const PostsGrid = memo(function PostsGrid() {
         }
 
         // Use transformedPost as base and merge with existing post data if available
+        // IMPORTANT: Don't override category and tags from transformed post
         const updatedPost = {
-          ...transformedPost,
-          // Preserve image and any other essential fields from existing post if available
+          ...existingPost, // Start with existing post to preserve all fields
+          ...transformedPost, // Override with updated data from API
+          // Ensure poll data is preserved
+          poll: transformedPost.poll || existingPost?.poll,
+          // Ensure image is preserved if not in response
           image: transformedPost.image || existingPost?.image || undefined,
-          // Preserve any additional fields that might be needed from existing post
-          ...((existingPost && {
-            category: existingPost.category,
-            tags: existingPost.tags,
-            // Add any other fields that should be preserved
-          }) ||
-            {}),
         };
 
+        console.log("[PostsGrid] Final updated post:", updatedPost);
         dispatch(updatePost(updatedPost));
 
         // Show success message
         const isLiked = response.data.isLiked;
+        console.log("[PostsGrid] Is liked:", isLiked);
         toast.success(isLiked ? "Post liked!" : "Post unliked!");
 
+      } else {
+        console.error("[PostsGrid] Like failed - response not successful:", response);
+        toast.error(response.message || "Failed to like post");
       }
     } catch (error: any) {
-      console.error("Failed to like post:", error);
+      console.error("[PostsGrid] Failed to like post:", error);
       toast.error(error.message || "Failed to like post");
     }
   };

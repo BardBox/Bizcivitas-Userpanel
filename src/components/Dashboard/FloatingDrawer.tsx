@@ -57,7 +57,10 @@ export default function FloatingDrawer({
   // Listen for header visibility changes
   useEffect(() => {
     const handleScroll = (event: Event) => {
-      const customEvent = event as CustomEvent<{ scrollY: number; lastScrollY: number }>;
+      const customEvent = event as CustomEvent<{
+        scrollY: number;
+        lastScrollY: number;
+      }>;
       const { scrollY: currentScrollY, lastScrollY } = customEvent.detail;
 
       // Show at middle when scrolling up or near top
@@ -82,8 +85,15 @@ export default function FloatingDrawer({
       onToggle?.(false);
     };
 
-    window.addEventListener("notificationDropdownOpened", handleNotificationOpen);
-    return () => window.removeEventListener("notificationDropdownOpened", handleNotificationOpen);
+    window.addEventListener(
+      "notificationDropdownOpened",
+      handleNotificationOpen
+    );
+    return () =>
+      window.removeEventListener(
+        "notificationDropdownOpened",
+        handleNotificationOpen
+      );
   }, [onToggle]);
 
   // Listen for user dropdown open event to close drawer
@@ -95,7 +105,8 @@ export default function FloatingDrawer({
     };
 
     window.addEventListener("userDropdownOpened", handleUserDropdownOpen);
-    return () => window.removeEventListener("userDropdownOpened", handleUserDropdownOpen);
+    return () =>
+      window.removeEventListener("userDropdownOpened", handleUserDropdownOpen);
   }, [onToggle]);
 
   const toggleDrawer = () => {
@@ -133,9 +144,7 @@ export default function FloatingDrawer({
       <div
         className={`fixed w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } ${
-          isHeaderVisible ? "top-20" : "top-4"
-        }`}
+        } ${isHeaderVisible ? "top-20" : "top-4"}`}
       >
         <div className="h-full overflow-y-auto custom-scrollbar">
           <style jsx>{`
@@ -160,9 +169,7 @@ export default function FloatingDrawer({
           {/* Drawer Header */}
           <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">
-                Recent Posts
-              </h3>
+              <h3 className="text-lg font-bold text-gray-900">Recent Posts</h3>
               <button
                 onClick={toggleDrawer}
                 className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-white/50 transition"
@@ -229,7 +236,11 @@ export default function FloatingDrawer({
                         <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
                           <div className="flex-shrink-0">
                             <Avatar
-                              src={post.postSource === "bizpulse" ? "/favicon.ico" : (post.author.avatar || undefined)}
+                              src={
+                                post.postSource === "bizpulse"
+                                  ? "/favicon.ico"
+                                  : post.author.avatar || undefined
+                              }
                               alt={post.author.name}
                               size="xs"
                               fallbackText={post.author.name}
@@ -261,12 +272,7 @@ export default function FloatingDrawer({
       </div>
 
       {/* Backdrop - Only show on mobile screens */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-25 z-30 md:hidden"
-          onClick={toggleDrawer}
-        />
-      )}
+      {isOpen && <div className="" onClick={toggleDrawer} />}
     </>
   );
 }

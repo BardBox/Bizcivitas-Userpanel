@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, memo, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RootState } from "../../../store/store";
@@ -12,7 +12,7 @@ import { bizpulseApi } from "../../services/bizpulseApi";
 import { bizhubApi } from "../../services/bizhubApi";
 import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
 import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
-import { Activity, Network, Sparkles, Filter } from "lucide-react";
+import { Activity, Network, Sparkles, Filter, ChevronDown } from "lucide-react";
 
 // removed unused dummy utilities
 
@@ -25,20 +25,29 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
 
   // Get initial tab from URL or default to "all"
-  const tabFromUrl = searchParams.get("tab") as "all" | "bizpulse" | "bizhub" | null;
+  const tabFromUrl = searchParams.get("tab") as
+    | "all"
+    | "bizpulse"
+    | "bizhub"
+    | null;
   const validTabs = ["all", "bizpulse", "bizhub"];
-  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "all";
+  const initialTab =
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "all";
 
   const [posts, setPosts] = useState<any[]>([]);
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"all" | "bizpulse" | "bizhub">(initialTab);
+  const [activeTab, setActiveTab] = useState<"all" | "bizpulse" | "bizhub">(
+    initialTab
+  );
   const user = useSelector((state: RootState) => state.auth.user);
   const currentUserId = user?._id || user?.id || "";
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateDrawer = () => setIsDrawerOpen(window.innerWidth >= 768);
@@ -53,23 +62,53 @@ export default function DashboardPage() {
       setIsDrawerOpen(false);
     };
 
-    window.addEventListener("notificationDropdownOpened", handleNotificationOpen);
-    return () => window.removeEventListener("notificationDropdownOpened", handleNotificationOpen);
+    window.addEventListener(
+      "notificationDropdownOpened",
+      handleNotificationOpen
+    );
+    return () =>
+      window.removeEventListener(
+        "notificationDropdownOpened",
+        handleNotificationOpen
+      );
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // Handler to change tab and update URL
-  const handleTabChange = useCallback((tab: "all" | "bizpulse" | "bizhub") => {
-    setActiveTab(tab);
-    // Update URL without full page reload
-    const params = new URLSearchParams(searchParams.toString());
-    if (tab === "all") {
-      params.delete("tab"); // Remove tab param for default "all"
-    } else {
-      params.set("tab", tab);
-    }
-    const newUrl = params.toString() ? `/feeds?${params.toString()}` : "/feeds";
-    router.push(newUrl, { scroll: false });
-  }, [router, searchParams]);
+  const handleTabChange = useCallback(
+    (tab: "all" | "bizpulse" | "bizhub") => {
+      setActiveTab(tab);
+      setIsDropdownOpen(false); // Close dropdown when selection is made
+      // Update URL without full page reload
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "all") {
+        params.delete("tab"); // Remove tab param for default "all"
+      } else {
+        params.set("tab", tab);
+      }
+      const newUrl = params.toString()
+        ? `/feeds?${params.toString()}`
+        : "/feeds";
+      router.push(newUrl, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   const fetchDailyFeed = useCallback(async () => {
     try {
@@ -83,13 +122,13 @@ export default function DashboardPage() {
       // Transform daily feed posts
       const transformedDaily = dailyFeeds.map((wf: any) => ({
         ...transformWallFeedPostToMock(wf),
-        postSource: "bizpulse"
+        postSource: "bizpulse",
       }));
       const transformedBizhubDaily = bizhubPosts
         .filter((p: any) => p.isDailyFeed === true)
         .map((p: any) => ({
           ...transformBizHubPostToMock(p),
-          postSource: "bizhub"
+          postSource: "bizhub",
         }));
 
       const merged = [...transformedDaily, ...transformedBizhubDaily];
@@ -97,23 +136,25 @@ export default function DashboardPage() {
       setPosts(merged);
 
       // Get all recent posts (mix BizPulse and BizHub)
-      const allBizPulsePosts = (allWallFeeds?.data?.wallFeeds || []).map((wf: any) => ({
-        ...transformWallFeedPostToMock(wf),
-        postSource: "bizpulse",
-        createdAtTimestamp: new Date(wf.createdAt).getTime()
-      }));
+      const allBizPulsePosts = (allWallFeeds?.data?.wallFeeds || []).map(
+        (wf: any) => ({
+          ...transformWallFeedPostToMock(wf),
+          postSource: "bizpulse",
+          createdAtTimestamp: new Date(wf.createdAt).getTime(),
+        })
+      );
 
       const allBizHubPosts = bizhubPosts.map((p: any) => ({
         ...transformBizHubPostToMock(p),
         postSource: "bizhub",
-        createdAtTimestamp: new Date(p.createdAt).getTime()
+        createdAtTimestamp: new Date(p.createdAt).getTime(),
       }));
 
       // Mix and sort by most recent
       const mixedPosts = [...allBizPulsePosts, ...allBizHubPosts]
         .sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp)
         .slice(0, 8)
-        .map(post => ({
+        .map((post) => ({
           id: post.id,
           title: post.title || post.poll?.question || "Untitled Post",
           description: post.content?.substring(0, 100),
@@ -121,7 +162,7 @@ export default function DashboardPage() {
           timeAgo: post.timeAgo,
           postSource: post.postSource,
           category: post.category,
-          isPoll: !!(post.poll || post.category === "pulse-polls")
+          isPoll: !!(post.poll || post.category === "pulse-polls"),
         }));
 
       setRecentPosts(mixedPosts);
@@ -158,7 +199,7 @@ export default function DashboardPage() {
       >
         <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto  space-y-3">
           {/* Filter Toggle Button */}
-          <div className="flex justify-end mt-12">
+          <div className="flex justify-end mt-4 md:mt-12">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
@@ -174,40 +215,119 @@ export default function DashboardPage() {
 
           {/* Tab Navigation - Show/Hide based on showFilters */}
           {showFilters && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex gap-2 animate-in slide-in-from-top duration-200">
-              <button
-                onClick={() => handleTabChange("all")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
-                  activeTab === "all"
-                    ? "bg-orange-500 text-white shadow-md"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <Sparkles className="w-5 h-5" />
-                <span className="font-medium">All</span>
-              </button>
-              <button
-                onClick={() => handleTabChange("bizpulse")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
-                  activeTab === "bizpulse"
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <Activity className="w-5 h-5" />
-                <span className="font-medium">BizPulse</span>
-              </button>
-              <button
-                onClick={() => handleTabChange("bizhub")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all ${
-                  activeTab === "bizhub"
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <Network className="w-5 h-5" />
-                <span className="font-medium">BizHub</span>
-              </button>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 animate-in slide-in-from-top duration-200">
+              {/* Mobile Dropdown Navigation (up to md) */}
+              <div className="md:hidden p-4">
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-left flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <span className="text-gray-900 font-medium flex items-center gap-2">
+                      {activeTab === "all" && (
+                        <>
+                          <Sparkles className="w-5 h-5" />
+                          All
+                        </>
+                      )}
+                      {activeTab === "bizpulse" && (
+                        <>
+                          <Activity className="w-5 h-5" />
+                          BizPulse
+                        </>
+                      )}
+                      {activeTab === "bizhub" && (
+                        <>
+                          <Network className="w-5 h-5" />
+                          BizHub
+                        </>
+                      )}
+                    </span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                      <button
+                        onClick={() => handleTabChange("all")}
+                        className={`w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors duration-150 first:rounded-t-lg flex items-center gap-2 ${
+                          activeTab === "all"
+                            ? "text-orange-600 bg-orange-50 font-medium"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        <Sparkles className="w-5 h-5" />
+                        All
+                      </button>
+                      <button
+                        onClick={() => handleTabChange("bizpulse")}
+                        className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-2 ${
+                          activeTab === "bizpulse"
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        <Activity className="w-5 h-5" />
+                        BizPulse
+                      </button>
+                      <button
+                        onClick={() => handleTabChange("bizhub")}
+                        className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 last:rounded-b-lg flex items-center gap-2 ${
+                          activeTab === "bizhub"
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        <Network className="w-5 h-5" />
+                        BizHub
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop Horizontal Tabs (md and above) */}
+              <div className="hidden md:block p-4">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleTabChange("all")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${
+                      activeTab === "all"
+                        ? "bg-orange-500 text-white shadow-md"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    <span className="font-medium">All</span>
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("bizpulse")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${
+                      activeTab === "bizpulse"
+                        ? "bg-blue-500 text-white shadow-md"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Activity className="w-5 h-5" />
+                    <span className="font-medium">BizPulse</span>
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("bizhub")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${
+                      activeTab === "bizhub"
+                        ? "bg-blue-500 text-white shadow-md"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Network className="w-5 h-5" />
+                    <span className="font-medium">BizHub</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -230,7 +350,9 @@ export default function DashboardPage() {
             style={{ overflow: "visible" }}
           >
             {posts.map((post) => {
-              const isPoll = post.category === "pulse-polls" || (post.poll && post.postType === "poll");
+              const isPoll =
+                post.category === "pulse-polls" ||
+                (post.poll && post.postType === "poll");
               if (isPoll && post.poll) {
                 const wallFeedPost = {
                   _id: post.id,
@@ -259,28 +381,73 @@ export default function DashboardPage() {
                 } as any;
 
                 return (
-                  <div key={post.id}>
+                  <div key={post.id} className="mb-4">
                     <PollCard
                       post={wallFeedPost}
                       currentUserId={currentUserId}
                       onVoteSuccess={(updated) => {
                         const updatedMock = {
                           ...transformWallFeedPostToMock(updated as any),
-                          postSource: "bizpulse"
+                          postSource: "bizpulse",
                         };
                         setAllPosts((prev) =>
-                          prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                          prev.map((p) =>
+                            p.id === updatedMock.id ? updatedMock : p
+                          )
                         );
                         setPosts((prev) =>
-                          prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                          prev.map((p) =>
+                            p.id === updatedMock.id ? updatedMock : p
+                          )
                         );
+                      }}
+                      onLike={async (postId) => {
+                        console.log(
+                          "[DashboardPage] Liking poll post:",
+                          postId
+                        );
+                        try {
+                          const response = await bizpulseApi.likeWallFeed(
+                            postId
+                          );
+                          console.log(
+                            "[DashboardPage] Like response:",
+                            response
+                          );
+                          if (response.success && response.data) {
+                            const updatedMock = {
+                              ...transformWallFeedPostToMock(
+                                response.data as any
+                              ),
+                              postSource: "bizpulse",
+                            };
+                            setAllPosts((prev) =>
+                              prev.map((p) =>
+                                p.id === updatedMock.id ? updatedMock : p
+                              )
+                            );
+                            setPosts((prev) =>
+                              prev.map((p) =>
+                                p.id === updatedMock.id ? updatedMock : p
+                              )
+                            );
+                            console.log(
+                              "[DashboardPage] Post state updated successfully"
+                            );
+                          }
+                        } catch (error) {
+                          console.error(
+                            "[DashboardPage] Failed to like poll post:",
+                            error
+                          );
+                        }
                       }}
                     />
                   </div>
                 );
               }
               return (
-                <div key={post.id}>
+                <div key={post.id} className="mb-4">
                   <PostCard
                     {...post}
                     sourceType={post.postSource}
@@ -289,17 +456,25 @@ export default function DashboardPage() {
                       // Handle like based on post source
                       if (post.postSource === "bizpulse") {
                         try {
-                          const response = await bizpulseApi.likeWallFeed(postId);
+                          const response = await bizpulseApi.likeWallFeed(
+                            postId
+                          );
                           if (response.success && response.data) {
                             const updatedMock = {
-                              ...transformWallFeedPostToMock(response.data as any),
-                              postSource: "bizpulse"
+                              ...transformWallFeedPostToMock(
+                                response.data as any
+                              ),
+                              postSource: "bizpulse",
                             };
                             setAllPosts((prev) =>
-                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                              prev.map((p) =>
+                                p.id === updatedMock.id ? updatedMock : p
+                              )
                             );
                             setPosts((prev) =>
-                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                              prev.map((p) =>
+                                p.id === updatedMock.id ? updatedMock : p
+                              )
                             );
                           }
                         } catch (error) {
@@ -311,13 +486,17 @@ export default function DashboardPage() {
                           if (response) {
                             const updatedMock = {
                               ...transformBizHubPostToMock(response),
-                              postSource: "bizhub"
+                              postSource: "bizhub",
                             };
                             setAllPosts((prev) =>
-                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                              prev.map((p) =>
+                                p.id === updatedMock.id ? updatedMock : p
+                              )
                             );
                             setPosts((prev) =>
-                              prev.map((p) => (p.id === updatedMock.id ? updatedMock : p))
+                              prev.map((p) =>
+                                p.id === updatedMock.id ? updatedMock : p
+                              )
                             );
                           }
                         } catch (error) {

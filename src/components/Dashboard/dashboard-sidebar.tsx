@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useCallback, memo } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageSquare, Bookmark, type LucideIcon } from "lucide-react";
 import ProfileSection from "./ProfileSection";
 
 const Arrow = ({ collapsed }: { collapsed: boolean }) => (
@@ -84,7 +84,7 @@ const navigationSections = [
       {
         href: "/feeds/messages",
         text: "Messages",
-        icon: "/dashboard/sidebaricons/notification.svg",
+        lucideIcon: MessageSquare,
       },
     ],
   },
@@ -109,7 +109,7 @@ const navigationSections = [
       {
         href: "/feeds/saved-resources",
         text: "Saved Resources",
-        icon: "/dashboard/sidebaricons/notification.svg",
+        lucideIcon: Bookmark,
       },
     ],
   },
@@ -257,13 +257,15 @@ const SidebarLink = memo(
     href,
     text,
     icon,
+    lucideIcon: LucideIcon,
     isActive,
     isCollapsed,
     onClick,
   }: {
     href: string;
     text: string;
-    icon: string;
+    icon?: string;
+    lucideIcon?: LucideIcon;
     isActive: boolean;
     isCollapsed: boolean;
     onClick?: () => void;
@@ -283,7 +285,15 @@ const SidebarLink = memo(
         {isActive && isCollapsed && (
           <div className="absolute left-0 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full" />
         )}
-        <SidebarIcon src={icon} isActive={isActive} isCollapsed={isCollapsed} />
+        {LucideIcon ? (
+          <LucideIcon
+            className={`transition-all duration-300 ${
+              isCollapsed ? "w-6 h-6" : "w-5 h-5"
+            } ${isActive ? "text-blue-600" : "text-gray-500"}`}
+          />
+        ) : icon ? (
+          <SidebarIcon src={icon} isActive={isActive} isCollapsed={isCollapsed} />
+        ) : null}
         {!isCollapsed && <span className="ml-3 truncate text-sm">{text}</span>}
       </Link>
     </li>

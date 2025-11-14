@@ -58,7 +58,7 @@ interface NotificationDropdownProps {
 
 export default function NotificationDropdown({
   className = "",
-  iconPath = "/dashboard/sidebaricons/notification.svg",
+  iconPath = "/Notification.svg",
 }: NotificationDropdownProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -531,7 +531,7 @@ export default function NotificationDropdown({
     return (
       <button className={className}>
         <img
-          src="/Notification.svg"
+          src={iconPath}
           alt="Notifications"
           className="!w-[32px] !h-[32px] transition-all hover:drop-shadow-lg"
         />
@@ -553,7 +553,7 @@ export default function NotificationDropdown({
     <div className={`relative ${className}`}>
       <button onClick={handleToggleDropdown} className="relative">
         <img
-          src="/Notification.svg"
+          src={iconPath}
           alt="Notifications"
           className="!w-[32px] !h-[32px] transition-all hover:drop-shadow-lg"
         />

@@ -45,65 +45,97 @@ const MyProfileClient: React.FC = () => {
   // This prevents unnecessary recalculations when only one section changes
 
   // Personal data - only recalculates if profile.myBio changes
-  const personalData = useMemo(() => ({
-    hobbiesAndInterests: profile?.myBio?.hobbiesAndInterests,
-    myBurningDesireIsTo: profile?.myBio?.myBurningDesireIsTo,
-  }), [profile?.myBio]);
+  const personalData = useMemo(
+    () => ({
+      hobbiesAndInterests: profile?.myBio?.hobbiesAndInterests,
+      myBurningDesireIsTo: profile?.myBio?.myBurningDesireIsTo,
+    }),
+    [profile?.myBio]
+  );
 
   // Business data - recalculates only if user or professionalDetails change
-  const businessData = useMemo(() => ({
-    ...profile?.professionalDetails,
-    email: user?.email,
-    mobile: user?.mobile,
-    location: user?.city || profile?.addresses?.address?.city,
-    companyLogo: profile?.professionalDetails?.companyLogo,
-    // Business location data comes from professionalDetails (can be updated by user)
-    // Fallback to addresses.address if not set in professionalDetails
-    businessCity:
-      profile?.professionalDetails?.businessCity ||
-      profile?.addresses?.address?.city,
-    businessState:
-      profile?.professionalDetails?.businessState ||
-      profile?.addresses?.address?.state,
-    businessCountry:
-      profile?.professionalDetails?.businessCountry ||
-      profile?.addresses?.address?.country,
-  }), [
-    user?.email,
-    user?.mobile,
-    user?.city,
-    profile?.professionalDetails,
-    profile?.addresses?.address
-  ]);
+  const businessData = useMemo(
+    () => ({
+      ...profile?.professionalDetails,
+      email: user?.email,
+      mobile: user?.mobile,
+      location: user?.city || profile?.addresses?.address?.city,
+      companyLogo: profile?.professionalDetails?.companyLogo,
+      // Business location data comes from professionalDetails (can be updated by user)
+      // Fallback to addresses.address if not set in professionalDetails
+      businessCity:
+        profile?.professionalDetails?.businessCity ||
+        profile?.addresses?.address?.city,
+      businessState:
+        profile?.professionalDetails?.businessState ||
+        profile?.addresses?.address?.state,
+      businessCountry:
+        profile?.professionalDetails?.businessCountry ||
+        profile?.addresses?.address?.country,
+    }),
+    [
+      user?.email,
+      user?.mobile,
+      user?.city,
+      profile?.professionalDetails,
+      profile?.addresses?.address,
+    ]
+  );
 
   // Leads data - only recalculates if myGives changes
-  const leadsData = useMemo(() => ({
-    given: profile?.myBio?.myGives,
-    received: [], // reserved for future
-  }), [profile?.myBio?.myGives]);
+  const leadsData = useMemo(
+    () => ({
+      given: profile?.myBio?.myGives,
+      received: [], // reserved for future
+    }),
+    [profile?.myBio?.myGives]
+  );
 
   // Needs data - only recalculates if myAsk changes
-  const needsData = useMemo(() => profile?.myBio?.myAsk, [profile?.myBio?.myAsk]);
+  const needsData = useMemo(
+    () => profile?.myBio?.myAsk,
+    [profile?.myBio?.myAsk]
+  );
 
   // Travel data - only recalculates if travelDiary changes
-  const travelData = useMemo(() => profile?.travelDiary, [profile?.travelDiary]);
+  const travelData = useMemo(
+    () => profile?.travelDiary,
+    [profile?.travelDiary]
+  );
 
   // Presentation data - only recalculates if weeklyPresentation changes
-  const presentationData = useMemo(() => profile?.weeklyPresentation, [profile?.weeklyPresentation]);
+  const presentationData = useMemo(
+    () => profile?.weeklyPresentation,
+    [profile?.weeklyPresentation]
+  );
 
   // Skills data - only recalculates if mySkillItems changes
-  const skillsData = useMemo(() => profile?.mySkillItems ?? [], [profile?.mySkillItems]);
+  const skillsData = useMemo(
+    () => profile?.mySkillItems ?? [],
+    [profile?.mySkillItems]
+  );
 
   // Combined normalized data object (lightweight - just references)
-  const normalizedData = useMemo(() => ({
-    personal: personalData,
-    business: businessData,
-    leads: leadsData,
-    needs: needsData,
-    travel: travelData,
-    presentation: presentationData,
-    skills: skillsData,
-  }), [personalData, businessData, leadsData, needsData, travelData, presentationData, skillsData]);
+  const normalizedData = useMemo(
+    () => ({
+      personal: personalData,
+      business: businessData,
+      leads: leadsData,
+      needs: needsData,
+      travel: travelData,
+      presentation: presentationData,
+      skills: skillsData,
+    }),
+    [
+      personalData,
+      businessData,
+      leadsData,
+      needsData,
+      travelData,
+      presentationData,
+      skillsData,
+    ]
+  );
 
   // Edit functionality hooks for each component using normalized data
   const businessDetailsHook = useBusinessDetailsWithAccordion(
@@ -242,7 +274,7 @@ const MyProfileClient: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-2 md:mt-8  lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">

@@ -206,12 +206,12 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-2 mb-6">
+    <div className="bg-white rounded-lg mb-6">
       {/* Content - Simple 2-column table layout */}
       <form ref={formRef} onSubmit={handleSubmit(handleSave)}>
         <div className="space-y-3">
           {/* Classification */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Award className="h-4 w-4 text-gray-500" />
@@ -234,7 +234,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Company Name */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-gray-500" />
@@ -257,7 +257,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Email */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Factory className="h-4 w-4 text-gray-500" />
@@ -283,7 +283,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             </div>
           </div>
           {/* mobile */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Factory className="h-4 w-4 text-gray-500" />
@@ -309,7 +309,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             </div>
           </div>
           {/* Location */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Factory className="h-4 w-4 text-gray-500" />
@@ -332,7 +332,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Business Category */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <FolderTree className="h-4 w-4 text-gray-500" />
@@ -361,7 +361,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Business Subcategory */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Layers className="h-4 w-4 text-gray-500" />
@@ -394,7 +394,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Business Description */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-gray-500" />
@@ -418,7 +418,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Industry */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Target className="h-4 w-4 text-gray-500" />
@@ -441,7 +441,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Business Address */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-gray-500" />
@@ -465,7 +465,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           </div>
 
           {/* Business Location - Country, State, City */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Globe className="h-4 w-4 text-gray-500" />
@@ -506,7 +506,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
           {!isEditing && professionalDetails && (
             <>
               {professionalDetails.companyWebsite && (
-                <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+                <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
                   <div>
                     <span className="font-medium text-gray-700 flex items-center gap-2">
                       <Globe className="h-4 w-4 text-gray-500" />
@@ -527,7 +527,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
               )}
 
               {professionalDetails.workExperience && (
-                <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+                <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
                   <div>
                     <span className="font-medium text-gray-700 flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-gray-500" />
@@ -544,7 +544,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
               {professionalDetails.skills &&
                 professionalDetails.skills.length > 0 && (
-                  <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+                  <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
                     <div>
                       <span className="font-medium text-gray-700 flex items-center gap-2">
                         <Target className="h-4 w-4 text-gray-500" />
@@ -561,7 +561,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
               {professionalDetails.achievements &&
                 professionalDetails.achievements.length > 0 && (
-                  <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+                  <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
                     <div>
                       <span className="font-medium text-gray-700 flex items-center gap-2">
                         <Trophy className="h-4 w-4 text-gray-500" />
@@ -580,7 +580,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
           {/* Display errors from either mutation or save operation */}
           {isEditing && (professionError || addressError || saveError) && (
-            <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
               <div></div>
               <div className="text-red-500 text-sm space-y-1">
                 {professionError && (

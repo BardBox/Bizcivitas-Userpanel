@@ -156,81 +156,159 @@ const BizNeeds: React.FC<BizNeedsProps> = ({
 
           <div className="space-y-3">
             {fields.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border border-gray-200 rounded-lg">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                        Company
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                        Name
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                        Designation
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {fields.map((field, index) => (
-                      <tr
-                        key={field.id}
-                        className="group hover:bg-gray-50 relative"
-                      >
-                        <td className="px-3 py-2 text-sm">
-                          {isEditing ? (
-                            <input
-                              {...register(`contacts.${index}.company`)}
-                              className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 bg-transparent px-2 py-1 text-sm focus:outline-none transition-colors"
-                              placeholder="Company name"
-                            />
-                          ) : (
-                            <span className="text-gray-900 px-2">
-                              {watchedContacts?.[index]?.company || "-"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-sm">
-                          {isEditing ? (
-                            <input
-                              {...register(`contacts.${index}.name`)}
-                              className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 bg-transparent px-2 py-1 text-sm focus:outline-none transition-colors"
-                              placeholder="Contact name"
-                            />
-                          ) : (
-                            <span className="text-gray-600 px-2">
-                              {watchedContacts?.[index]?.name || "-"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-sm relative">
-                          {isEditing ? (
-                            <input
-                              {...register(`contacts.${index}.role`)}
-                              className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 bg-transparent px-2 py-1 text-sm focus:outline-none transition-colors"
-                              placeholder="Job title/role"
-                            />
-                          ) : (
-                            <span className="text-gray-600 px-2">
-                              {watchedContacts?.[index]?.role || "-"}
-                            </span>
-                          )}
-                          {isEditing && (
-                            <button
-                              type="button"
-                              onClick={() => remove(index)}
-                              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                              title="Remove contact"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          )}
-                        </td>
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full border border-gray-200 rounded-lg">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                          Company
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                          Name
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                          Designation
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {fields.map((field, index) => (
+                        <tr
+                          key={field.id}
+                          className="group hover:bg-gray-50 relative"
+                        >
+                          <td className="px-3 py-2 text-sm">
+                            {isEditing ? (
+                              <input
+                                {...register(`contacts.${index}.company`)}
+                                className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 bg-transparent px-2 py-1 text-sm focus:outline-none transition-colors"
+                                placeholder="Company name"
+                              />
+                            ) : (
+                              <span className="text-gray-900 px-2">
+                                {watchedContacts?.[index]?.company || "-"}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-sm">
+                            {isEditing ? (
+                              <input
+                                {...register(`contacts.${index}.name`)}
+                                className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 bg-transparent px-2 py-1 text-sm focus:outline-none transition-colors"
+                                placeholder="Contact name"
+                              />
+                            ) : (
+                              <span className="text-gray-600 px-2">
+                                {watchedContacts?.[index]?.name || "-"}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-sm relative">
+                            {isEditing ? (
+                              <input
+                                {...register(`contacts.${index}.role`)}
+                                className="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 bg-transparent px-2 py-1 text-sm focus:outline-none transition-colors"
+                                placeholder="Job title/role"
+                              />
+                            ) : (
+                              <span className="text-gray-600 px-2">
+                                {watchedContacts?.[index]?.role || "-"}
+                              </span>
+                            )}
+                            {isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => remove(index)}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                title="Remove contact"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                  {fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="border border-gray-200 rounded-lg p-3 space-y-2 relative bg-white"
+                    >
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md"
+                          title="Remove contact"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1.5">
+                          <Building2 className="h-3 w-3" />
+                          Company
+                        </label>
+                        {isEditing ? (
+                          <input
+                            {...register(`contacts.${index}.company`)}
+                            className="w-full mt-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            placeholder="Company name"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900 font-medium mt-1">
+                            {watchedContacts?.[index]?.company || "-"}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1.5">
+                          <User className="h-3 w-3" />
+                          Name
+                        </label>
+                        {isEditing ? (
+                          <input
+                            {...register(`contacts.${index}.name`)}
+                            className="w-full mt-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            placeholder="Contact name"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-600 mt-1">
+                            {watchedContacts?.[index]?.name || "-"}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1.5">
+                          <Briefcase className="h-3 w-3" />
+                          Designation
+                        </label>
+                        {isEditing ? (
+                          <input
+                            {...register(`contacts.${index}.role`)}
+                            className="w-full mt-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            placeholder="Job title/role"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-600 mt-1">
+                            {watchedContacts?.[index]?.role || "-"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <span className="text-gray-600">No specific contacts needed</span>
             )}
@@ -248,7 +326,7 @@ const BizNeeds: React.FC<BizNeedsProps> = ({
           </div>
 
           {error && isEditing && (
-            <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
               <div></div>
               <div className="text-red-500 text-sm">{String(error)}</div>
             </div>

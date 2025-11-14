@@ -138,7 +138,7 @@ const TravelDiary: React.FC<TravelDiaryProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-2 mb-6">
+    <div className="bg-white rounded-lg mb-6">
       <form ref={formRef} onSubmit={handleSubmit(handleSave)}>
         <div className="space-y-3">
           {/* Dream Destination */}

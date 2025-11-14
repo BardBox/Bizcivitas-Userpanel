@@ -84,11 +84,11 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-2 mb-6">
+    <div className="bg-white rounded-lg mb-6">
       <form ref={formRef} onSubmit={handleSubmit(handleSave)}>
         <div className="space-y-3">
           {/* Title */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Presentation className="h-4 w-4 text-gray-500" />
@@ -118,7 +118,7 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
           </div>
 
           {/* Description */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-gray-500" />
@@ -150,7 +150,7 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
           </div>
 
           {/* Presentation Date */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-500" />
@@ -184,7 +184,7 @@ const WeeklyPresentation: React.FC<WeeklyPresentationProps> = ({
           </div>
 
           {error && isEditing && (
-            <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
               <div></div>
               <div className="text-red-500 text-sm">{String(error)}</div>
             </div>

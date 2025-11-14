@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, Edit3, Save, X } from "lucide-react";
 
 interface AccordionItemProps {
@@ -27,6 +27,13 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
   rightContent,
 }) => {
   const [open, setOpen] = useState(defaultOpen);
+
+  // Automatically open accordion when entering edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setOpen(true);
+    }
+  }, [isEditing]);
   return (
     <div className="bg-white rounded-lg shadow-sm px-2">
       <div className="w-full flex justify-between items-center py-4 px-2">
@@ -55,20 +62,20 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
                 <>
                   <button
                     type="button"
-                    className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                    className="bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                     onClick={onSave}
                     disabled={isSaving}
+                    title={isSaving ? "Saving..." : "Save"}
                   >
-                    <Save className="h-4 w-4" />
-                    {isSaving ? "Saving..." : "Save"}
+                    <Save className="h-5 w-5" />
                   </button>
                   <button
                     type="button"
-                    className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 flex items-center gap-1 transition-colors"
+                    className="bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300 transition-colors"
                     onClick={onCancel}
+                    title="Cancel"
                   >
-                    <X className="h-4 w-4" />
-                    Cancel
+                    <X className="h-5 w-5" />
                   </button>
                 </>
               )}

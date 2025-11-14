@@ -274,11 +274,11 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-2 mb-6">
+    <div className="bg-white rounded-lg mb-6">
       <form ref={formRef} onSubmit={handleSubmit(handleSave)}>
         <fieldset disabled={isLoading} className="space-y-3">
           {/* About Me */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Target className="h-4 w-4 text-gray-500" />
@@ -302,7 +302,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           </div>
 
           {/* Hobbies and Interests */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Heart className="h-4 w-4 text-gray-500" />
@@ -326,7 +326,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           </div>
 
           {/* My Skills Section */}
-          <div className="grid grid-cols-[35%_1fr] gap-4 py-2 border-t border-gray-100 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2 border-t border-gray-100 pt-4">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Award className="h-4 w-4 text-gray-500" />
@@ -355,14 +355,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                             handleEndorseSkill(skill._id, skill.endorsedByMe)
                           }
                           disabled={isEndorsing || isOwnProfile}
-                          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all font-medium ${
+                          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg font-medium ${
                             skill.endorsedByMe
                               ? "text-blue-600"
-                              : "text-gray-600 hover:text-blue-600"
+                              : "text-gray-600"
                           } ${
                             isOwnProfile
                               ? "cursor-not-allowed opacity-50"
-                              : "hover:scale-110"
+                              : ""
                           }`}
                           title={
                             isOwnProfile
@@ -377,14 +377,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                             <img
                               src="/arrowfilled.svg"
                               alt="Endorsed"
-                              className="h-4 w-4 transition-transform"
+                              className="h-4 w-4"
                             />
                           ) : (
                             // Outlined arrow (not endorsed by you)
                             <img
                               src="/arrow.svg"
                               alt="Endorse"
-                              className="h-4 w-4 transition-transform group-hover:scale-110"
+                              className="h-4 w-4"
                             />
                           )}
                           <span className="text-xs font-bold text-gray-700">

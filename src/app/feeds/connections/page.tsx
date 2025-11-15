@@ -317,7 +317,7 @@ function ConnectionsPageContent() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top Row - Title and Buttons */}
-          <div className="py-4 flex items-center justify-between">
+          <div className="py-4 lg:flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
                 My Connections
@@ -328,7 +328,7 @@ function ConnectionsPageContent() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mt-2 lg:mt-0">
               {/* My Network Button */}
               <button
                 onClick={() => setActiveTab("my-network")}
@@ -339,8 +339,8 @@ function ConnectionsPageContent() {
                 }`}
               >
                 <Users className="h-5 w-5" />
-                My Network
-              </button>
+<p className="text-[14px]">                My Network
+</p>              </button>
 
               {/* Requests Button */}
               <button
@@ -352,7 +352,8 @@ function ConnectionsPageContent() {
                 }`}
               >
                 <Inbox className="h-5 w-5" />
-                Requests
+             <p className="text-[14px]">             
+   Requests</p>
                 {receivedCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
                     {receivedCount > 99 ? "99+" : receivedCount}
@@ -398,9 +399,9 @@ function ConnectionsPageContent() {
             /* Search and Filter Section */
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               {/* Search Bar and Filter */}
-              <div className="flex items-center gap-4 flex-1 max-w-2xl mb-6">
+              <div className="md:flex md:flex-row items-center gap-4 flex-1 max-w-2xl mb-6">
               {/* Search Bar */}
-              <div className="flex-1 max-w-md relative">
+              <div className="md:flex-1 max-w-md relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
                 </div>
@@ -423,7 +424,7 @@ function ConnectionsPageContent() {
 
               {/* Filter Dropdown */}
               {connectionsCount > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-4">
                   <Filter className="h-5 w-5 text-gray-400" />
                   <select
                     value={sortBy}

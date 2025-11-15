@@ -121,7 +121,7 @@ const UserCard: React.FC<UserCardProps> = ({
           <h3 className="font-bold text-blue-600 xl:text-[20px] lg:text-[18px] md:text-[16px] text-[14px] transition-all duration-300 group-hover:text-blue-700 group-hover:scale-105">
             {name || "-"}
           </h3>
-          <p className="text-muted xl:text-[12px] lg:text-[11px] md:text-[10px] text-[8px] font-medium mb-2 transition-colors duration-300 group-hover:text-gray-700">
+          <p className="text-muted xl:text-[12px] lg:text-[11px] md:text-[10px] text-[12px] font-medium mb-2 transition-colors duration-300 group-hover:text-gray-700">
             {title || "-"}
           </p>
           <p className="text-muted xl:text-[14px] lg:text-[12px] md:text-[13px] text-[10px] font-semibold mb-1 transition-colors duration-300 group-hover:text-gray-700">

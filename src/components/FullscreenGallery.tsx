@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from "lucide-react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Download,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 interface FullscreenGalleryProps {
@@ -78,7 +85,8 @@ export default function FullscreenGallery({
       link.href = url;
 
       // Extract filename from URL or use a default name
-      const filename = currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
+      const filename =
+        currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
       link.download = filename;
 
       // Trigger download
@@ -121,7 +129,11 @@ export default function FullscreenGallery({
           className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
           aria-label={isZoomed ? "Zoom out" : "Zoom in"}
         >
-          {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
+          {isZoomed ? (
+            <ZoomOut className="w-5 h-5" />
+          ) : (
+            <ZoomIn className="w-5 h-5" />
+          )}
         </button>
 
         {/* Download button */}
@@ -171,7 +183,7 @@ export default function FullscreenGallery({
       >
         <div
           className={`relative transition-all duration-300 ${
-            isZoomed ? "w-auto h-auto max-w-none" : "max-w-[90vw] max-h-[85vh]"
+            isZoomed ? "w-auto h-auto max-w-none" : "max-w-[90vw] max-h-full"
           }`}
         >
           <img
@@ -181,10 +193,8 @@ export default function FullscreenGallery({
               isZoomed
                 ? "w-auto h-auto max-w-none cursor-grab active:cursor-grabbing"
                 : "max-w-full max-h-[85vh] w-auto h-auto"
-    
-              }`}
-          style={isZoomed ? { imageRendering: "crisp-edges" } : {}}
-
+            }`}
+            style={isZoomed ? { imageRendering: "crisp-edges" } : {}}
             draggable={false}
           />
         </div>

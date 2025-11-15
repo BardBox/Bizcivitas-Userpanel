@@ -75,7 +75,7 @@ export default function FeedsLayoutClient({
   }, [isMobileMenuOpen]);
 
   return (
-    <div className="flex h-screen bg-dashboard-primary overflow-hidden px-4 md:p-0">
+    <div className="flex h-screen bg-dashboard-primary overflow-hidden  md:p-0">
       {/* Desktop Sidebar */}
       <div className="hidden md:block relative z-30">
         <DashboardSidebar isMobile={false} />

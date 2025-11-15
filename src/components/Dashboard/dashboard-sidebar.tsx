@@ -4,7 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useCallback, memo } from "react";
-import { ChevronDown, ChevronRight, MessageSquare, Bookmark, type LucideIcon } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  MessageSquare,
+  Bookmark,
+  type LucideIcon,
+} from "lucide-react";
 import ProfileSection from "./ProfileSection";
 
 const Arrow = ({ collapsed }: { collapsed: boolean }) => (
@@ -14,7 +20,7 @@ const Arrow = ({ collapsed }: { collapsed: boolean }) => (
     stroke="currentColor"
     viewBox="0 0 24 24"
   >
-    <path 
+    <path
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
@@ -166,7 +172,7 @@ export default function DashboardSidebar({
   return (
     <aside
       className={`h-full fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${
-        isCollapsed ? "w-24" : "w-72"
+        isCollapsed ? "w-24" : "xl:w-72"
       }`}
     >
       {/* Logo - Hidden on mobile */}
@@ -292,7 +298,11 @@ const SidebarLink = memo(
             } ${isActive ? "text-blue-600" : "text-gray-500"}`}
           />
         ) : icon ? (
-          <SidebarIcon src={icon} isActive={isActive} isCollapsed={isCollapsed} />
+          <SidebarIcon
+            src={icon}
+            isActive={isActive}
+            isCollapsed={isCollapsed}
+          />
         ) : null}
         {!isCollapsed && <span className="ml-3 truncate text-sm">{text}</span>}
       </Link>

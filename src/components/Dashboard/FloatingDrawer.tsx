@@ -144,7 +144,7 @@ export default function FloatingDrawer({
       <div
         className={`fixed w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } ${isHeaderVisible ? "top-20" : "top-4"}`}
+        } ${isHeaderVisible ? "top-20" : "top-0"}`}
       >
         <div className="h-full overflow-y-auto custom-scrollbar">
           <style jsx>{`

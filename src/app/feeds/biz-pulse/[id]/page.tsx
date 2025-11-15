@@ -2,7 +2,13 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
-import { ThumbsUp, MessageSquare, ArrowLeft, MoreVertical, Flag } from "lucide-react";
+import {
+  ThumbsUp,
+  MessageSquare,
+  ArrowLeft,
+  MoreVertical,
+  Flag,
+} from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import type { RootState } from "../../../../../store/store";
@@ -20,7 +26,7 @@ export default function BizPulseDetailPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const postId = params?.id as string;
-  const enableCommentReporting = false; 
+  const enableCommentReporting = false;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,39 +42,46 @@ export default function BizPulseDetailPage() {
   const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [newComment, setNewComment] = useState("");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(
+    null
+  );
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(null);
+  const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(
+    null
+  );
   const [editingContent, setEditingContent] = useState<string>("");
   const [backButtonText, setBackButtonText] = useState<string>("Back to Feeds");
 
   // Determine back button text based on referrer
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const referrer = document.referrer;
-      if (referrer.includes('/feeds/biz-pulse')) {
-        setBackButtonText('Back to Biz Pulse');
-      } else if (referrer.includes('/feeds/biz-hub')) {
-        setBackButtonText('Back to Biz Pulse');
+      if (referrer.includes("/feeds/biz-pulse")) {
+        setBackButtonText("Back to Biz Pulse");
+      } else if (referrer.includes("/feeds/biz-hub")) {
+        setBackButtonText("Back to Biz Pulse");
       } else {
-        setBackButtonText('Back to Feeds');
+        setBackButtonText("Back to Feeds");
       }
     }
   }, []);
 
   // Scroll to comments section if navigation came from a notification about a comment
   useEffect(() => {
-    if (typeof window !== 'undefined' && post) {
-      const shouldScrollToComments = sessionStorage.getItem('scrollToComments');
-      if (shouldScrollToComments === 'true') {
+    if (typeof window !== "undefined" && post) {
+      const shouldScrollToComments = sessionStorage.getItem("scrollToComments");
+      if (shouldScrollToComments === "true") {
         // Remove the flag immediately to prevent re-scrolling on refresh
-        sessionStorage.removeItem('scrollToComments');
+        sessionStorage.removeItem("scrollToComments");
 
         // Use a timeout to ensure the page has fully rendered
         setTimeout(() => {
-          const commentsSection = document.getElementById('comments-section');
+          const commentsSection = document.getElementById("comments-section");
           if (commentsSection) {
-            commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            commentsSection.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
           }
         }, 500);
       }
@@ -81,13 +94,12 @@ export default function BizPulseDetailPage() {
       if (openMenuId) setOpenMenuId(null);
     };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [openMenuId]);
 
   useEffect(() => {
     const fetchPostIfNeeded = async () => {
-      
       if (!post && postId) {
         setIsLoading(true);
         try {
@@ -114,7 +126,6 @@ export default function BizPulseDetailPage() {
     fetchPostIfNeeded();
   }, [postId, post, dispatch]);
 
-  
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -196,7 +207,7 @@ export default function BizPulseDetailPage() {
         if (!transformedPost.image && post.image) {
           transformedPost.image = post.image;
         }
-        
+
         dispatch(updatePost(transformedPost));
       }
     } catch (error) {
@@ -286,7 +297,8 @@ export default function BizPulseDetailPage() {
       // Revert optimistic update on error
       const revertedPost = await bizpulseApi.fetchWallFeedById(postId);
       if (revertedPost.success && revertedPost.data) {
-        const postData = (revertedPost.data as any).wallFeed || revertedPost.data;
+        const postData =
+          (revertedPost.data as any).wallFeed || revertedPost.data;
         const transformedPost = transformBizPulsePostToMock(postData);
         dispatch(updatePost(transformedPost));
       }
@@ -299,7 +311,9 @@ export default function BizPulseDetailPage() {
     if (!reportingCommentId) return;
     const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(reportingCommentId);
     if (!isValidObjectId) {
-      toast.error("Cannot report this comment until it’s synced. Please refresh.");
+      toast.error(
+        "Cannot report this comment until it’s synced. Please refresh."
+      );
       setReportingCommentId(null);
       setIsReportModalOpen(false);
       return;
@@ -319,7 +333,9 @@ export default function BizPulseDetailPage() {
 
       if (result.success) {
         console.debug("[BizPulseDetailPage] Report success:", result);
-        toast.success("Comment reported successfully. It has been hidden from your view.");
+        toast.success(
+          "Comment reported successfully. It has been hidden from your view."
+        );
       } else {
         console.error("[BizPulseDetailPage] Report failed:", result.error);
         toast.error(result.error || "Failed to report comment");
@@ -336,7 +352,9 @@ export default function BizPulseDetailPage() {
   const handleOpenReportModal = (commentId: string) => {
     const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(commentId);
     if (!isValidObjectId) {
-      toast.error("Cannot report this comment until it’s synced. Please refresh.");
+      toast.error(
+        "Cannot report this comment until it’s synced. Please refresh."
+      );
       return;
     }
     setReportingCommentId(commentId);
@@ -345,12 +363,15 @@ export default function BizPulseDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen mt-12 bg-gray-50">
       {/* Header with breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <button onClick={() => router.back()} className="flex items-center hover:text-blue-600 transition-colors">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center hover:text-blue-600 transition-colors"
+            >
               <ArrowLeft className="w-4 h-4 mr-1" />
               {backButtonText}
             </button>
@@ -360,272 +381,287 @@ export default function BizPulseDetailPage() {
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-  {/* Author Info Header */}
-  <div className="px-6 py-5 sm:px-8">
-    <div className="flex items-center gap-3">
-      <Avatar
-        src={getAvatarUrl(post.author.avatar)}
-        alt={post.author.name}
-        size="md"
-        fallbackText={post.author.name}
-        showMembershipBorder={false}
-      />
-      <div className="flex-1">
-        <div className="text-base font-semibold text-gray-900">
-          {post.author.name}
-        </div>
-        <div className="text-sm text-gray-500 mt-0.5">
-          {post.timeAgo}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {/* Hero Image(s) - Use carousel if multiple images exist */}
-  {Array.isArray((post as any).images) && (post as any).images.length > 0 ? (
-    <ImageCarousel
-      images={(post as any).images}
-      alt={post.title}
-    />
-  ) : post.image ? (
-    <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
-      <img
-        src={post.image}
-        alt={post.title}
-        className="w-full h-full object-contain"
-      />
-    </div>
-  ) : null}
-
-  {/* Article Content */}
-  <div className="px-6 py-8 sm:px-8 sm:py-10">
-    {/* Category Badge */}
-    <div className="mb-4">
-      <span className="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full font-medium">
-        {post.category
-          .replace("-", " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase())}
-      </span>
-    </div>
-
-    {/* Title */}
-    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-      {post.title}
-    </h1>
-
-    {/* Article Content */}
-    <div className="prose prose-lg max-w-none text-gray-700 mb-8">
-      <div dangerouslySetInnerHTML={{ __html: post.content }} />
-    </div>
-
-    {/* Interactive Stats Display */}
-    <div className="py-6 border-y border-gray-200">
-      <div className="flex items-center gap-6 text-gray-700">
-        {/* Like Button */}
-        <button
-          onClick={handleLike}
-          disabled={isLiking}
-          className={`flex items-center space-x-2 transition-all hover:scale-105 ${
-            isLiked
-              ? "text-blue-600"
-              : "text-gray-700 hover:text-blue-600"
-          } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
-        >
-          <ThumbsUp
-            className={`w-5 h-5 ${
-              isLiked ? "fill-current" : ""
-            }`}
-          />
-          <span className="font-medium">{post.stats.likes || 0} Likes</span>
-        </button>
-        {/* Comments Count */}
-        <div className="flex items-center space-x-2">
-          <MessageSquare className="w-5 h-5 text-gray-400" />
-          <span className="font-medium">{post.stats.comments || 0} Comments</span>
-        </div>
-      </div>
-    </div>
-
-    {/* Comment Form */}
-    <div className="py-8">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">
-        Add a Comment
-      </h3>
-      <div className="flex space-x-3">
-        <Avatar
-          src={getAvatarUrl(currentUser?.avatar)}
-          alt={
-            currentUser
-              ? `${currentUser.fname} ${currentUser.lname}`
-              : "User"
-          }
-          size="sm"
-          fallbackText={
-            currentUser
-              ? `${currentUser.fname} ${currentUser.lname}`
-              : "You"
-          }
-          showMembershipBorder={false}
-        />
-        <div className="flex-1">
-          <div className="relative">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Share your thoughts..."
-              disabled={isSubmitting}
-              className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                error ? "border-red-300" : "border-gray-300"
-              } ${isSubmitting ? "bg-gray-50" : ""}`}
-              rows={3}
-            />
-            <button
-              onClick={handleCommentSubmit}
-              disabled={!newComment.trim() || isSubmitting}
-              className={`absolute bottom-4 right-4 px-4 py-2 rounded-lg font-medium transition-all ${
-                isSubmitting || !newComment.trim()
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
-              }`}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Posting...</span>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {/* Author Info Header */}
+          <div className="px-6 py-5 sm:px-8">
+            <div className="flex items-center gap-3">
+              <Avatar
+                src={getAvatarUrl(post.author.avatar)}
+                alt={post.author.name}
+                size="md"
+                fallbackText={post.author.name}
+                showMembershipBorder={false}
+              />
+              <div className="flex-1">
+                <div className="text-base font-semibold text-gray-900">
+                  {post.author.name}
                 </div>
-              ) : (
-                "Post Comment"
-              )}
-            </button>
+                <div className="text-sm text-gray-500 mt-0.5">
+                  {post.timeAgo}
+                </div>
+              </div>
+            </div>
           </div>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        </div>
-      </div>
-    </div>
 
-    {/* Comments Section */}
-    <div className="border-t border-gray-200 pt-8">
-      <h3 id="comments-section" className="text-xl font-bold text-gray-900 mb-6">
-        Comments ({post.stats.comments})
-      </h3>
+          {/* Hero Image(s) - Use carousel if multiple images exist */}
+          {Array.isArray((post as any).images) &&
+          (post as any).images.length > 0 ? (
+            <ImageCarousel images={(post as any).images} alt={post.title} />
+          ) : post.image ? (
+            <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : null}
 
-      <div className="space-y-6">
-        {post.comments && post.comments.length > 0 ? (
-          post.comments.map((comment) => {
-            const isCurrentUserComment =
-              comment.author.id === (currentUser?._id || currentUser?.id);
-            const commentProfileUrl = isCurrentUserComment
-              ? "/feeds/myprofile"
-              : `/feeds/connections/${comment.author.id}?from=connect-members`;
+          {/* Article Content */}
+          <div className="px-2 py-4 md:px-6 md:py-8">
+            {/* Category Badge */}
+            <div className="mb-4">
+              <span className="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full font-medium">
+                {post.category
+                  .replace("-", " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+              </span>
+            </div>
 
-            return (
-              <div
-                key={comment.id}
-                className="flex space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
-              >
-                <Link href={commentProfileUrl}>
-                  <Avatar
-                    src={getAvatarUrl(comment.author.avatar)}
-                    alt={comment.author.name}
-                    size="sm"
-                    fallbackText={comment.author.name}
-                    showMembershipBorder={false}
-                    className="cursor-pointer"
+            {/* Title */}
+            <h1 className="text-[20px] md:text-[24px] font-bold text-gray-900 md:mb-2 lg:mb-6 leading-tight">
+              {post.title}
+            </h1>
+
+            {/* Article Content */}
+            <div className="prose mt-2 prose-lg max-w-none text-gray-700 mb-8">
+              <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            </div>
+
+            {/* Interactive Stats Display */}
+            <div className="py-6 border-y border-gray-200">
+              <div className="flex items-center gap-6 text-gray-700">
+                {/* Like Button */}
+                <button
+                  onClick={handleLike}
+                  disabled={isLiking}
+                  className={`flex items-center space-x-2 transition-all hover:scale-105 ${
+                    isLiked
+                      ? "text-blue-600"
+                      : "text-gray-700 hover:text-blue-600"
+                  } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <ThumbsUp
+                    className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`}
                   />
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center space-x-2">
-                      <Link
-                        href={commentProfileUrl}
-                        className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                      >
-                        {comment.author.name}
-                      </Link>
-                      <span className="text-xs text-gray-500">
-                        • {comment.timeAgo}
-                      </span>
-                    </div>
-                    {/* Comment menu (edit/delete/report) stays same */}
-                    {/* ... */}
+                  <span className="font-medium">
+                    {post.stats.likes || 0} Likes
+                  </span>
+                </button>
+                {/* Comments Count */}
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-gray-400" />
+                  <span className="font-medium">
+                    {post.stats.comments || 0} Comments
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Comment Form */}
+            <div className="py-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Add a Comment
+              </h3>
+              <div className="flex space-x-3">
+                <Avatar
+                  src={getAvatarUrl(currentUser?.avatar)}
+                  alt={
+                    currentUser
+                      ? `${currentUser.fname} ${currentUser.lname}`
+                      : "User"
+                  }
+                  size="sm"
+                  fallbackText={
+                    currentUser
+                      ? `${currentUser.fname} ${currentUser.lname}`
+                      : "You"
+                  }
+                  showMembershipBorder={false}
+                />
+                <div className="flex-1">
+                  <div className="relative">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Share your thoughts..."
+                      disabled={isSubmitting}
+                      className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        error ? "border-red-300" : "border-gray-300"
+                      } ${isSubmitting ? "bg-gray-50" : ""}`}
+                      rows={3}
+                    />
+                    <button
+                      onClick={handleCommentSubmit}
+                      disabled={!newComment.trim() || isSubmitting}
+                      className={`absolute bottom-4 right-4 px-4 py-2 rounded-lg font-medium transition-all ${
+                        isSubmitting || !newComment.trim()
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Posting...</span>
+                        </div>
+                      ) : (
+                        "Post Comment"
+                      )}
+                    </button>
                   </div>
-                  {isEditingCommentId === comment.id ? (
-                    <div className="mt-2 space-y-2">
-                      <textarea
-                        value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
-                        className="w-full border rounded-lg p-2 text-sm"
-                        rows={3}
-                      />
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={async () => {
-                            try {
-                              await bizpulseApi.editComment(
-                                postId,
-                                comment.id,
-                                editingContent.trim()
-                              );
-                              const refreshed =
-                                await bizpulseApi.fetchWallFeedById(postId);
-                              if (refreshed.success && refreshed.data) {
-                                const postData =
-                                  (refreshed.data as any).wallFeed ||
-                                  refreshed.data;
-                                const transformedPost =
-                                  transformBizPulsePostToMock(postData);
-                                if (!transformedPost.image && post.image) {
-                                  transformedPost.image = post.image;
-                                }
-                                dispatch(updatePost(transformedPost));
-                                toast.success("Comment updated");
-                              }
-                            } catch (err) {
-                              console.error("Failed to update comment", err);
-                              toast.error("Failed to update comment");
-                            } finally {
-                              setIsEditingCommentId(null);
-                              setEditingContent("");
-                            }
-                          }}
-                          className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsEditingCommentId(null);
-                            setEditingContent("");
-                          }}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-700 border rounded-lg hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {comment.content}
-                    </p>
+                  {error && (
+                    <p className="mt-2 text-sm text-red-600">{error}</p>
                   )}
                 </div>
               </div>
-            );
-          })
-        ) : (
-          <div className="text-center py-12">
-            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">
-              No comments yet. Be the first to comment!
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
+            </div>
 
+            {/* Comments Section */}
+            <div className="border-t border-gray-200 pt-8">
+              <h3
+                id="comments-section"
+                className="text-xl font-bold text-gray-900 mb-6"
+              >
+                Comments ({post.stats.comments})
+              </h3>
+
+              <div className="space-y-6">
+                {post.comments && post.comments.length > 0 ? (
+                  post.comments.map((comment) => {
+                    const isCurrentUserComment =
+                      comment.author.id ===
+                      (currentUser?._id || currentUser?.id);
+                    const commentProfileUrl = isCurrentUserComment
+                      ? "/feeds/myprofile"
+                      : `/feeds/connections/${comment.author.id}?from=connect-members`;
+
+                    return (
+                      <div
+                        key={comment.id}
+                        className="flex space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
+                      >
+                        <Link href={commentProfileUrl}>
+                          <Avatar
+                            src={getAvatarUrl(comment.author.avatar)}
+                            alt={comment.author.name}
+                            size="sm"
+                            fallbackText={comment.author.name}
+                            showMembershipBorder={false}
+                            className="cursor-pointer"
+                          />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-2">
+                              <Link
+                                href={commentProfileUrl}
+                                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                              >
+                                {comment.author.name}
+                              </Link>
+                              <span className="text-xs text-gray-500">
+                                • {comment.timeAgo}
+                              </span>
+                            </div>
+                            {/* Comment menu (edit/delete/report) stays same */}
+                            {/* ... */}
+                          </div>
+                          {isEditingCommentId === comment.id ? (
+                            <div className="mt-2 space-y-2">
+                              <textarea
+                                value={editingContent}
+                                onChange={(e) =>
+                                  setEditingContent(e.target.value)
+                                }
+                                className="w-full border rounded-lg p-2 text-sm"
+                                rows={3}
+                              />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await bizpulseApi.editComment(
+                                        postId,
+                                        comment.id,
+                                        editingContent.trim()
+                                      );
+                                      const refreshed =
+                                        await bizpulseApi.fetchWallFeedById(
+                                          postId
+                                        );
+                                      if (refreshed.success && refreshed.data) {
+                                        const postData =
+                                          (refreshed.data as any).wallFeed ||
+                                          refreshed.data;
+                                        const transformedPost =
+                                          transformBizPulsePostToMock(postData);
+                                        if (
+                                          !transformedPost.image &&
+                                          post.image
+                                        ) {
+                                          transformedPost.image = post.image;
+                                        }
+                                        dispatch(updatePost(transformedPost));
+                                        toast.success("Comment updated");
+                                      }
+                                    } catch (err) {
+                                      console.error(
+                                        "Failed to update comment",
+                                        err
+                                      );
+                                      toast.error("Failed to update comment");
+                                    } finally {
+                                      setIsEditingCommentId(null);
+                                      setEditingContent("");
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsEditingCommentId(null);
+                                    setEditingContent("");
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-medium text-gray-700 border rounded-lg hover:bg-gray-50"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                              {comment.content}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">
+                      No comments yet. Be the first to comment!
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Report Modal */}

@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useCallback, memo } from "react";
 import {
   ChevronDown,
   ChevronRight,
   MessageSquare,
   Bookmark,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../store/authSlice";
 import ProfileSection from "./ProfileSection";
 
 const Arrow = ({ collapsed }: { collapsed: boolean }) => (
@@ -137,6 +140,12 @@ const navigationSections = [
         text: "Account Settings",
         icon: "/dashboard/sidebaricons/settings.svg",
       },
+      {
+        href: "#",
+        text: "Logout",
+        lucideIcon: LogOut,
+        isLogout: true,
+      },
     ],
   },
 ];
@@ -151,6 +160,8 @@ export default function DashboardSidebar({
   isMobile?: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useDispatch();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expanded, setExpanded] = useState(
     new Set(navigationSections.map((s) => s.title))
@@ -169,10 +180,15 @@ export default function DashboardSidebar({
     else setIsCollapsed((prev) => !prev);
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/login");
+  };
+
   return (
     <aside
       className={`h-full fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${
-        isCollapsed ? "w-24" : "xl:w-72"
+        isCollapsed ? "w-24" : "w-64 xl:w-72"
       }`}
     >
       {/* Logo - Hidden on mobile */}
@@ -207,7 +223,7 @@ export default function DashboardSidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 pb-6 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto px-2 pb-24 scrollbar-thin">
         {navigationSections.map(({ title, items }, i) => {
           const open = expanded.has(title);
           return (
@@ -244,7 +260,7 @@ export default function DashboardSidebar({
                         {...item}
                         isActive={isActive}
                         isCollapsed={isCollapsed}
-                        onClick={onNavigate}
+                        onClick={(item as any).isLogout ? handleLogout : onNavigate}
                       />
                     );
                   })}
@@ -267,6 +283,7 @@ const SidebarLink = memo(
     isActive,
     isCollapsed,
     onClick,
+    isLogout,
   }: {
     href: string;
     text: string;
@@ -275,27 +292,24 @@ const SidebarLink = memo(
     isActive: boolean;
     isCollapsed: boolean;
     onClick?: () => void;
-  }) => (
-    <li>
-      <Link
-        href={href}
-        onClick={onClick}
-        prefetch={false}
-        className={`group flex items-center rounded-md transition-all duration-300 ${
-          isActive
-            ? "bg-blue-50/50 text-blue-700 font-semibold"
-            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        } ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"}`}
-        title={isCollapsed ? text : undefined}
-      >
-        {isActive && isCollapsed && (
+    isLogout?: boolean;
+  }) => {
+    const content = (
+      <>
+        {isActive && isCollapsed && !isLogout && (
           <div className="absolute left-0 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full" />
         )}
         {LucideIcon ? (
           <LucideIcon
             className={`transition-all duration-300 ${
               isCollapsed ? "w-6 h-6" : "w-5 h-5"
-            } ${isActive ? "text-blue-600" : "text-gray-500"}`}
+            } ${
+              isLogout
+                ? "text-red-600"
+                : isActive
+                ? "text-blue-600"
+                : "text-gray-500"
+            }`}
           />
         ) : icon ? (
           <SidebarIcon
@@ -305,11 +319,44 @@ const SidebarLink = memo(
           />
         ) : null}
         {!isCollapsed && <span className="ml-3 truncate text-sm">{text}</span>}
-      </Link>
-    </li>
-  ),
+      </>
+    );
+
+    const className = `group flex items-center rounded-md transition-all duration-300 ${
+      isLogout
+        ? "text-red-600 hover:bg-red-50 hover:text-red-700"
+        : isActive
+        ? "bg-blue-50/50 text-blue-700 font-semibold"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+    } ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"}`;
+
+    return (
+      <li>
+        {isLogout ? (
+          <button
+            onClick={onClick}
+            className={className}
+            title={isCollapsed ? text : undefined}
+          >
+            {content}
+          </button>
+        ) : (
+          <Link
+            href={href}
+            onClick={onClick}
+            prefetch={false}
+            className={className}
+            title={isCollapsed ? text : undefined}
+          >
+            {content}
+          </Link>
+        )}
+      </li>
+    );
+  },
   (prev, next) =>
     prev.href === next.href &&
     prev.isActive === next.isActive &&
-    prev.isCollapsed === next.isCollapsed
+    prev.isCollapsed === next.isCollapsed &&
+    prev.isLogout === next.isLogout
 );

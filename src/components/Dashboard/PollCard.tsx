@@ -211,7 +211,7 @@ export default function PollCard({
                   />
                 )}
 
-                <div className="relative z-10 flex items-center justify-between">
+                <div className="relative z-[1] flex items-center justify-between">
                   <div className="flex-1">
                     <p
                       className={`text-xs font-medium ${

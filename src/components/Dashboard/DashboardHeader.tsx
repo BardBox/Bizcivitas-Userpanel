@@ -267,7 +267,7 @@ export default function DashboardHeader() {
     if (!userId) return;
     setIsSearchOpen(false);
     setSearchQuery("");
-    router.push(`/feeds/connections/${userId}`);
+    router.push(`/feeds/connections/${userId}?from=search`);
   };
 
   const handlePostClick = (postId: string, postSource: string) => {
@@ -340,7 +340,7 @@ export default function DashboardHeader() {
       );
   }, []);
 
-  // Auto-hide header on scroll
+  // Auto-hide header on scroll (desktop only)
   useEffect(() => {
     const handleScroll = (event: Event) => {
       const customEvent = event as CustomEvent<{
@@ -349,11 +349,20 @@ export default function DashboardHeader() {
       }>;
       const { scrollY: currentScrollY, lastScrollY } = customEvent.detail;
 
-      // Show header when scrolling up or near top
+      // Only hide on desktop (width >= 768px)
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        // Always show header on mobile
+        setIsHeaderVisible(true);
+        return;
+      }
+
+      // Desktop behavior: Show header when scrolling up or near top
       if (currentScrollY < lastScrollY || currentScrollY < 50) {
         setIsHeaderVisible(true);
       }
-      // Hide header when scrolling down past threshold
+      // Hide header when scrolling down past threshold (desktop only)
       else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsHeaderVisible(false);
         setShowSearchBar(false); // Close search bar when hiding header

@@ -101,7 +101,7 @@ export default function FeedsLayoutClient({
         <main
           ref={mainRef}
           className={`relative flex-1 overflow-y-auto pt-16 ${
-            shouldHavePadding ? "md:p-12" : ""
+            shouldHavePadding ? "md:p-12" : "px-3"
           }`}
         >
           <NavigationLoader />

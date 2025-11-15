@@ -12,8 +12,10 @@ import {
   LogOut,
   type LucideIcon,
 } from "lucide-react";
-import { useDispatch } from "react-redux";
-import { logout } from "../../../store/authSlice";
+import { useLogoutMutation } from "@/store/api";
+import { useAppDispatch } from "@/store/hooks";
+import { logout as logoutAction } from "@/store/slices/authSlice";
+import toast from "react-hot-toast";
 import ProfileSection from "./ProfileSection";
 
 const Arrow = ({ collapsed }: { collapsed: boolean }) => (
@@ -161,7 +163,8 @@ export default function DashboardSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const [logoutUser] = useLogoutMutation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expanded, setExpanded] = useState(
     new Set(navigationSections.map((s) => s.title))
@@ -180,9 +183,28 @@ export default function DashboardSidebar({
     else setIsCollapsed((prev) => !prev);
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      // Get FCM token from localStorage
+      // Use placeholder if not found (backend requires fcmToken field)
+      const fcmToken = localStorage.getItem("fcmToken") || "no-fcm-token";
+
+      await logoutUser({ fcmToken }).unwrap();
+
+      // Dispatch Redux logout action to clear auth state
+      dispatch(logoutAction());
+
+      // Clear all local storage
+      localStorage.clear();
+
+      toast.success("Logged out successfully");
+
+      // Force immediate hard redirect to home page (root page)
+      window.location.href = "/";
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      toast.error(error?.data?.message || "Logout failed");
+    }
   };
 
   return (

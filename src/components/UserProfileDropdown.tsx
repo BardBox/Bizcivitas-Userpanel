@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLogoutMutation } from "@/store/api";
+import { useAppDispatch } from "@/store/hooks";
+import { logout as logoutAction } from "@/store/slices/authSlice";
 import toast from "react-hot-toast";
 
 interface UserProfileDropdownProps {
@@ -14,6 +16,7 @@ export default function UserProfileDropdown({
   className = "",
 }: UserProfileDropdownProps) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [logoutUser, { isLoading: logoutLoading }] = useLogoutMutation();
@@ -57,12 +60,15 @@ export default function UserProfileDropdown({
 
       await logoutUser({ fcmToken }).unwrap();
 
+      // Dispatch Redux logout action to clear auth state
+      dispatch(logoutAction());
+
       // Clear all local storage
       localStorage.clear();
 
       toast.success("Logged out successfully");
 
-      // Force immediate hard redirect to home page
+      // Force immediate hard redirect to home page (root page)
       window.location.href = "/";
     } catch (error: any) {
       console.error("Logout error:", error);

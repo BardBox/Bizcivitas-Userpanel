@@ -154,23 +154,27 @@ export default function MeetupsChart({
         </div>
 
         {/* Time Filter Buttons + Create Button */}
-        <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
-          {dateFilters.map((filter) => (
-            <button
-              key={filter.id}
-              onClick={() => handleRangeChange(filter.id)}
-              className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
-                selectedRange === filter.id
-                  ? "bg-[#4A62AD] text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
+        <div className="flex flex-col gap-2 mt-4 sm:mt-0 w-full sm:w-auto">
+          {/* Date Filter Buttons */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            {dateFilters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => handleRangeChange(filter.id)}
+                className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
+                  selectedRange === filter.id
+                    ? "bg-[#4A62AD] text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          {/* Create Button - Full width on mobile */}
           <button
             onClick={() => setIsFormOpen(true)}
-            className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md hover:shadow-lg"
+            className="w-full sm:w-auto sm:px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center"
             title="Create Meetup"
           >
             <Plus className="w-5 h-5" />
@@ -230,9 +234,9 @@ export default function MeetupsChart({
             </div>
           </div>
         ) : (
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="bg-gray-50 rounded-xl">
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <BarChart data={chartData} margin={{ top: 20, right: 5, left: -20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                 <XAxis
                   dataKey="date"

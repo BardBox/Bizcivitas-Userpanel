@@ -18,6 +18,7 @@ import {
   useGetMeetingsAllTimeInvitedPeopleCountQuery,
 } from "../../../../store/api/dashboardApi";
 import { Plus } from "lucide-react";
+import VisitorInvitationDetailModal from "./VisitorInvitationDetailModal";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate";
 
@@ -52,6 +53,8 @@ export default function VisitorInvitationChart({
       setInternalRange(range);
     }
   };
+
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Conditional API calls based on selected range
   const {
@@ -178,7 +181,10 @@ export default function VisitorInvitationChart({
 
       {/* Stats Card */}
       <div className="mb-8">
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 px-6 py-4 rounded-xl border border-orange-200">
+        <div
+          onClick={() => setIsDetailModalOpen(true)}
+          className="bg-gradient-to-br from-orange-50 to-orange-100 px-6 py-4 rounded-xl border border-orange-200 cursor-pointer hover:shadow-lg transition-shadow"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-orange-700 mb-1 font-medium">Total Invitations</p>
@@ -274,6 +280,13 @@ export default function VisitorInvitationChart({
           </div>
         )}
       </div>
+
+      {/* Visitor Invitation Detail Modal */}
+      <VisitorInvitationDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        initialDateRange={selectedRange}
+      />
     </div>
   );
 }

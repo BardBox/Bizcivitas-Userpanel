@@ -185,13 +185,13 @@ export default function BizWinDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-green-600 to-emerald-600">
-          <h2 className="text-2xl font-bold text-white">BizWin Data (TYFCB)</h2>
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-green-600 to-emerald-600">
+          <h2 className="text-base md:text-lg lg:text-xl font-bold text-white">BizWin Data (TYFCB)</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/20 rounded-full transition-colors"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </button>
         </div>
 
@@ -199,7 +199,7 @@ export default function BizWinDetailModal({
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab("given")}
-            className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
               activeTab === "given"
                 ? "bg-green-500 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -209,7 +209,7 @@ export default function BizWinDetailModal({
           </button>
           <button
             onClick={() => setActiveTab("received")}
-            className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
               activeTab === "received"
                 ? "bg-green-500 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -220,8 +220,8 @@ export default function BizWinDetailModal({
         </div>
 
         {/* Date Range Filters */}
-        <div className="p-6 border-b border-gray-200 space-y-4">
-          <div className="flex gap-2 flex-wrap">
+        <div className="p-4 md:p-6 border-b border-gray-200 space-y-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             {[
               { value: "15days", label: "15 Days" },
               { value: "3months", label: "3 Months" },
@@ -231,7 +231,7 @@ export default function BizWinDetailModal({
               <button
                 key={option.value}
                 onClick={() => setDateRange(option.value as any)}
-                className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
+                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
                   dateRange === option.value
                     ? "bg-green-600 text-white shadow-lg"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -245,31 +245,31 @@ export default function BizWinDetailModal({
           {/* Download PDF Button */}
           <button
             onClick={handleDownloadPDF}
-            className="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
+            className="w-full py-2.5 md:py-3 bg-green-600 text-white text-sm md:text-base font-semibold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-4 h-4 md:w-5 md:h-5" />
             Download PDF Report
           </button>
 
           {/* Date Range Display */}
-          <div className="flex gap-4 justify-center">
-            <div className="px-4 py-2 bg-green-100 rounded-lg text-sm">
+          <div className="flex gap-2 md:gap-4 justify-center">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 rounded-lg text-xs md:text-sm">
               <span className="text-gray-600">Start: </span>
               <span className="font-semibold text-green-900">{startDate}</span>
             </div>
-            <div className="px-4 py-2 bg-green-100 rounded-lg text-sm">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 rounded-lg text-xs md:text-sm">
               <span className="text-gray-600">End: </span>
               <span className="font-semibold text-green-900">{endDate}</span>
             </div>
           </div>
 
           {/* Total Amount & Count */}
-          <div className="flex gap-4 justify-center">
-            <div className="px-4 py-2 bg-emerald-100 rounded-lg text-sm">
+          <div className="flex gap-2 md:gap-4 justify-center">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-emerald-100 rounded-lg text-xs md:text-sm">
               <span className="text-gray-600">Total Amount: </span>
               <span className="font-bold text-emerald-900">{formatCurrency(totalAmount)}</span>
             </div>
-            <div className="px-4 py-2 bg-emerald-100 rounded-lg text-sm">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-emerald-100 rounded-lg text-xs md:text-sm">
               <span className="text-gray-600">Total Records: </span>
               <span className="font-bold text-emerald-900">{totalCount}</span>
             </div>
@@ -284,8 +284,8 @@ export default function BizWinDetailModal({
             </div>
           ) : currentData.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium">No records found</p>
-              <p className="text-sm">Try selecting a different date range</p>
+              <p className="text-base md:text-lg font-medium">No records found</p>
+              <p className="text-xs md:text-sm">Try selecting a different date range</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -326,69 +326,83 @@ export default function BizWinDetailModal({
                       key={record.id || record._id}
                       className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-start gap-4">
-                        {/* Avatar */}
-                        <div className="flex-shrink-0">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                            {(() => {
-                              const avatarUrl = displayUser?.avatar
-                                ? displayUser.avatar.startsWith('http')
-                                  ? displayUser.avatar
-                                  : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${displayUser.avatar}`
-                                : null;
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex gap-3 flex-1">
+                          {/* Avatar */}
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                              {(() => {
+                                const avatarUrl = displayUser?.avatar
+                                  ? displayUser.avatar.startsWith('http')
+                                    ? displayUser.avatar
+                                    : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${displayUser.avatar}`
+                                  : null;
 
-                              return avatarUrl ? (
-                                <img
-                                  src={avatarUrl}
-                                  alt={userName}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    if (e.currentTarget.nextSibling) {
-                                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                              ) : null;
-                            })()}
-                            <div
-                              className="w-full h-full flex items-center justify-center bg-green-600 text-white font-bold text-lg"
-                              style={{ display: displayUser?.avatar ? 'none' : 'flex' }}
-                            >
-                              {userInitials}
+                                return avatarUrl ? (
+                                  <img
+                                    key={`avatar-img-${record.id || record._id}`}
+                                    src={avatarUrl}
+                                    alt={userName}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      if (e.currentTarget.nextSibling) {
+                                        (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    key={`avatar-initials-${record.id || record._id}`}
+                                    className="w-full h-full flex items-center justify-center bg-green-600 text-white font-bold text-sm"
+                                  >
+                                    {userInitials}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-gray-900 text-sm mb-1 break-words">
+                              {userName}
+                            </h3>
+                            {displayUser?.business && (
+                              <p className="text-xs text-gray-600 mb-1 break-words">
+                                {displayUser.business}
+                              </p>
+                            )}
+
+                            <div className="space-y-1 mt-2">
+                              <div className="flex items-center gap-1.5">
+                                <IndianRupee className="w-3 h-3 text-green-600 flex-shrink-0" />
+                                <span className="text-sm font-bold text-green-700">
+                                  {formatCurrency(record.amount)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-green-600">
+                                Status: <span className="font-medium">Got the business</span>
+                              </p>
                             </div>
                           </div>
                         </div>
 
-                        {/* Details */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-lg">
-                            {userName}
-                          </h3>
-                          {displayUser?.business && (
-                            <p className="text-sm text-gray-600 mt-0.5">
-                              {displayUser.business}
+                        {/* Comments and Date */}
+                        <div className="sm:w-2/5 flex-shrink-0">
+                          <div className="p-2 bg-green-50 rounded-lg border border-green-100">
+                            {record.comments && (
+                              <>
+                                <p className="text-xs text-green-800 font-semibold mb-1">Comments:</p>
+                                <p className="text-xs text-gray-700 line-clamp-2 italic mb-2">
+                                  "{record.comments}"
+                                </p>
+                              </>
+                            )}
+                            <p className="text-xs text-gray-600">
+                              Date: <span className="font-semibold text-green-900">{formatDate(record.createdAt || record.date || "")}</span>
                             </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <IndianRupee className="w-5 h-5 text-green-600" />
-                            <span className="text-xl font-bold text-green-700">
-                              {formatCurrency(record.amount)}
-                            </span>
                           </div>
-                          {record.comments && (
-                            <p className="text-sm text-gray-600 mt-2 italic">
-                              "{record.comments}"
-                            </p>
-                          )}
-                          <p className="text-sm text-green-600 mt-1">
-                            Status: <span className="font-medium">Got the business</span>
-                          </p>
-                        </div>
-
-                        {/* Date */}
-                        <div className="text-right text-sm text-gray-500">
-                          {formatDate(record.createdAt || record.date || "")}
                         </div>
                       </div>
                     </div>

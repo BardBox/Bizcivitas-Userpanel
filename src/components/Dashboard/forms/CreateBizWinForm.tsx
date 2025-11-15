@@ -130,7 +130,7 @@ export default function CreateBizWinForm({
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Create BizWin (TYFCB)">
-        <form onSubmit={handleSubmit} className="p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <form onSubmit={handleSubmit} className="p-4 lg:p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
           {/* To User */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-blue-900 mb-2">
@@ -212,18 +212,18 @@ export default function CreateBizWinForm({
           )}
 
           {/* Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all shadow-sm"
+              className="w-full sm:flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Creating..." : "Create BizWin"}
             </button>

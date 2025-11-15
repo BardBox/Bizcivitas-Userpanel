@@ -132,7 +132,7 @@ export default function CreateBizConnectForm({
       onClose={onClose}
       title="Create BizConnect"
     >
-      <form onSubmit={handleSubmit} className="p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <form onSubmit={handleSubmit} className="p-4 lg:p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         {/* Two Column Layout for Large Screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
@@ -268,18 +268,18 @@ export default function CreateBizConnectForm({
         )}
 
         {/* Buttons */}
-        <div className="flex gap-4 pt-6">
+        <div className="flex flex-col sm:flex-row gap-4 pt-6">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-6 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-semibold transition-all shadow-sm hover:shadow-md"
+            className="w-full sm:flex-1 px-6 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-semibold transition-all shadow-sm hover:shadow-md"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
+            className="w-full sm:flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
           >
             {isSubmitting ? "Creating..." : "Create Referral"}
           </button>

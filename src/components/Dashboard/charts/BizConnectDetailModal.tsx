@@ -199,13 +199,13 @@ export default function BizConnectDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
-          <h2 className="text-2xl font-bold text-white">BizConnect Data</h2>
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
+          <h2 className="text-base md:text-lg lg:text-xl font-bold text-white">BizConnect Data</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/20 rounded-full transition-colors"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </button>
         </div>
 
@@ -213,7 +213,7 @@ export default function BizConnectDetailModal({
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab("given")}
-            className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
               activeTab === "given"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -223,7 +223,7 @@ export default function BizConnectDetailModal({
           </button>
           <button
             onClick={() => setActiveTab("received")}
-            className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
               activeTab === "received"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -234,8 +234,8 @@ export default function BizConnectDetailModal({
         </div>
 
         {/* Date Range Filters */}
-        <div className="p-6 border-b border-gray-200 space-y-4">
-          <div className="flex gap-2 flex-wrap">
+        <div className="p-4 md:p-6 border-b border-gray-200 space-y-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             {[
               { value: "15days", label: "15 Days" },
               { value: "3months", label: "3 Months" },
@@ -245,7 +245,7 @@ export default function BizConnectDetailModal({
               <button
                 key={option.value}
                 onClick={() => setDateRange(option.value as any)}
-                className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
+                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
                   dateRange === option.value
                     ? "bg-blue-600 text-white shadow-lg"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -259,26 +259,26 @@ export default function BizConnectDetailModal({
           {/* Download PDF Button */}
           <button
             onClick={handleDownloadPDF}
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
+            className="w-full py-2.5 md:py-3 bg-blue-600 text-white text-sm md:text-base font-semibold rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-4 h-4 md:w-5 md:h-5" />
             Download PDF Report
           </button>
 
           {/* Date Range Display */}
-          <div className="flex gap-4 justify-center">
-            <div className="px-4 py-2 bg-blue-100 rounded-lg text-sm">
+          <div className="flex gap-2 md:gap-4 justify-center">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 rounded-lg text-xs md:text-sm">
               <span className="text-gray-600">Start: </span>
               <span className="font-semibold text-blue-900">{startDate}</span>
             </div>
-            <div className="px-4 py-2 bg-blue-100 rounded-lg text-sm">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 rounded-lg text-xs md:text-sm">
               <span className="text-gray-600">End: </span>
               <span className="font-semibold text-blue-900">{endDate}</span>
             </div>
           </div>
 
           {/* Total Count */}
-          <div className="text-center text-gray-700 font-medium">
+          <div className="text-center text-sm md:text-base text-gray-700 font-medium">
             Total BizConnect {activeTab === "given" ? "Given" : "Received"}: {totalCount}
           </div>
         </div>
@@ -294,8 +294,8 @@ export default function BizConnectDetailModal({
             </div>
           ) : currentData.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium">No records found</p>
-              <p className="text-sm">Try selecting a different date range</p>
+              <p className="text-base md:text-lg font-medium">No records found</p>
+              <p className="text-xs md:text-sm">Try selecting a different date range</p>
             </div>
           ) : (
             <div className="space-y-4 pb-4">
@@ -353,91 +353,101 @@ export default function BizConnectDetailModal({
                       key={record.id || record._id}
                       className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                     >
-                    <div className="flex items-start gap-4">
-                      {/* Avatar */}
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={userName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                // Fallback to initials if image fails to load
-                                e.currentTarget.style.display = 'none';
-                                if (e.currentTarget.nextSibling) {
-                                  (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
-                                }
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className="w-full h-full flex items-center justify-center bg-blue-600 text-white font-bold text-lg"
-                            style={{ display: avatarUrl ? 'none' : 'flex' }}
-                          >
-                            {userInitials}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex gap-3 flex-1">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                            {avatarUrl ? (
+                              <img
+                                key={`avatar-img-${record.id || record._id}`}
+                                src={avatarUrl}
+                                alt={userName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  if (e.currentTarget.nextSibling) {
+                                    (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div
+                                key={`avatar-initials-${record.id || record._id}`}
+                                className="w-full h-full flex items-center justify-center bg-blue-600 text-white font-bold text-sm"
+                              >
+                                {userInitials}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 text-lg">
-                          {userName}
-                        </h3>
-                        {displayUser?.business && (
-                          <p className="text-sm text-gray-600 mt-0.5">
-                            {displayUser.business}
-                          </p>
-                        )}
-                        {record.contactRelation && (
-                          <p className="text-sm text-blue-600 mt-1">
-                            Contact Relation: <span className="font-medium">{record.contactRelation}</span>
-                          </p>
-                        )}
-                        {invitedName && invitedName !== "N/A" && (
-                          <p className="text-sm text-gray-700 mt-1">
-                            Invited: <span className="font-medium">{invitedName}</span>
-                          </p>
-                        )}
-                        {record.status && (
-                          <p className={`text-sm mt-1 ${
-                            record.status === "got the business" ? "text-green-600" :
-                            record.status === "contacted" ? "text-blue-600" :
-                            record.status === "not contacted yet" ? "text-yellow-600" :
-                            record.status === "no response" ? "text-red-600" :
-                            "text-gray-600"
-                          }`}>
-                            Status: <span className="font-medium capitalize">{record.status}</span>
-                          </p>
-                        )}
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-gray-900 text-sm mb-1 break-words">
+                            {userName}
+                          </h3>
+                          {displayUser?.business && (
+                            <p className="text-xs text-gray-600 mb-1 break-words">
+                              {displayUser.business}
+                            </p>
+                          )}
+
+                          <div className="space-y-1 mt-2">
+                            {record.contactRelation && (
+                              <p className="text-xs text-blue-600">
+                                Contact Relation: <span className="font-medium">{record.contactRelation}</span>
+                              </p>
+                            )}
+                            {invitedName && invitedName !== "N/A" && (
+                              <p className="text-xs text-gray-700">
+                                Invited: <span className="font-medium">{invitedName}</span>
+                              </p>
+                            )}
+                            {record.status && (
+                              <p className={`text-xs ${
+                                record.status === "got the business" ? "text-green-600" :
+                                record.status === "contacted" ? "text-blue-600" :
+                                record.status === "not contacted yet" ? "text-yellow-600" :
+                                record.status === "no response" ? "text-red-600" :
+                                "text-gray-600"
+                              }`}>
+                                Status: <span className="font-medium capitalize">{record.status}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
                       {/* Date and Actions */}
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="text-sm text-gray-500">
-                          {formatDate(record.createdAt || record.date || "")}
-                        </div>
+                      <div className="sm:w-2/5 flex-shrink-0">
+                        <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Date: <span className="font-semibold text-blue-900">{formatDate(record.createdAt || record.date || "")}</span>
+                          </p>
 
-                        {/* Edit and Delete buttons (only for Given tab) */}
-                        {activeTab === "given" && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEdit(record)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Edit referral"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(record._id || record.id)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete referral"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                          {/* Edit and Delete buttons (only for Given tab) */}
+                          {activeTab === "given" && (
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => handleEdit(record)}
+                                className="flex-1 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                title="Edit referral"
+                              >
+                                <Edit className="w-3 h-3" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(record._id || record.id)}
+                                className="flex-1 px-3 py-1.5 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                title="Delete referral"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

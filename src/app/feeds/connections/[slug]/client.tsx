@@ -440,17 +440,17 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     <div className="min-h-screen bg-gray-50">
       {/* Header with Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="py-2 sm:py-3">
             {/* Breadcrumb Navigation */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-1 sm:gap-1.5 text-sm text-gray-600">
               <button
                 onClick={() => router.push("/feeds")}
-                className="hover:text-blue-600 transition-colors"
+                className="hover:text-blue-600 transition-colors p-0.5"
               >
-                <Home className="w-4 h-4" />
+                <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
               <button
                 onClick={() => {
                   if (referrerTab) {
@@ -459,25 +459,25 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
                     router.push("/feeds/connections");
                   }
                 }}
-                className="hover:text-blue-600 transition-colors"
+                className="text-[11px] sm:text-[13px] md:text-[14px] hover:text-blue-600 transition-colors"
               >
                 Connections
               </button>
               {referrerTab && (
                 <>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
                   <button
                     onClick={() => {
                       router.push(`/feeds/connections?tab=${referrerTab}`);
                     }}
-                    className="hover:text-blue-600 transition-colors"
+                    className="hover:text-blue-600 transition-colors text-[11px] sm:text-[13px] md:text-[14px]"
                   >
                     {getTabLabel(referrerTab)}
                   </button>
                 </>
               )}
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-900 font-medium">
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
+              <span className="text-gray-900 font-medium text-[11px] sm:text-[13px] md:text-[14px] truncate max-w-[150px] sm:max-w-none">
                 {`${personalCardData?.fname} ${personalCardData?.lname}`}
               </span>
             </div>

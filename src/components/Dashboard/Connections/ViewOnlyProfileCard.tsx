@@ -95,24 +95,37 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl flex flex-col items-center justify-center shadow-lg border border-gray-100 overflow-hidden">
-      {/* Profile Photo Section using ProfilePreview */}
-      <div className="pt-6">
-        <ProfilePreview
-          userData={{
-            fname: profile.fname,
-            lname: profile.lname,
-            avatar: profile.avatar,
-            membershipType: profile.membershipType,
-          }}
-          size="medium"
-          showEditButton={false}
-          showMembershipBadge={true}
-        />
+    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+      {/* Header Background with Gradient */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 h-24 sm:h-28"></div>
+      
+      {/* Profile Photo Section - Overlapping header */}
+      <div className="relative -mt-14 sm:-mt-16 px-4">
+        <div className="flex justify-center">
+          <ProfilePreview
+            userData={{
+              fname: profile.fname,
+              lname: profile.lname,
+              avatar: profile.avatar,
+              membershipType: profile.membershipType,
+            }}
+            size="medium"
+            showEditButton={false}
+            showMembershipBadge={true}
+          />
+        </div>
       </div>
 
-      {/* Action Buttons using ConnectionsAndShare */}
-      <div className="my-4">
+      {/* Name and Business */}
+      <div className="text-center px-4 mt-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{fullName}</h2>
+        <p className="text-sm text-gray-600 mt-1 capitalize">
+          {profile.membershipType || "Member"}
+        </p>
+      </div>
+
+      {/* Action Buttons - Compact */}
+      <div className="px-4 mt-4">
         <ConnectionsAndShare
           userProfile={{
             fname: profile.fname,
@@ -128,12 +141,12 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
       </div>
 
       {/* Connection Status Actions */}
-      <div className="mb-4 flex justify-center">
+      <div className="px-4 mt-3 flex justify-center">
         {connectionStatus.status === "none" && (
           <button
             onClick={onConnect}
             disabled={isConnecting}
-            className="flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isConnecting ? (
               <>
@@ -171,7 +184,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
         {connectionStatus.status === "pending_sent" && (
           <button
             onClick={onRemoveConnection}
-            className="flex items-center justify-center bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors text-sm"
+            className="w-full flex items-center justify-center bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2.5 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all shadow-md hover:shadow-lg text-sm font-medium"
           >
             <UserMinus className="h-4 w-4 mr-2" />
             Cancel Request
@@ -182,7 +195,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
           <button
             onClick={onConnect}
             disabled={isConnecting}
-            className="flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-2.5 rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-md hover:shadow-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isConnecting ? (
               <>
@@ -220,7 +233,7 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
         {connectionStatus.status === "connected" && (
           <button
             onClick={onRemoveConnection}
-            className="flex items-center justify-center bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+            className="w-full flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2.5 rounded-xl hover:from-red-700 hover:to-red-800 transition-all shadow-md hover:shadow-lg text-sm font-medium"
           >
             <UserMinus className="h-4 w-4 mr-2" />
             Remove Connection
@@ -229,32 +242,42 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
       </div>
 
       {/* Business Information */}
-      <div className="text-center w-full">
-        <div className="text-center mb-4 sm:mb-6">
-          <div
-            className="relative w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 overflow-hidden cursor-pointer"
-            onClick={() =>
-              profile.business?.logo &&
-              !logoLoadError &&
-              setIsLogoModalOpen(true)
-            }
-          >
-            {profile.business?.logo && !logoLoadError ? (
-              <img
-                src={profile.business.logo}
-                alt={`${profile.business.name} logo`}
-                className="w-full h-full object-cover rounded-full"
-                onError={() => setLogoLoadError(true)}
-              />
-            ) : (
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-full"></div>
-              </div>
-            )}
+      <div className="mt-4 mx-4">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3">
+            <div
+              className="relative w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer flex-shrink-0 border-2 border-blue-200"
+              onClick={() =>
+                profile.business?.logo &&
+                !logoLoadError &&
+                setIsLogoModalOpen(true)
+              }
+            >
+              {profile.business?.logo && !logoLoadError ? (
+                <img
+                  src={profile.business.logo}
+                  alt={`${profile.business.name} logo`}
+                  className="w-full h-full object-cover rounded-xl"
+                  onError={() => setLogoLoadError(true)}
+                />
+              ) : (
+                <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-3 h-3 bg-white rounded-sm"></div>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-sm truncate">
+                {profile.business?.name || "Business Name Not Provided"}
+              </h3>
+              {profile.location && (
+                <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  <span className="truncate">{profile.location}</span>
+                </div>
+              )}
+            </div>
           </div>
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-            {profile.business?.name || "Business Name Not Provided"}
-          </h3>
         </div>
 
         {/* Image Modal */}
@@ -268,63 +291,55 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
         />
 
         {/* Contact Information */}
-        <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm px-6 pb-6">
-          {/* Location */}
-          {profile.location && (
-            <div className="mb-2 text-gray-800 font-medium text-xs sm:text-sm flex items-center justify-center gap-2">
-              <MapPin className="h-4 w-4 text-gray-500" />
-              <span>{profile.location}</span>
-            </div>
-          )}
-
+        <div className="mt-4 space-y-2 px-4 pb-5">
           {/* Contact Details */}
           {profile.contact && (
             <>
               {profile.contact.personal ? (
                 <a
                   href={`tel:${profile.contact.personal}`}
-                  className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  className="flex items-center gap-2 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg transition-all group"
                 >
-                  <Phone className="h-4 w-4" />
-                  <span>Personal: {profile.contact.personal}</span>
+                  <Phone className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium">Personal: {profile.contact.personal}</span>
                 </a>
               ) : (
                 connectionStatus?.status !== "connected" && (
-                  <div className="flex items-center justify-center gap-2 text-gray-400 font-medium">
+                  <div className="flex items-center gap-2 text-sm bg-gray-50 text-gray-400 px-3 py-2 rounded-lg">
                     <Phone className="h-4 w-4" />
-                    <span>Personal: •••••••••</span>
+                    <span className="font-medium">Personal: •••••••••</span>
                   </div>
                 )
               )}
               {profile.contact.professional ? (
                 <a
                   href={`tel:${profile.contact.professional}`}
-                  className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  className="flex items-center gap-2 text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg transition-all group"
                 >
-                  <Phone className="h-4 w-4" />
-                  <span>Professional: {profile.contact.professional}</span>
+                  <Phone className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium">Professional: {profile.contact.professional}</span>
                 </a>
               ) : (
                 connectionStatus?.status !== "connected" && (
-                  <div className="flex items-center justify-center gap-2 text-gray-400 font-medium">
+                  <div className="flex items-center gap-2 text-sm bg-gray-50 text-gray-400 px-3 py-2 rounded-lg">
                     <Phone className="h-4 w-4" />
-                    <span>Professional: •••••••••</span>
+                    <span className="font-medium">Professional: •••••••••</span>
                   </div>
                 )
               )}
               {profile.contact.email ? (
                 <a
                   href={`mailto:${profile.contact.email}`}
-                  className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium break-all transition-colors"
+                  className="flex items-center gap-2 text-sm bg-green-50 hover:bg-green-100 text-green-700 px-3 py-2 rounded-lg transition-all group"
                 >
-                  <Mail className="h-4 w-4 flex-shrink-0" />
-                  <span className="break-all">{profile.contact.email}</span>
+                  <Mail className="h-4 w-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium truncate">{profile.contact.email}</span>
                 </a>
               ) : (
                 connectionStatus?.status !== "connected" && (
-                  <div className="flex items-center justify-center gap-2 text-gray-400 font-medium">
+                  <div className="flex items-center gap-2 text-sm bg-gray-50 text-gray-400 px-3 py-2 rounded-lg">
                     <Mail className="h-4 w-4 flex-shrink-0" />
-                    <span>•••••••••@••••••••</span>
+                    <span className="font-medium">•••••••••@••••••••</span>
                   </div>
                 )
               )}
@@ -337,10 +352,10 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium break-all transition-colors"
+                  className="flex items-center gap-2 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 px-3 py-2 rounded-lg transition-all group"
                 >
-                  <Globe className="h-4 w-4 flex-shrink-0" />
-                  <span className="break-all">{profile.contact.website}</span>
+                  <Globe className="h-4 w-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium truncate">{profile.contact.website}</span>
                 </a>
               )}
             </>
@@ -348,10 +363,10 @@ const ViewOnlyProfileCard: React.FC<ViewOnlyProfileCardProps> = ({
 
           {/* Member Since */}
           {profile.joiningDate && (
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <div className="text-gray-500 text-xs flex items-center justify-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span>Member since {formatDate(profile.joiningDate)}</span>
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="text-gray-600 text-xs flex items-center justify-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">Member since {formatDate(profile.joiningDate)}</span>
               </div>
             </div>
           )}

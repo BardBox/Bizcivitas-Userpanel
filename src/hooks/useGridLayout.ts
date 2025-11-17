@@ -40,7 +40,7 @@ export function useGridLayout() {
       } else {
         // mobile: 1 column
         columns = 1;
-        rows = 4; // 1x4 = 4 items
+        rows = 6; // 1x6 = 6 items
       }
 
       const calculatedItems = columns * rows;
@@ -105,7 +105,7 @@ export function useGridConfig() {
         breakpoint = "sm";
       } else {
         columns = 1;
-        rows = 4;
+        rows = 6;
         breakpoint = "xs";
       }
 

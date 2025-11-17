@@ -318,44 +318,43 @@ function ConnectionsPageContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top Row - Title and Buttons */}
           <div className="py-4 lg:flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
+            <div className="mb-3 lg:mb-0">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
                 My Connections
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-[16px] sm:text-[20px] text-gray-600">
                 {connectionsCount} connections
               </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3 mt-2 lg:mt-0">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* My Network Button */}
               <button
                 onClick={() => setActiveTab("my-network")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                   activeTab === "my-network"
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                 }`}
               >
-                <Users className="h-5 w-5" />
-<p className="text-[14px]">                My Network
-</p>              </button>
+                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-[16px]">My Network</span>
+              </button>
 
               {/* Requests Button */}
               <button
                 onClick={() => setActiveTab("requests")}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                   activeTab === "requests"
                     ? "bg-blue-600 text-white"
                     : "bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
                 }`}
               >
-                <Inbox className="h-5 w-5" />
-             <p className="text-[14px]">             
-   Requests</p>
+                <Inbox className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span  className="text-[16px]">Requests</span>
                 {receivedCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center">
                     {receivedCount > 99 ? "99+" : receivedCount}
                   </span>
                 )}
@@ -541,14 +540,15 @@ function ConnectionsPageContent() {
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Previous</span>
+                      <span className="sm:hidden">Prev</span>
                     </button>
 
                     {/* Page Numbers */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 sm:gap-1">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                         (page) => {
                           // Show first page, last page, current page, and pages around current
@@ -561,7 +561,7 @@ function ConnectionsPageContent() {
                               <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                                className={`px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                                   page === currentPage
                                     ? "bg-blue-600 text-white border-blue-600"
                                     : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -575,7 +575,7 @@ function ConnectionsPageContent() {
                             page === currentPage + 2
                           ) {
                             return (
-                              <span key={page} className="px-2 text-gray-500">
+                              <span key={page} className="px-1 sm:px-2 text-gray-500 text-xs sm:text-sm">
                                 ...
                               </span>
                             );
@@ -589,10 +589,11 @@ function ConnectionsPageContent() {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      Next
-                      <ChevronRight className="h-4 w-4" />
+                      <span className="sm:hidden">Next</span>
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                     </button>
                   </div>
                 )}

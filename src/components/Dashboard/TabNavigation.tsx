@@ -21,6 +21,8 @@ export default function TabNavigation() {
   const handleTabChange = (tabId: BizPulseCategory) => {
     dispatch(setActiveCategory(tabId));
     setIsDropdownOpen(false);
+    // Clear URL params when manually switching tabs
+    window.history.replaceState(null, '', pathname);
   };
 
   const activeTab =

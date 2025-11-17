@@ -31,6 +31,8 @@ export default function BizHubTabNavigation() {
   const handleTabChange = (tabId: BizHubCategory) => {
     dispatch(setActiveCategory(tabId));
     setIsDropdownOpen(false);
+    // Clear URL params when manually switching tabs
+    window.history.replaceState(null, '', pathname);
   };
 
   const activeTab =

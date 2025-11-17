@@ -268,7 +268,6 @@ export default function MeetupsDetailModal({
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                             {avatarUrl ? (
                               <img
-                                key={`avatar-img-${meetup._id}`}
                                 src={avatarUrl}
                                 alt={creatorName}
                                 className="w-full h-full object-cover"
@@ -280,10 +279,7 @@ export default function MeetupsDetailModal({
                                 }}
                               />
                             ) : (
-                              <div
-                                key={`avatar-initials-${meetup._id}`}
-                                className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-bold text-sm"
-                              >
+                              <div className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-bold text-sm">
                                 {creatorInitials}
                               </div>
                             )}

@@ -17,9 +17,8 @@ export default function FeedsLayoutClient({
   const lastScrollY = useRef(0);
   const pathname = usePathname();
 
-  // Pages that should NOT have padding (main feed pages)
-  const noPaddingPages = ["/feeds"];
-  const shouldHavePadding = !noPaddingPages.includes(pathname);
+  // Main /feeds page should only have horizontal padding, no vertical padding
+  const isMainFeedsPage = pathname === "/feeds";
 
   useEffect(() => {
     const mainElement = mainRef.current;
@@ -109,7 +108,7 @@ export default function FeedsLayoutClient({
         <main
           ref={mainRef}
           className={`relative flex-1 overflow-y-auto pt-16 ${
-            shouldHavePadding ? "md:p-12" : "px-3"
+            isMainFeedsPage ? "px-3" : "px-3 md:p-12"
           }`}
         >
           <NavigationLoader />

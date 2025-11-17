@@ -185,9 +185,9 @@ export default function BizPulsePage() {
       <SearchBar />
 
       {/* Tab Navigation and Content */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-visible">
         <TabNavigation />
-        <div className="p-2 md:p-6">
+        <div className="p-2 md:p-6 overflow-hidden">
           {error && posts.length > 0 && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="text-red-600 text-sm mb-2">

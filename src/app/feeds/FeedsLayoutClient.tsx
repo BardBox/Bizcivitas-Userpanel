@@ -75,7 +75,13 @@ export default function FeedsLayoutClient({
   }, [isMobileMenuOpen]);
 
   return (
-    <div className="flex h-screen bg-dashboard-primary overflow-hidden  md:p-0">
+    <div className="flex h-screen overflow-hidden md:p-0" style={{
+      backgroundImage: 'url(/background.svg)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed'
+    }}>
       {/* Desktop Sidebar */}
       <div className="hidden md:block relative z-30">
         <DashboardSidebar isMobile={false} />
@@ -83,7 +89,11 @@ export default function FeedsLayoutClient({
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed left-0 top-16 h-full w-64 bg-dashboard-primary z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0">
+        <div className="fixed left-0 top-16 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0" style={{
+          backgroundImage: 'url(/background.svg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}>
           <DashboardSidebar
             onNavigate={() => setIsMobileMenuOpen(false)}
             onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

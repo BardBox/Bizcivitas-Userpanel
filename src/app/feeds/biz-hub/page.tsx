@@ -94,9 +94,9 @@ export default function BizHubPage() {
       </div>
 
       {/* Tab Navigation and Content */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-visible">
         <BizHubTabNavigation />
-        <div className="p-2 md:p-6">
+        <div className="p-2 md:p-6 overflow-hidden">
           {/* Category Description */}
           <p className="text-sm text-gray-500 mb-4">
             {categoryDescriptions[activeCategory]}

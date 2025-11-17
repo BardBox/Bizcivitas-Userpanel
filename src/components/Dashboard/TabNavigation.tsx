@@ -2,6 +2,7 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { RootState } from "../../../store";
 import { setActiveCategory } from "../../../store/postsSlice";
@@ -9,6 +10,7 @@ import { BIZPULSE_TABS, BizPulseCategory } from "../../../types/bizpulse.types";
 
 export default function TabNavigation() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { activeCategory, loading } = useSelector(
     (state: RootState) => state.posts
   );
@@ -18,6 +20,8 @@ export default function TabNavigation() {
   const handleTabChange = (tabId: BizPulseCategory) => {
     dispatch(setActiveCategory(tabId));
     setIsDropdownOpen(false); // Close dropdown when selection is made
+    // Clear URL params to prevent them from interfering with tab navigation
+    router.replace('/feeds/biz-pulse', { scroll: false });
   };
 
   const activeTab =
@@ -63,7 +67,7 @@ export default function TabNavigation() {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
               {BIZPULSE_TABS.map((tab) => (
                 <button
                   key={tab.id}

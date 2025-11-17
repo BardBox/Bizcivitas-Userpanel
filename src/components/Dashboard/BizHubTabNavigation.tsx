@@ -2,6 +2,7 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { RootState } from "../../../store/store";
 import { setActiveCategory, type BizHubCategory } from "../../../store/bizhubSlice";
@@ -19,6 +20,7 @@ const BIZHUB_TABS = [
 
 export default function BizHubTabNavigation() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { activeCategory, loading } = useSelector(
     (state: RootState) => state.bizhub
   );
@@ -28,6 +30,8 @@ export default function BizHubTabNavigation() {
   const handleTabChange = (tabId: BizHubCategory) => {
     dispatch(setActiveCategory(tabId));
     setIsDropdownOpen(false);
+    // Clear URL params to prevent them from interfering with tab navigation
+    router.replace('/feeds/biz-hub', { scroll: false });
   };
 
   const activeTab =
@@ -73,7 +77,7 @@ export default function BizHubTabNavigation() {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
               {BIZHUB_TABS.map((tab) => (
                 <button
                   key={tab.id}

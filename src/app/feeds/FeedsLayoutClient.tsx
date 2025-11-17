@@ -77,10 +77,8 @@ export default function FeedsLayoutClient({
   return (
     <div className="flex h-screen overflow-hidden md:p-0" style={{
       backgroundImage: 'url(/background.svg)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      backgroundAttachment: 'fixed'
+      backgroundRepeat: 'repeat',
+      backgroundSize: '45%'
     }}>
       {/* Desktop Sidebar */}
       <div className="hidden md:block relative z-30">
@@ -91,8 +89,8 @@ export default function FeedsLayoutClient({
       {isMobileMenuOpen && (
         <div className="fixed left-0 top-16 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0" style={{
           backgroundImage: 'url(/background.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundRepeat: 'repeat',
+          backgroundSize: '40%'
         }}>
           <DashboardSidebar
             onNavigate={() => setIsMobileMenuOpen(false)}

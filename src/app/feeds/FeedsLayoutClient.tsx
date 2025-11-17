@@ -91,27 +91,36 @@ export default function FeedsLayoutClient({
         <DashboardSidebar isMobile={false} />
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed left-0 top-16 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0 relative">
-          {/* Background with opacity for mobile drawer */}
+        <>
+          {/* Dark backdrop - starts below header */}
           <div
-            className="absolute inset-0 z-0"
-            style={{
-              backgroundImage: 'url(/background.svg)',
-              backgroundRepeat: 'repeat',
-              backgroundSize: '40%',
-              opacity: 0.5
-            }}
+            className="fixed inset-0 top-16 bg-black/50 z-40 md:hidden transition-opacity duration-300"
+            onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="relative z-10">
-            <DashboardSidebar
-              onNavigate={() => setIsMobileMenuOpen(false)}
-              onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              isMobile={true}
+
+          {/* Drawer sidebar - starts below header */}
+          <div className="fixed left-0 top-16 bottom-0 w-64 z-50 md:hidden transform transition-transform duration-300 ease-in-out">
+            {/* Background with opacity for mobile drawer */}
+            <div
+              className="absolute inset-0 z-0"
+              style={{
+                backgroundImage: 'url(/background.svg)',
+                backgroundRepeat: 'repeat',
+                backgroundSize: '40%',
+                opacity: 0.5
+              }}
             />
+            <div className="relative z-10 h-full overflow-y-auto">
+              <DashboardSidebar
+                onNavigate={() => setIsMobileMenuOpen(false)}
+                onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                isMobile={true}
+              />
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Main Content */}

@@ -35,13 +35,14 @@ export default function BizHubPage() {
     useSelector((state: RootState) => state.bizhub);
   const userId = useSelector((state: RootState) => state.auth.user?._id);
 
-  // Handle URL type parameter
+  // Handle URL type parameter - only on initial load
   useEffect(() => {
     const typeFromUrl = searchParams.get('type');
-    if (typeFromUrl && typeFromUrl !== activeCategory) {
+    if (typeFromUrl) {
       dispatch(setActiveCategory(typeFromUrl as BizHubCategory));
     }
-  }, [searchParams, dispatch, activeCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, dispatch]);
 
   useEffect(() => {
     dispatch(fetchBizHubPosts());

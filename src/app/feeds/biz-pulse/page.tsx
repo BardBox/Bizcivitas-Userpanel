@@ -28,13 +28,14 @@ export default function BizPulsePage() {
   const showNotificationBanner = false; // temporarily hide the notifications banner
   const [highlightedPollId, setHighlightedPollId] = useState<string | null>(null);
 
-  // Handle URL category parameter
+  // Handle URL category parameter - only on initial load
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category');
-    if (categoryFromUrl && categoryFromUrl !== activeCategory) {
+    if (categoryFromUrl) {
       dispatch(setActiveCategory(categoryFromUrl as any));
     }
-  }, [searchParams, dispatch, activeCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, dispatch]);
 
   // ✅ PERFORMANCE FIX: Memoize fetch function to prevent unnecessary effect triggers
   const handleFetchPosts = useCallback(() => {

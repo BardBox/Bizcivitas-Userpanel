@@ -74,11 +74,18 @@ export default function FeedsLayoutClient({
   }, [isMobileMenuOpen]);
 
   return (
-    <div className="flex h-screen overflow-hidden md:p-0" style={{
-      backgroundImage: 'url(/background.svg)',
-      backgroundRepeat: 'repeat',
-      backgroundSize: '45%'
-    }}>
+    <div className="flex h-screen overflow-hidden md:p-0 relative">
+      {/* Background with opacity */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: 'url(/background.svg)',
+          backgroundRepeat: 'repeat',
+          backgroundSize: '45%',
+          opacity: 0.7
+        }}
+      />
+
       {/* Desktop Sidebar */}
       <div className="hidden md:block relative z-30">
         <DashboardSidebar isMobile={false} />
@@ -86,16 +93,24 @@ export default function FeedsLayoutClient({
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed left-0 top-16 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0" style={{
-          backgroundImage: 'url(/background.svg)',
-          backgroundRepeat: 'repeat',
-          backgroundSize: '40%'
-        }}>
-          <DashboardSidebar
-            onNavigate={() => setIsMobileMenuOpen(false)}
-            onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            isMobile={true}
+        <div className="fixed left-0 top-16 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:hidden translate-x-0 relative">
+          {/* Background with opacity for mobile drawer */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: 'url(/background.svg)',
+              backgroundRepeat: 'repeat',
+              backgroundSize: '40%',
+              opacity: 0.5
+            }}
           />
+          <div className="relative z-10">
+            <DashboardSidebar
+              onNavigate={() => setIsMobileMenuOpen(false)}
+              onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              isMobile={true}
+            />
+          </div>
         </div>
       )}
 

@@ -430,7 +430,6 @@ export default function DashboardHeader() {
                 className="relative flex items-center bg-white rounded-full border border-gray-300 shadow-sm hover:shadow-md transition-shadow"
                 ref={searchRef}
               >
-                {/* Category Dropdown Inside Pill */}
                 <div className="relative" ref={categoryRef}>
                   <button
                     type="button"

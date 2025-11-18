@@ -267,7 +267,7 @@ export default function DashboardHeader() {
     if (!userId) return;
     setIsSearchOpen(false);
     setSearchQuery("");
-    router.push(`/feeds/connections/${userId}?from=search`);
+    router.push(`/feeds/connections/${userId}?from=member-directory`);
   };
 
   const handlePostClick = (postId: string, postSource: string) => {

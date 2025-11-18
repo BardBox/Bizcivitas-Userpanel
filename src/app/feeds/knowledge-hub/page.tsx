@@ -15,6 +15,7 @@ import {
   Trash2,
   CheckCircle,
   AlertCircle,
+  Home,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -191,32 +192,40 @@ export default function KnowledgeHubPage() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+    <div className="space-y-4 md:space-y-6 px-3 md:px-0">
+      {/* Header with Breadcrumb */}
+      <div className="md:mt-12 pt-4">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
+          <Home className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+          <span className="text-gray-400">/</span>
+          <span className="text-gray-900 font-medium">Knowledge Hub</span>
+        </div>
+
+        {/* Page Title */}
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
           Knowledge Hub
         </h1>
       </div>
 
       {/* Search Bar */}
-      <div className="max-w-md">
+      <div className="w-full md:max-w-md">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
           </div>
           <input
             type="text"
             placeholder="Search content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none shadow-sm"
           />
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-visible">
         <div className="border-b border-gray-200">
           {/* Mobile/Tablet Dropdown Navigation (up to lg) */}
           <div className="lg:hidden p-4">
@@ -225,7 +234,7 @@ export default function KnowledgeHubPage() {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-left flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <span className="text-gray-900 font-medium flex items-center gap-2">
+                <span className="text-gray-900 font-medium flex items-center gap-2 text-sm md:text-base">
                   {activeTabInfo.label}
                   {currentLoading && (
                     <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
@@ -239,7 +248,7 @@ export default function KnowledgeHubPage() {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-lg shadow-xl z-[100] overflow-hidden border border-gray-100">
                   {KNOWLEDGE_HUB_TABS.map((tab) => (
                     <button
                       key={tab.id}
@@ -247,7 +256,7 @@ export default function KnowledgeHubPage() {
                         handleTabChange(tab.id);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg ${
+                      className={`w-full text-left px-4 py-3 text-sm md:text-base hover:bg-blue-50 active:bg-blue-100 transition-colors duration-150 ${
                         tab.id === activeTab
                           ? "text-blue-600 bg-blue-50 font-medium"
                           : "text-gray-700"
@@ -289,7 +298,7 @@ export default function KnowledgeHubPage() {
       </div>
 
       {/* Content Area - Outside Tab Container */}
-      <div>
+      <div className="bg-white rounded-lg shadow p-4 md:p-6 mt-6">
         {currentLoading && filteredCollections.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
@@ -318,16 +327,16 @@ export default function KnowledgeHubPage() {
               activeTab === "tutorials" ||
               activeTab === "membership" ||
               activeTab === "resource") && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                 {filteredCollections.map((collection) => (
                   <div
                     key={collection._id}
                     onClick={() => handleCollectionClick(collection._id)}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col h-full"
+                    className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-lg transition-all cursor-pointer group flex flex-col h-full"
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                       {/* Collection Thumbnail */}
-                      <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                      <div className="relative aspect-video rounded-md md:rounded-lg overflow-hidden bg-gray-100">
                         {collection.thumbnailUrl ? (
                           <img
                             src={collection.thumbnailUrl}
@@ -336,7 +345,7 @@ export default function KnowledgeHubPage() {
                           />
                         ) : (
                           <div className="flex items-center justify-center w-full h-full">
-                            <Video className="w-16 h-16 text-white/70" />
+                            <Video className="w-12 h-12 md:w-16 md:h-16 text-white/70" />
                           </div>
                         )}
 
@@ -349,7 +358,7 @@ export default function KnowledgeHubPage() {
                               collection.title
                             )
                           }
-                          className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all hover:scale-110"
+                          className="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 md:p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
                           title={
                             isCollectionSaved(collection)
                               ? "Remove from saved"
@@ -357,29 +366,29 @@ export default function KnowledgeHubPage() {
                           }
                         >
                           {isCollectionSaved(collection) ? (
-                            <BookmarkCheck className="w-5 h-5 text-blue-600 fill-current" />
+                            <BookmarkCheck className="w-4 h-4 md:w-5 md:h-5 text-blue-600 fill-current" />
                           ) : (
-                            <Bookmark className="w-5 h-5 text-gray-600" />
+                            <Bookmark className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
                           )}
                         </button>
                       </div>
 
                       {/* Collection Stats */}
-                      <div className="space-y-3">
-                        <h3 className="font-bold text-gray-900">
+                      <div className="space-y-2 md:space-y-3">
+                        <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-2">
                           {collection.title}
                         </h3>
 
                         {collection.expertType && (
-                          <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                          <span className="inline-block px-2 md:px-3 py-0.5 md:py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
                             {collection.expertType}
                           </span>
                         )}
 
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
                           {activeTab === "resource" ? (
                             <>
-                              <FileText className="w-4 h-4" />
+                              <FileText className="w-3 h-3 md:w-4 md:h-4" />
                               <span>
                                 {collection.subItems?.length || 0}{" "}
                                 {collection.subItems?.length === 1
@@ -389,7 +398,7 @@ export default function KnowledgeHubPage() {
                             </>
                           ) : (
                             <>
-                              <Video className="w-4 h-4" />
+                              <Video className="w-3 h-3 md:w-4 md:h-4" />
                               <span>
                                 {collection.subItems?.length || 0}{" "}
                                 {collection.subItems?.length === 1
@@ -401,7 +410,7 @@ export default function KnowledgeHubPage() {
                         </div>
 
                         {collection.author && (
-                          <div className="text-sm text-gray-600">
+                          <div className="text-xs md:text-sm text-gray-600 line-clamp-1">
                             <span className="font-semibold">By:</span>{" "}
                             {collection.author}
                           </div>
@@ -417,7 +426,7 @@ export default function KnowledgeHubPage() {
       </div>
 
       {/* Description */}
-      <div className="text-center text-sm text-gray-500">
+      <div className="text-center text-xs md:text-sm text-gray-500 px-4">
         Access educational content, business templates, and expert resources
         curated by BizCivitas.
       </div>

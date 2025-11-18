@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Video,
   FileText,
@@ -10,6 +10,8 @@ import {
   BookmarkCheck,
   Trash2,
   AlertCircle,
+  Home,
+  ChevronDown,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -37,6 +39,8 @@ export default function SavedResourcesPage() {
   const tabFromUrl = (searchParams.get("tab") as TabType) || "expert";
   const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync activeTab with URL parameter changes
   useEffect(() => {
@@ -45,6 +49,20 @@ export default function SavedResourcesPage() {
       setActiveTab(urlTab);
     }
   }, [searchParams]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch saved collections
   const { data: savedCollections = [], isLoading } =
@@ -107,34 +125,85 @@ export default function SavedResourcesPage() {
     SAVED_TABS.find((tab) => tab.id === activeTab) || SAVED_TABS[0];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+    <div className="space-y-4 mt-4 md:mt-8  md:space-y-6 px-3 md:px-0">
+      {/* Header with Breadcrumb */}
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
+          <Home className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+          <span className="text-gray-400">/</span>
+          <span className="text-gray-900 font-medium">Saved Resources</span>
+        </div>
+
+        {/* Page Title */}
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
           Saved Resources
         </h1>
       </div>
 
       {/* Search Bar */}
-      <div className="max-w-md">
+      <div className="w-full md:max-w-md">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
           </div>
           <input
             type="text"
             placeholder="Search saved content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none shadow-sm"
           />
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-visible">
         <div className="border-b border-gray-200">
-          {/* Desktop Tabs */}
+          {/* Mobile/Tablet Dropdown Navigation (up to lg) */}
+          <div className="lg:hidden p-4">
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-left flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <span className="text-gray-900 font-medium flex items-center gap-2 text-sm md:text-base">
+                  {activeTabInfo.label}
+                  {isLoading && (
+                    <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                  )}
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-lg shadow-xl z-[100] overflow-hidden border border-gray-100">
+                  {SAVED_TABS.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        handleTabChange(tab.id);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm md:text-base hover:bg-blue-50 active:bg-blue-100 transition-colors duration-150 ${
+                        tab.id === activeTab
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Horizontal Tabs (lg and above) */}
           <div className="hidden lg:block">
             <nav
               className="flex space-x-8 px-6 overflow-x-auto"
@@ -158,43 +227,11 @@ export default function SavedResourcesPage() {
               ))}
             </nav>
           </div>
-
-          {/* Mobile Dropdown */}
-          <div className="lg:hidden px-4 py-3">
-            <div className="relative">
-              <select
-                value={activeTab}
-                onChange={(e) => handleTabChange(e.target.value as TabType)}
-                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {SAVED_TABS.map((tab) => (
-                  <option key={tab.id} value={tab.id}>
-                    {tab.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg
-                  className="w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Content Area */}
-      <div>
+      <div className="bg-white rounded-lg shadow p-4 md:p-6 mt-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">

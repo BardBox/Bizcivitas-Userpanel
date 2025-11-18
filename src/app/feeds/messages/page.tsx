@@ -546,20 +546,19 @@ export default function MessagesPage() {
 
   const isLoading = chatsLoading || membersLoading;
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between py-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
-          <p className="text-sm text-gray-600 mt-0.5">Chat with your connections</p>
-        </div>
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Header - Only show on mobile when no chat selected */}
+      <div className={`bg-white border-b border-gray-200 px-3 sm:px-4 py-3 sm:py-4 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
+        <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Messages</h1>
+        <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Chat with your connections</p>
       </div>
 
-      <div className="grid grid-cols-12 gap-4 h-[75vh]">
-        {/* Sidebar */}
-        <div className="col-span-4 bg-teal-600 rounded-lg shadow-md overflow-hidden flex flex-col">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar - Full width on mobile, fixed width on larger screens */}
+        <div className={`${selectedChat ? 'hidden sm:flex' : 'flex'} sm:w-80 md:w-96 w-full bg-white border-r border-gray-200 flex-col overflow-hidden`}>
           {/* Sidebar Header */}
-          <div className="bg-teal-600 p-4 text-white">
-            <h2 className="text-lg font-semibold mb-3">Chats</h2>
+          <div className="bg-teal-600 p-3 sm:p-4 text-white">
+            <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Chats</h2>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-white/70" />
@@ -575,7 +574,7 @@ export default function MessagesPage() {
                     setShowDropdown(true);
                   }
                 }}
-                className="w-full pl-9 pr-3 py-2.5 text-sm bg-teal-700 bg-opacity-60 text-white placeholder-white/60 rounded-lg focus:outline-none focus:bg-opacity-80 transition-all"
+                className="w-full pl-9 pr-3 py-2.5 text-sm bg-[#0D1B2A] text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 border border-gray-700 transition-all"
               />
 
               {/* Autocomplete Dropdown */}
@@ -889,12 +888,22 @@ export default function MessagesPage() {
           </div>
         </div>
 
-        {/* Chat panel */}
-        <div className="col-span-8 bg-white rounded-lg shadow-md border border-gray-200 flex flex-col overflow-hidden">
+        {/* Chat panel - Full width on mobile when chat selected */}
+        <div className={`${selectedChat ? 'flex' : 'hidden sm:flex'} flex-1 bg-white flex-col overflow-hidden`}>
           {selectedChat ? (
-            <div className="flex-1 flex flex-col">
-              {/* Chat Header - WhatsApp style */}
-              <div className="bg-teal-700 p-3 flex items-center gap-3 shadow-sm">
+            <div className="flex-1 flex flex-col h-full">
+              {/* Chat Header - WhatsApp style with back button */}
+              <div className="bg-teal-700 p-2 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-sm">
+                {/* Back button - only on mobile */}
+                <button
+                  onClick={() => setSelectedChat(null)}
+                  className="sm:hidden p-2 hover:bg-teal-600 rounded-full transition-colors"
+                  aria-label="Back to chats"
+                >
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
                 <button
                   onClick={() => {
                     const other = getOtherParticipant(selectedChat);
@@ -964,10 +973,9 @@ export default function MessagesPage() {
 
               {/* Messages Area with WhatsApp-style wallpaper */}
               <div
-                className="flex-1 overflow-y-auto p-4 min-h-0 relative"
+                className="flex-1 overflow-y-auto p-3 sm:p-4 min-h-0 relative"
                 id="messages-area"
                 style={{
-                  maxHeight: 'calc(72vh - 200px)',
                   backgroundImage: `
                     repeating-linear-gradient(
                       45deg,
@@ -1137,7 +1145,7 @@ export default function MessagesPage() {
               </div>
 
               {/* Message Input Area - Colorful & Stylish */}
-              <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 p-4 border-t border-gray-200">
+              <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 p-2 sm:p-3 md:p-4 border-t border-gray-200">
                 <MessageInput
                   onSendMessage={async (message) => {
                     if (!message.trim() || !selectedChat) return;
@@ -1171,10 +1179,10 @@ export default function MessagesPage() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-gray-500">
-              <MessageCircle className="w-16 h-16 mb-3 text-gray-300" />
-              <h3 className="text-base font-medium text-gray-900 mb-1">Select a conversation</h3>
-              <p className="text-sm text-gray-500">Choose a chat on the left or search for a member to start chatting.</p>
+            <div className="hidden sm:flex flex-1 flex-col items-center justify-center text-center p-8 text-gray-500">
+              <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 mb-3 text-gray-300" />
+              <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-1">Select a conversation</h3>
+              <p className="text-xs sm:text-sm text-gray-500">Choose a chat on the left or search for a member to start chatting.</p>
             </div>
           )}
         </div>

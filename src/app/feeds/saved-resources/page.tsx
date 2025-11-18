@@ -262,7 +262,7 @@ export default function SavedResourcesPage() {
 
                   {/* Collection Stats */}
                   <div className="space-y-3">
-                    <h3 className="font-bold text-gray-900">
+                    <h3 className="font-semibold text-base text-gray-900 line-clamp-2">
                       {collection.title}
                     </h3>
 

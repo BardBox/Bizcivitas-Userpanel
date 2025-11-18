@@ -103,17 +103,17 @@ export default function CollectionDetailPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-            <Home className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-3">
+            <Home className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             <span className="text-gray-400">/</span>
             <button
               onClick={handleBack}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-blue-600 transition-colors truncate"
             >
               {source === "saved" ? "Saved Resources" : "Knowledge Hub"}
             </button>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium">
+            <span className="text-gray-900 font-medium truncate">
               {returnTab === "recordings" || returnTab === "expert"
                 ? "Expert Learnings"
                 : returnTab === "tutorials" || returnTab === "knowledge"
@@ -128,15 +128,8 @@ export default function CollectionDetailPage() {
 
           {/* Title */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Go back"
-            >
-              <ChevronLeft className="w-6 h-6 text-gray-600" />
-            </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 truncate">
+              <h1 className="text-base md:text-lg font-semibold text-gray-900 line-clamp-2">
                 {collection.title}
               </h1>
               {collection.expertType && (
@@ -149,7 +142,7 @@ export default function CollectionDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-2 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Video Player or Document Viewer */}
           <div className="lg:col-span-2 space-y-6">
@@ -181,7 +174,7 @@ export default function CollectionDetailPage() {
 
                   {/* Video Info */}
                   <div className="p-4 md:p-6">
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+                    <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                       {currentItem?.title || "Video Title"}
                     </h2>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -215,7 +208,7 @@ export default function CollectionDetailPage() {
 
                   {/* Document Info */}
                   <div className="p-4 md:p-6">
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+                    <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                       {currentItem?.title ||
                         currentItem?.fileName ||
                         "Document"}
@@ -257,11 +250,11 @@ export default function CollectionDetailPage() {
               </div>
 
               {/* Tab Content */}
-              <div className="p-4 md:p-6">
+              <div className="p-2 md:p-6">
                 {activeTab === "contents" ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-base text-gray-900">
                         {isDocumentCollection
                           ? `All Documents (${items.length})`
                           : `All Videos (${items.length})`}
@@ -277,8 +270,7 @@ export default function CollectionDetailPage() {
                             : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
                         }`}
                       >
-                        {/* Thumbnail */}
-                        <div className="relative flex-shrink-0 w-32 h-20 rounded-lg overflow-hidden">
+                        <div className="relative flex-shrink-0 w-20 h-16 sm:w-32 sm:h-20 rounded-lg overflow-hidden">
                           {item.thumbnailUrl ? (
                             <img
                               src={item.thumbnailUrl}
@@ -317,7 +309,7 @@ export default function CollectionDetailPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start gap-2">
                             <h4
-                              className={`font-semibold line-clamp-2 text-sm ${
+                              className={`font-semibold line-clamp-2 text-sm sm:text-base ${
                                 index === currentItemIndex
                                   ? "text-gray-900"
                                   : "text-gray-800"
@@ -332,7 +324,7 @@ export default function CollectionDetailPage() {
                             )}
                           </div>
                           {item.description && (
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">
                               {item.description}
                             </p>
                           )}
@@ -388,7 +380,7 @@ export default function CollectionDetailPage() {
 
                 {/* Collection Stats */}
                 <div className="space-y-3">
-                  <h3 className="font-bold text-gray-900">
+                  <h3 className="font-semibold text-base text-gray-900 line-clamp-2">
                     {collection.title}
                   </h3>
 

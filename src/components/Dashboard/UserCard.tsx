@@ -99,15 +99,16 @@ const UserCard: React.FC<UserCardProps> = ({
 
       {/* Avatar Section */}
       <div className="flex flex-col items-center mb-6">
-        <div className="relative mb-4 transform group-hover:scale-110 transition-transform duration-300">
-          <Avatar
-            src={avatar}
-            alt={name}
-            size="xl"
-            fallbackText={name}
-            showMembershipBorder={false}
-            className="group-hover:shadow-lg transition-shadow duration-300"
-          />
+        <div className="relative mb-4">
+          <div className="rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
+            <Avatar
+              src={avatar}
+              alt={name}
+              size="xl"
+              fallbackText={name}
+              showMembershipBorder={false}
+            />
+          </div>
           {isOnline && (
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-3 border-white rounded-full ring-2 ring-green-100 group-hover:animate-pulse"></div>
           )}

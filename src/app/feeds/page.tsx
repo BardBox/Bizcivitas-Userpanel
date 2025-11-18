@@ -453,25 +453,22 @@ export default function DashboardPage() {
                     sourceType={post.postSource}
                     isLiked={post.isLiked}
                     onLike={async (postId) => {
-                      // Handle like based on post source
                       if (post.postSource === "bizpulse") {
                         try {
-                          const response = await bizpulseApi.likeWallFeed(
-                            postId
-                          );
+                          const response = await bizpulseApi.likeWallFeed(postId);
                           if (response.success && response.data) {
-                            // Just update the like status, don't recreate the whole object
-                            const newIsLiked = response.data.isLiked;
-                            const newLikeCount = response.data.likes?.length || 0;
-                            
+                            const updatedMock = {
+                              ...transformWallFeedPostToMock(response.data as any),
+                              postSource: "bizpulse",
+                            };
                             setAllPosts((prev) =>
                               prev.map((p) =>
-                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
+                                p.id === updatedMock.id ? updatedMock : p
                               )
                             );
                             setPosts((prev) =>
                               prev.map((p) =>
-                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
+                                p.id === updatedMock.id ? updatedMock : p
                               )
                             );
                           }
@@ -482,18 +479,18 @@ export default function DashboardPage() {
                         try {
                           const response = await bizhubApi.likePost(postId);
                           if (response) {
-                            // Just update the like status, don't recreate the whole object
-                            const newIsLiked = response.isLiked;
-                            const newLikeCount = (response as any).likes?.length || 0;
-                            
+                            const updatedMock = {
+                              ...transformBizHubPostToMock(response),
+                              postSource: "bizhub",
+                            };
                             setAllPosts((prev) =>
                               prev.map((p) =>
-                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
+                                p.id === updatedMock.id ? updatedMock : p
                               )
                             );
                             setPosts((prev) =>
                               prev.map((p) =>
-                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
+                                p.id === updatedMock.id ? updatedMock : p
                               )
                             );
                           }

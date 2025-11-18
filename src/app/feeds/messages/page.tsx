@@ -34,6 +34,8 @@ import { formatDistanceToNow } from "date-fns";
 import { initializeSocket } from "@/lib/socket";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 import toast from "react-hot-toast";
+import Breadcrumb from "@/components/Breadcrumb";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -51,6 +53,7 @@ export default function MessagesPage() {
   const [showDeleteChatModal, setShowDeleteChatModal] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<{ chatId: string; chat: Chat } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesAreaRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const chatMenuRef = useRef<HTMLDivElement | null>(null);
@@ -563,8 +566,29 @@ export default function MessagesPage() {
   };
 
   const isLoading = chatsLoading || membersLoading;
+
+  // Get other participant for breadcrumb when chat is selected
+  const otherParticipantForBreadcrumb = selectedChat ? getOtherParticipant(selectedChat) : null;
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    {
+      label: "Back",
+      onClick: () => router.back()
+    },
+    { label: "Messages", href: selectedChat ? "/feeds/messages" : undefined },
+    ...(selectedChat && otherParticipantForBreadcrumb
+      ? [{ label: getUserFullName(otherParticipantForBreadcrumb), isActive: true }]
+      : []),
+  ];
+
   return (
     <div className="fixed inset-0 md:relative md:inset-auto md:h-full flex flex-col bg-gray-50 overflow-hidden pt-16 md:pt-0">
+      {/* Breadcrumb - Hidden on mobile when chat is selected */}
+      <div className={`flex-shrink-0 bg-white border-b border-gray-200 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+
       {/* Header - Only show on mobile when no chat selected */}
       <div className={`flex-shrink-0 bg-white border-b border-gray-200 px-3 sm:px-4 py-3 sm:py-4 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
         <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Messages</h1>
@@ -755,13 +779,13 @@ export default function MessagesPage() {
                     return (
                       <div
                         key={chat._id}
-                        className={`p-3 hover:bg-gray-50 transition-colors flex items-start gap-3 group relative border-b border-gray-100 last:border-b-0 ${
+                        className={`p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 group relative border-b border-gray-100 last:border-b-0 ${
                           selectedChat?._id === chat._id ? "bg-teal-50 border-l-4 border-l-teal-600" : "bg-white"
                         }`}
                       >
                         <div
                           onClick={() => handleChatClick(chat._id)}
-                          className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                         >
                           <div className="flex-shrink-0 w-10 h-10">
                             {otherParticipant?.avatar ? (
@@ -783,7 +807,7 @@ export default function MessagesPage() {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="flex items-center justify-between gap-2 mb-1">
                               <div className="flex-1 min-w-0">
                                 <h3 className={`text-sm text-gray-900 truncate ${isUnread ? "font-semibold" : "font-medium"}`}>
                                   {getUserFullName(otherParticipant)}
@@ -791,9 +815,9 @@ export default function MessagesPage() {
                               </div>
 
                               {lastMessage && (
-                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
                                   <Clock className="w-3 h-3" />
-                                  <span className="text-xs">{formatTimestamp(lastMessage.createdAt)}</span>
+                                  <span className="text-xs whitespace-nowrap">{formatTimestamp(lastMessage.createdAt)}</span>
                                 </div>
                               )}
                             </div>
@@ -859,7 +883,7 @@ export default function MessagesPage() {
                       <div
                         key={`member-${member._id}`}
                         onClick={() => handleStartConversation(member)}
-                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-start gap-3 ${
+                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 ${
                           hasChat ? "border-l-2 border-blue-300" : "border-l-2 border-green-500"
                         }`}
                       >
@@ -890,7 +914,7 @@ export default function MessagesPage() {
                           </p>
                         </div>
 
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 self-start">
                           <span className={`${hasChat ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} text-xs font-medium px-2 py-0.5 rounded-full`}>
                             {hasChat ? "Chat" : "New"}
                           </span>
@@ -992,8 +1016,9 @@ export default function MessagesPage() {
                 </div>
               </div>
 
-              {/* Messages Area with WhatsApp-style wallpaper - SCROLLABLE */}
+              {/* Messages Area - SCROLLABLE */}
               <div
+                ref={messagesAreaRef}
                 className="flex-1 overflow-y-auto p-3 sm:p-4"
                 id="messages-area"
                 style={{
@@ -1113,7 +1138,7 @@ export default function MessagesPage() {
                                 <div className="relative">
                                   <button
                                     onClick={() => setMenuOpenForMessage(menuOpenForMessage === msg._id ? null : msg._id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded-full transition-opacity"
+                                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 hover:bg-gray-200 rounded-full transition-opacity"
                                   >
                                     <MoreVertical className="w-4 h-4 text-gray-600" />
                                   </button>
@@ -1230,6 +1255,16 @@ export default function MessagesPage() {
         isDestructive={true}
         warningText="This will permanently delete all messages in this chat."
       />
+
+      {/* Scroll to Top Button - only shows in chat view */}
+      {selectedChat && (
+        <ScrollToTop
+          threshold={25}
+          scrollPercentage={40}
+          scrollToTop={false}
+          containerRef={messagesAreaRef}
+        />
+      )}
     </div>
   );
 }

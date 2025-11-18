@@ -1,22 +1,25 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { notFound, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Calendar,
   MapPin,
   Users,
   Clock,
   Globe,
-  ArrowLeft,
   CreditCard,
   UserCheck,
   Building2,
-  Tag,
+  ChevronRight,
+  Home,
 } from "lucide-react";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { useGetEventWithDetailsQuery } from "../../../../../../store/api/eventsApi.latest";
+import FullscreenGallery from "@/components/FullscreenGallery";
+import DOMPurify from "dompurify";
 
 export default function EventDetailPage({
   params,
@@ -26,6 +29,7 @@ export default function EventDetailPage({
   const { id } = React.use(params);
   const router = useRouter();
   const { data: event, error, isLoading } = useGetEventWithDetailsQuery(id);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -88,19 +92,41 @@ export default function EventDetailPage({
 
   const accessMode = getAccessModeDisplay();
 
+  // Helper function to trim event title for breadcrumb
+  const trimTitle = (title: string, maxLength: number = 30) => {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength) + "...";
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <div className="min-h-screen">
+      {/* Breadcrumb - Outside white container */}
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-4">
+        <nav className="flex items-center text-xs sm:text-sm text-gray-500 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm">
+          <Link
+            href="/feeds"
+            className="flex items-center hover:text-blue-600 transition-colors"
+          >
+            <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            <span>Home</span>
+          </Link>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mx-1 sm:mx-2" />
+          <Link
+            href="/feeds/events"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Events
+          </Link>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mx-1 sm:mx-2" />
+          <span className="text-gray-900 font-medium truncate">
+            {trimTitle(event.eventName, 30)}
+          </span>
+        </nav>
+      </div>
+
+      {/* Header - White container with title */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Events
-          </button>
-
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -131,13 +157,22 @@ export default function EventDetailPage({
           <div className="lg:col-span-2 space-y-8">
             {/* Event Image */}
             {event.img && (
-              <div className="relative h-80 w-full rounded-xl overflow-hidden shadow-lg">
+              <div
+                className="relative w-full aspect-[16/9] rounded-xl overflow-hidden shadow-lg bg-gray-100 cursor-pointer group"
+                onClick={() => setIsGalleryOpen(true)}
+              >
                 <Image
                   src={getAbsoluteImageUrl(event.img)}
                   alt={event.eventName}
                   fill
-                  className="object-cover"
+                  className="object-contain transition-opacity group-hover:opacity-90"
+                  priority
                 />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg">
+                    <p className="text-gray-900 font-medium text-sm">Click to view fullscreen</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -147,9 +182,12 @@ export default function EventDetailPage({
                 <h2 className="text-2xl font-semibold mb-4 text-gray-900">
                   Event Overview
                 </h2>
-                <p className="text-gray-700 leading-relaxed">
-                  {event.eventOverview}
-                </p>
+                <div
+                  className="text-gray-700 leading-relaxed prose max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(event.eventOverview),
+                  }}
+                />
               </div>
             )}
 
@@ -158,11 +196,12 @@ export default function EventDetailPage({
               <h2 className="text-2xl font-semibold mb-4 text-gray-900">
                 Description
               </h2>
-              <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {event.description}
-                </p>
-              </div>
+              <div
+                className="text-gray-700 leading-relaxed prose max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(event.description),
+                }}
+              />
             </div>
 
             {/* Why Attend */}
@@ -470,6 +509,17 @@ export default function EventDetailPage({
           </div>
         )}
       </div>
+
+      {/* Fullscreen Gallery */}
+      {event.img && (
+        <FullscreenGallery
+          images={[getAbsoluteImageUrl(event.img)]}
+          initialIndex={0}
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          alt={event.eventName}
+        />
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
 import { useLogoutMutation } from "@/store/api";
 import { useAppDispatch } from "@/store/hooks";
 import { logout as logoutAction } from "@/store/slices/authSlice";
+import { useSidebar } from "@/contexts/SidebarContext";
 import toast from "react-hot-toast";
 import ProfileSection from "./ProfileSection";
 
@@ -165,7 +166,7 @@ export default function DashboardSidebar({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [logoutUser] = useLogoutMutation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isCollapsed, setIsCollapsed } = useSidebar();
   const [expanded, setExpanded] = useState(
     new Set(navigationSections.map((s) => s.title))
   );
@@ -180,7 +181,7 @@ export default function DashboardSidebar({
 
   const handleToggle = () => {
     if (isMobile) onToggleMobile?.();
-    else setIsCollapsed((prev) => !prev);
+    else setIsCollapsed(!isCollapsed);
   };
 
   const handleLogout = async () => {

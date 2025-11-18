@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import NavigationLoader from "@/components/NavigationLoader";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import { X } from "lucide-react";
 
 export default function FeedsLayoutClient({
@@ -74,22 +75,23 @@ export default function FeedsLayoutClient({
   }, [isMobileMenuOpen]);
 
   return (
-    <div className="flex h-screen overflow-hidden md:p-0 relative">
-      {/* Background with opacity */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: 'url(/background.svg)',
-          backgroundRepeat: 'repeat',
-          backgroundSize: '45%',
-          opacity: 0.7
-        }}
-      />
+    <SidebarProvider>
+      <div className="flex h-screen overflow-hidden md:p-0 relative">
+        {/* Background with opacity */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: 'url(/background.svg)',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '45%',
+            opacity: 0.7
+          }}
+        />
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block relative z-30">
-        <DashboardSidebar isMobile={false} />
-      </div>
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block relative z-30">
+          <DashboardSidebar isMobile={false} />
+        </div>
 
       {/* Mobile Drawer Overlay */}
       {isMobileMenuOpen && (
@@ -161,6 +163,7 @@ export default function FeedsLayoutClient({
           </svg>
         </button>
       )} */}
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }

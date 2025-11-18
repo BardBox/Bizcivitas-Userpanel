@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   Search,
   Filter,
@@ -10,6 +11,8 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
+  ChevronRight,
+  Home,
 } from "lucide-react";
 import {
   useGetAllEventsQuery,
@@ -17,6 +20,7 @@ import {
 } from "../../../../store/api/eventsApi.latest";
 import { FrontendEvent } from "../../../../types/mongoEvent.types.latest";
 import EventCard from "@/components/Events/EventCard";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 type FilterType = "upcoming" | "past";
 type PriceFilter = "all" | "free" | "paid" | "freepaid";
@@ -27,6 +31,7 @@ export default function EventsPage() {
   const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isCollapsed } = useSidebar();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -159,40 +164,53 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-6 sm:pt-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+          <Link
+            href="/feeds"
+            className="flex items-center hover:text-blue-600 transition-colors"
+          >
+            <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            <span>Home</span>
+          </Link>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mx-1 sm:mx-2" />
+          <span className="text-gray-900 font-medium">Events</span>
+        </nav>
+
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Events</h1>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Events</h1>
 
           {/* Search Bar */}
-          <div className="relative max-w-md mb-4">
+          <div className="relative w-full sm:max-w-md mb-3 sm:mb-4">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
             </div>
             <input
               type="text"
               placeholder="Search events..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-9 sm:pl-10 pr-3 py-2 sm:py-2.5 text-sm border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
-                <span className="text-gray-400 hover:text-gray-600 text-2xl">×</span>
+                <span className="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl">×</span>
               </button>
             )}
           </div>
 
           {/* Filter Section - Mobile App Style */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
             {/* Time-based Toggle Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <button
                 onClick={() => setActiveFilter("upcoming")}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                   activeFilter === "upcoming"
                     ? "bg-blue-600 text-white shadow-md"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
@@ -202,7 +220,7 @@ export default function EventsPage() {
               </button>
               <button
                 onClick={() => setActiveFilter("past")}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                   activeFilter === "past"
                     ? "bg-blue-600 text-white shadow-md"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
@@ -216,21 +234,21 @@ export default function EventsPage() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                className="p-2.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="p-2 sm:p-2.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 aria-label="Filter events"
               >
-                <Filter className="h-5 w-5 text-gray-600" />
+                <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
               </button>
 
               {/* Dropdown Menu */}
               {isFilterDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                <div className="absolute right-0 mt-2 w-40 sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
                   <button
                     onClick={() => {
                       setPriceFilter("all");
                       setIsFilterDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors ${
                       priceFilter === "all"
                         ? "bg-blue-50 text-blue-700 font-semibold"
                         : "text-gray-700 hover:bg-gray-50"
@@ -243,7 +261,7 @@ export default function EventsPage() {
                       setPriceFilter("free");
                       setIsFilterDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors ${
                       priceFilter === "free"
                         ? "bg-blue-50 text-blue-700 font-semibold"
                         : "text-gray-700 hover:bg-gray-50"
@@ -256,7 +274,7 @@ export default function EventsPage() {
                       setPriceFilter("paid");
                       setIsFilterDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors ${
                       priceFilter === "paid"
                         ? "bg-blue-50 text-blue-700 font-semibold"
                         : "text-gray-700 hover:bg-gray-50"
@@ -271,9 +289,9 @@ export default function EventsPage() {
 
           {/* Active Filters Summary */}
           {(searchQuery || priceFilter !== "all") && (
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-3">
-              <Filter className="h-4 w-4" />
-              <span>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3">
+              <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="flex-1 min-w-0 truncate">
                 Showing {filteredEvents.length} events
                 {searchQuery && ` matching "${searchQuery}"`}
                 {priceFilter !== "all" && ` • ${priceFilter} events`}
@@ -283,7 +301,7 @@ export default function EventsPage() {
                   setSearchQuery("");
                   setPriceFilter("all");
                 }}
-                className="text-blue-600 hover:text-blue-800 font-medium ml-auto"
+                className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm whitespace-nowrap"
               >
                 Clear filters
               </button>
@@ -293,7 +311,11 @@ export default function EventsPage() {
 
         {/* Events Grid */}
         {filteredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid grid-cols-1 ${
+            isCollapsed
+              ? "md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
+              : "md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
+          } gap-4 sm:gap-6`}>
             {filteredEvents.map((event: FrontendEvent) => (
               <EventCard key={event._id} event={event} />
             ))}

@@ -173,6 +173,19 @@ export default function MessagesPage() {
     }
   }, [searchParams, currentUserId, chats, selectedChat, getOrCreateChat, router, markAsRead, refetch]);
 
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      // Clear selected chat when navigating back
+      setSelectedChat(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   // Initialize Socket.io when user is available (optional for real-time updates)
   useEffect(() => {
     if (currentUserId) {
@@ -352,6 +365,11 @@ export default function MessagesPage() {
     const c = chats.find((ch) => ch._id === chatId) || null;
     // Immediately update UI with local chat so the right panel responds instantly
     setSelectedChat(c as Chat | null);
+    
+    // Push state to browser history so back button works
+    if (c) {
+      window.history.pushState({ chatOpen: true }, '', window.location.pathname + window.location.search);
+    }
 
     // Mark messages as read when opening chat
     if (c) {
@@ -546,9 +564,9 @@ export default function MessagesPage() {
 
   const isLoading = chatsLoading || membersLoading;
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
       {/* Header - Only show on mobile when no chat selected */}
-      <div className={`bg-white border-b border-gray-200 px-3 sm:px-4 py-3 sm:py-4 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
+      <div className={`flex-shrink-0 bg-white border-b border-gray-200 px-3 sm:px-4 py-3 sm:py-4 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
         <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Messages</h1>
         <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Chat with your connections</p>
       </div>
@@ -889,14 +907,17 @@ export default function MessagesPage() {
         </div>
 
         {/* Chat panel - Full width on mobile when chat selected */}
-        <div className={`${selectedChat ? 'flex' : 'hidden sm:flex'} flex-1 bg-white flex-col overflow-hidden`}>
+        <div className={`${selectedChat ? 'flex' : 'hidden sm:flex'} flex-1 bg-white flex-col overflow-hidden h-full`}>
           {selectedChat ? (
-            <div className="flex-1 flex flex-col h-full">
-              {/* Chat Header - WhatsApp style with back button */}
-              <div className="bg-teal-700 p-2 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-sm">
+            <div className="flex flex-col h-full">
+              {/* Chat Header - WhatsApp style with back button - FIXED */}
+              <div className="flex-shrink-0 bg-teal-700 p-2 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-sm">
                 {/* Back button - only on mobile */}
                 <button
-                  onClick={() => setSelectedChat(null)}
+                  onClick={() => {
+                    setSelectedChat(null);
+                    router.back();
+                  }}
                   className="sm:hidden p-2 hover:bg-teal-600 rounded-full transition-colors"
                   aria-label="Back to chats"
                 >
@@ -971,9 +992,9 @@ export default function MessagesPage() {
                 </div>
               </div>
 
-              {/* Messages Area with WhatsApp-style wallpaper */}
+              {/* Messages Area with WhatsApp-style wallpaper - SCROLLABLE */}
               <div
-                className="flex-1 overflow-y-auto p-3 sm:p-4 min-h-0 relative"
+                className="flex-1 overflow-y-auto p-3 sm:p-4"
                 id="messages-area"
                 style={{
                   backgroundImage: `
@@ -1144,8 +1165,8 @@ export default function MessagesPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input Area - Colorful & Stylish */}
-              <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 p-2 sm:p-3 md:p-4 border-t border-gray-200">
+              {/* Message Input Area - Colorful & Stylish - FIXED */}
+              <div className="flex-shrink-0 bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 p-2 sm:p-3 md:p-4 border-t border-gray-200">
                 <MessageInput
                   onSendMessage={async (message) => {
                     if (!message.trim() || !selectedChat) return;

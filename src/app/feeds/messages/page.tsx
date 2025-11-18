@@ -564,7 +564,7 @@ export default function MessagesPage() {
 
   const isLoading = chatsLoading || membersLoading;
   return (
-    <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="fixed inset-0 md:relative md:inset-auto md:h-full flex flex-col bg-gray-50 overflow-hidden pt-16 md:pt-0">
       {/* Header - Only show on mobile when no chat selected */}
       <div className={`flex-shrink-0 bg-white border-b border-gray-200 px-3 sm:px-4 py-3 sm:py-4 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
         <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Messages</h1>

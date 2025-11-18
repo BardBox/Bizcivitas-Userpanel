@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, ChangeEvent } from "react";
-import { Users, Filter, X, Search } from "lucide-react";
+import { Users, Filter, X, Search, ChevronRight, Home } from "lucide-react";
+import Link from "next/link";
 import UserCard from "@/components/Dashboard/UserCard";
 import {
   useGetSuggestionsAllQuery,
@@ -171,27 +172,41 @@ export default function MemberDirectoryPage() {
 
   // -------------------- Render --------------------
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-6 sm:pt-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+          <Link
+            href="/feeds"
+            className="flex items-center hover:text-blue-600 transition-colors"
+          >
+            <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            <span>Home</span>
+          </Link>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mx-1 sm:mx-2" />
+          <span className="text-gray-900 font-medium">Member Directory</span>
+        </nav>
+
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 Member Directory
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 {hasActiveFilters ? "Search results" : "Browse all members"}
               </p>
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="relative flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="relative flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
             >
-              <Filter size={20} />
-              Advanced Search
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Advanced Search</span>
+              <span className="sm:hidden">Filters</span>
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -201,8 +216,7 @@ export default function MemberDirectoryPage() {
           {/* Quick Search */}
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5"
             />
             <input
               type="text"
@@ -211,19 +225,19 @@ export default function MemberDirectoryPage() {
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setSearchQuery(e.target.value)
               }
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Active Filters */}
           {activeFilterCount > 0 && (
-            <div className="mt-4 flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-600">Active filters:</span>
+            <div className="mt-3 sm:mt-4 flex items-center gap-2 flex-wrap">
+              <span className="text-xs sm:text-sm text-gray-600">Active filters:</span>
               {Object.entries(activeFilters).map(([key, value]) =>
                 value ? (
                   <span
                     key={key}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm"
                   >
                     <strong>{key}:</strong> {value}
                   </span>
@@ -231,9 +245,9 @@ export default function MemberDirectoryPage() {
               )}
               <button
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300 transition-colors"
+                className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-200 text-gray-700 rounded-full text-xs sm:text-sm hover:bg-gray-300 transition-colors"
               >
-                <X size={14} />
+                <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 Clear all
               </button>
             </div>
@@ -242,20 +256,20 @@ export default function MemberDirectoryPage() {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
                 Advanced Search
               </h2>
               <button
                 onClick={() => setShowFilters(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <X size={24} />
+                <X className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <InputField
                 label="Keyword"
                 value={filters.keyword || ""}
@@ -294,16 +308,16 @@ export default function MemberDirectoryPage() {
               />
             </div>
 
-            <div className="flex items-center gap-3 mt-6">
+            <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={handleApplyFilters}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
               >
                 Apply Filters
               </button>
               <button
                 onClick={handleClearFilters}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-4 sm:px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-xs sm:text-sm"
               >
                 Clear All
               </button>
@@ -325,13 +339,13 @@ export default function MemberDirectoryPage() {
         {/* Members Grid */}
         {!isLoading && !error && filteredMembers.length > 0 && (
           <>
-            <div className="mb-4 text-sm text-gray-600">
+            <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
               Showing {paginationState.startIndex + 1}-
               {Math.min(paginationState.endIndex, filteredMembers.length)} of{" "}
               {filteredMembers.length} members
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {currentMembers.map((member) => (
                 <UserCard
                   key={member.id}
@@ -342,16 +356,18 @@ export default function MemberDirectoryPage() {
             </div>
 
             {paginationState.totalPages > 1 && (
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                 <Pagination
                   state={paginationState}
                   actions={paginationActions}
                   itemName="members"
                   searchTerm={searchQuery}
                   layout="inline"
-                  showItemsPerPage={true}
-                  showFirstLastButtons={true}
-                  size="md"
+                  showInfo={false}
+                  showItemsPerPage={false}
+                  showFirstLastButtons={false}
+                  maxVisiblePages={3}
+                  size="sm"
                   className="flex justify-center"
                 />
               </div>
@@ -367,7 +383,7 @@ export default function MemberDirectoryPage() {
 function InputField({ label, value, onChange, placeholder }: InputFieldProps) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
         {label}
       </label>
       <input
@@ -377,7 +393,7 @@ function InputField({ label, value, onChange, placeholder }: InputFieldProps) {
           onChange(e.target.value)
         }
         placeholder={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
     </div>
   );
@@ -387,8 +403,8 @@ function LoadingState() {
   return (
     <div className="min-h-[400px] flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading members...</p>
+        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+        <p className="text-xs sm:text-sm text-gray-600">Loading members...</p>
       </div>
     </div>
   );
@@ -397,17 +413,17 @@ function LoadingState() {
 function ErrorState() {
   return (
     <div className="min-h-[400px] flex items-center justify-center">
-      <div className="text-center">
-        <Users className="h-12 w-12 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="text-center px-4">
+        <Users className="h-10 w-10 sm:h-12 sm:w-12 text-red-400 mx-auto mb-3 sm:mb-4" />
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
           Failed to load members
         </h3>
-        <p className="text-gray-600 mb-4">
+        <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
           There was an error loading members. Please try again.
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
         >
           Retry
         </button>
@@ -423,12 +439,12 @@ function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="min-h-[400px] flex items-center justify-center">
-      <div className="text-center">
-        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="text-center px-4">
+        <Users className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
           No members found
         </h3>
-        <p className="text-gray-600 mb-4">
+        <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
           {hasFilters || searchQuery
             ? "Try adjusting your search criteria"
             : "No members available at the moment"}
@@ -436,7 +452,7 @@ function EmptyState({
         {(hasFilters || searchQuery) && (
           <button
             onClick={clearFilters}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm"
           >
             Clear filters and search
           </button>

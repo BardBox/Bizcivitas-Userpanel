@@ -439,8 +439,8 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Breadcrumb */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto">
+      <div className="bg-white border-b border-gray-200 mt-4 sm:mt-6">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="py-2 sm:py-3">
             {/* Breadcrumb Navigation */}
             <div className="flex items-center gap-1 sm:gap-1.5 text-sm text-gray-600">
@@ -485,11 +485,11 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Card */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-24">
+          <div className="xl:col-span-1">
+            <div className="xl:sticky xl:top-24">
               {personalCardData && (
                 <ViewOnlyProfileCard
                   profile={personalCardData}
@@ -505,7 +505,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           </div>
 
           {/* Right Column - Accordion Sections */}
-          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+          <div className="xl:col-span-2 space-y-3 sm:space-y-4">
             {/* Personal Details Section */}
             <AccordionItem
               key="personal"

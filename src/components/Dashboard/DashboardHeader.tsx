@@ -381,10 +381,10 @@ export default function DashboardHeader() {
         }`}
       >
         <div className="flex items-center justify-between px-6 py-3">
-          {/* Mobile/Tablet Header - Animated Hamburger Menu */}
+      
           <button
             onClick={() => {
-              // Dispatch event to toggle mobile menu in FeedsLayoutClient
+           
               window.dispatchEvent(new CustomEvent("toggleMobileMenu"));
             }}
             className="md:hidden flex items-center  justify-center hover:bg-gray-200 rounded-lg p-2 transition-colors w-10 h-10"
@@ -414,10 +414,10 @@ export default function DashboardHeader() {
             </div>
           </button>
 
-          {/* Mobile - Empty Space */}
+         
           <div className="md:hidden flex-1"></div>
 
-          {/* Center Search - Desktop Only */}
+        
           <div className="hidden md:flex flex-1 justify-center">
             <form
               onSubmit={handleSearch}
@@ -425,7 +425,7 @@ export default function DashboardHeader() {
                 showSearchBar ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}
             >
-              {/* Combined Search Bar with Pill Design */}
+            
               <div
                 className="relative flex items-center bg-white rounded-full border border-gray-300 shadow-sm hover:shadow-md transition-shadow"
                 ref={searchRef}

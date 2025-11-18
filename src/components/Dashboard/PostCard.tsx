@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import Image from "next/image";
 import { ThumbsUp, MessageSquare, Activity, Network } from "lucide-react";
 import Link from "next/link";
@@ -29,7 +29,7 @@ interface PostCardProps {
   isLiked?: boolean;
 }
 
-export default function PostCard({
+const PostCard = ({
   title,
   content,
   id,
@@ -42,7 +42,7 @@ export default function PostCard({
   sourceType,
   onLike,
   isLiked: initialIsLiked = false,
-}: PostCardProps) {
+}: PostCardProps) => {
   // Don't sync with props - keep independent state for smooth UX
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(stats.likes || 0);
@@ -244,4 +244,14 @@ export default function PostCard({
       </div>
     </div>
   );
-}
+};
+
+// Memoize to prevent re-renders unless the image URL changes
+export default memo(PostCard, (prevProps, nextProps) => {
+  // Return true if props are equal (skip re-render), false if different (re-render)
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.image === nextProps.image &&
+    prevProps.title === nextProps.title
+  );
+});

@@ -453,47 +453,16 @@ export default function DashboardPage() {
                     sourceType={post.postSource}
                     isLiked={post.isLiked}
                     onLike={async (postId) => {
+                      // Just call the API - don't update state
                       if (post.postSource === "bizpulse") {
                         try {
-                          const response = await bizpulseApi.likeWallFeed(postId);
-                          if (response.success && response.data) {
-                            const updatedMock = {
-                              ...transformWallFeedPostToMock(response.data as any),
-                              postSource: "bizpulse",
-                            };
-                            setAllPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
-                              )
-                            );
-                            setPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
-                              )
-                            );
-                          }
+                          await bizpulseApi.likeWallFeed(postId);
                         } catch (error) {
                           console.error("Failed to like post:", error);
                         }
                       } else if (post.postSource === "bizhub") {
                         try {
-                          const response = await bizhubApi.likePost(postId);
-                          if (response) {
-                            const updatedMock = {
-                              ...transformBizHubPostToMock(response),
-                              postSource: "bizhub",
-                            };
-                            setAllPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
-                              )
-                            );
-                            setPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
-                              )
-                            );
-                          }
+                          await bizhubApi.likePost(postId);
                         } catch (error) {
                           console.error("Failed to like post:", error);
                         }

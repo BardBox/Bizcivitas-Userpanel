@@ -43,14 +43,9 @@ export default function PostCard({
   onLike,
   isLiked: initialIsLiked = false,
 }: PostCardProps) {
+  // Don't sync with props - keep independent state for smooth UX
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(stats.likes || 0);
-
-  // Update local state when props change
-  useState(() => {
-    setIsLiked(initialIsLiked);
-    setLikeCount(stats.likes || 0);
-  });
 
   // Determine if this is a BizPulse post based on sourceType or category
   const isBizPulse = sourceType === "bizpulse" || (sourceType !== "bizhub" && !!category);
@@ -179,11 +174,14 @@ export default function PostCard({
         <Link href={detailUrl}>
           <div className="w-full aspect-video relative overflow-hidden bg-gray-100 cursor-pointer">
             <Image
+              key={`${id}-image`}
               src={image}
               alt={title}
               fill
               className="object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={false}
+              loading="lazy"
             />
           </div>
         </Link>

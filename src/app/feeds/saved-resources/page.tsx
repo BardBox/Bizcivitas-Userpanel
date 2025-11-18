@@ -134,6 +134,7 @@ export default function SavedResourcesPage() {
       {/* Tab Navigation */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="border-b border-gray-200">
+          {/* Desktop Tabs */}
           <div className="hidden lg:block">
             <nav
               className="flex space-x-8 px-6 overflow-x-auto"
@@ -156,6 +157,38 @@ export default function SavedResourcesPage() {
                 </button>
               ))}
             </nav>
+          </div>
+
+          {/* Mobile Dropdown */}
+          <div className="lg:hidden px-4 py-3">
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(e) => handleTabChange(e.target.value as TabType)}
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {SAVED_TABS.map((tab) => (
+                  <option key={tab.id} value={tab.id}>
+                    {tab.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg
+                  className="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>

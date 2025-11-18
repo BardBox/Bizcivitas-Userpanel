@@ -387,25 +387,25 @@ export default function DashboardHeader() {
               // Dispatch event to toggle mobile menu in FeedsLayoutClient
               window.dispatchEvent(new CustomEvent("toggleMobileMenu"));
             }}
-            className="md:hidden flex items-center justify-center hover:bg-gray-200 rounded-lg p-2 transition-colors w-10 h-10"
+            className="md:hidden flex items-center  justify-center hover:bg-gray-200 rounded-lg p-2 transition-colors w-10 h-10"
           >
-            <div className="w-6 h-5 relative flex flex-col justify-center items-center">
+            <div className="w-6 h-5 relative  flex flex-col  justify-center items-center">
               <span
-                className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ease-in-out absolute ${
+                className={`w-full h-0.5 bg-current rounded-full bg-white transition-all duration-300 ease-in-out absolute ${
                   isMobileMenuOpen
                     ? "rotate-45 top-1/2 -translate-y-1/2"
-                    : "top-0"
+                    : "top-0 "
                 }`}
               />
               <span
-                className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ease-in-out absolute top-1/2 -translate-y-1/2 ${
+                className={`w-full h-0.5 bg-white bg-current rounded-full transition-all duration-300 ease-in-out absolute top-1/2 -translate-y-1/2 ${
                   isMobileMenuOpen
                     ? "opacity-0 scale-0"
                     : "opacity-100 scale-100"
                 }`}
               />
               <span
-                className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ease-in-out absolute ${
+                className={`w-full bg-white h-0.5 bg-current rounded-full transition-all duration-300 ease-in-out absolute ${
                   isMobileMenuOpen
                     ? "-rotate-45 top-1/2 -translate-y-1/2"
                     : "bottom-0"

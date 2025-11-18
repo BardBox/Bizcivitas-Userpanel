@@ -460,20 +460,18 @@ export default function DashboardPage() {
                             postId
                           );
                           if (response.success && response.data) {
-                            const updatedMock = {
-                              ...transformWallFeedPostToMock(
-                                response.data as any
-                              ),
-                              postSource: "bizpulse",
-                            };
+                            // Just update the like status, don't recreate the whole object
+                            const newIsLiked = response.data.isLiked;
+                            const newLikeCount = response.data.likes?.length || 0;
+                            
                             setAllPosts((prev) =>
                               prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
+                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
                               )
                             );
                             setPosts((prev) =>
                               prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
+                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
                               )
                             );
                           }
@@ -484,18 +482,18 @@ export default function DashboardPage() {
                         try {
                           const response = await bizhubApi.likePost(postId);
                           if (response) {
-                            const updatedMock = {
-                              ...transformBizHubPostToMock(response),
-                              postSource: "bizhub",
-                            };
+                            // Just update the like status, don't recreate the whole object
+                            const newIsLiked = response.isLiked;
+                            const newLikeCount = (response as any).likes?.length || 0;
+                            
                             setAllPosts((prev) =>
                               prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
+                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
                               )
                             );
                             setPosts((prev) =>
                               prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
+                                p.id === postId ? { ...p, isLiked: newIsLiked, stats: { ...p.stats, likes: newLikeCount } } : p
                               )
                             );
                           }

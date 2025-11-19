@@ -89,7 +89,7 @@ export default function FeedsLayoutClient({
         />
 
         {/* Desktop Sidebar */}
-        <div className="hidden md:block relative z-30">
+        <div className="hidden md:block relative z-50">
           <DashboardSidebar isMobile={false} />
         </div>
 

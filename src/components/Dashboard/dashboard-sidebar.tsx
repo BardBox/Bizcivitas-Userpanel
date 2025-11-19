@@ -210,7 +210,7 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`h-full fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${
+      className={`h-full z-50 fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${
         isCollapsed ? "w-24" : "w-64 xl:w-72"
       }`}
     >

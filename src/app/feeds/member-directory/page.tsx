@@ -173,7 +173,7 @@ export default function MemberDirectoryPage() {
   // -------------------- Render --------------------
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-6 sm:pt-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-6 sm:pt-8 md:mt-12">
         {/* Breadcrumb */}
         <nav className="flex items-center text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
           <Link

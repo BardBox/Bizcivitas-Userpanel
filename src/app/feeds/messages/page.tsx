@@ -583,7 +583,7 @@ export default function MessagesPage() {
   ];
 
   return (
-    <div className="fixed inset-0 md:relative md:inset-auto md:h-full flex flex-col bg-gray-50 overflow-hidden pt-16 md:pt-0">
+    <div className="fixed inset-0 md:relative md:inset-auto md:h-full flex flex-col bg-gray-50 overflow-hidden pt-16 md:pt-0 md:mt-12">
       {/* Breadcrumb - Hidden on mobile when chat is selected */}
       <div className={`flex-shrink-0 bg-white border-b border-gray-200 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
         <Breadcrumb items={breadcrumbItems} />

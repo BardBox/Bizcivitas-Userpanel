@@ -16,12 +16,13 @@ import {
   useGetRecord3MonthCountsQuery,
   useGetRecord6MonthCountsQuery,
   useGetRecordTillDateAmountsQuery,
+  useGetRecordCustomRangeQuery,
 } from "../../../../store/api/dashboardApi";
 import { Plus } from "lucide-react";
 import CreateBizWinForm from "../forms/CreateBizWinForm";
 import BizWinDetailModal from "./BizWinDetailModal";
 
-type DateRange = "15days" | "3months" | "6months" | "tilldate";
+type DateRange = "15days" | "3months" | "6months" | "tilldate" | "custom";
 
 interface DateFilterButton {
   id: DateRange;
@@ -70,6 +71,19 @@ export default function BizWinChart({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  // Custom date range state
+  const getDefaultDates = () => {
+    const endDate = new Date().toISOString().split("T")[0];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 15);
+    return {
+      start: startDate.toISOString().split("T")[0],
+      end: endDate,
+    };
+  };
+
+  const [customDateRange, setCustomDateRange] = useState(getDefaultDates());
+
   // Conditional API calls based on selected range
   const {
     data: data15Days,
@@ -103,6 +117,20 @@ export default function BizWinChart({
     skip: selectedRange !== "tilldate",
   });
 
+  const {
+    data: dataCustomRange,
+    isLoading: loadingCustomRange,
+    error: errorCustomRange,
+  } = useGetRecordCustomRangeQuery(
+    {
+      startDate: customDateRange.start,
+      endDate: customDateRange.end,
+    },
+    {
+      skip: selectedRange !== "custom",
+    }
+  );
+
   // Determine current data and loading state
   const getData = () => {
     switch (selectedRange) {
@@ -114,12 +142,14 @@ export default function BizWinChart({
         return data6Months;
       case "tilldate":
         return dataTillDate;
+      case "custom":
+        return dataCustomRange;
     }
   };
 
   const isLoading =
-    loading15Days || loading3Months || loading6Months || loadingTillDate;
-  const error = error15Days || error3Months || error6Months || errorTillDate;
+    loading15Days || loading3Months || loading6Months || loadingTillDate || loadingCustomRange;
+  const error = error15Days || error3Months || error6Months || errorTillDate || errorCustomRange;
 
   // Debug errors
   if (error15Days) console.error('❌ BizWin 15 Days Error:', error15Days);

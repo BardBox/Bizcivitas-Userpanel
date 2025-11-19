@@ -5,6 +5,7 @@ import { X, Download, Calendar, Edit, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useUpdateReferralSlipMutation, useDeleteReferralSlipMutation } from "../../../../store/api/dashboardApi";
 import EditReferralModal from "./EditReferralModal";
+import DateRangePicker from "../DateRangePicker";
 
 interface UserDetails {
   _id?: string;
@@ -44,7 +45,7 @@ interface BizConnectDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: "given" | "received";
-  initialDateRange?: "15days" | "3months" | "6months" | "tilldate";
+  initialDateRange?: "15days" | "3months" | "6months" | "tilldate" | "custom";
 }
 
 export default function BizConnectDetailModal({
@@ -62,6 +63,9 @@ export default function BizConnectDetailModal({
   const [endDate, setEndDate] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedReferral, setSelectedReferral] = useState<InviteDetail | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   // Mutations
   const [updateReferralSlip] = useUpdateReferralSlipMutation();
@@ -69,6 +73,14 @@ export default function BizConnectDetailModal({
 
   // Calculate date range based on selected filter (matching backend logic)
   const calculateDateRange = (range: string) => {
+    // For custom range, use the selected custom dates
+    if (range === "custom" && customStartDate && customEndDate) {
+      return {
+        startDate: customStartDate,
+        endDate: customEndDate,
+      };
+    }
+
     const currentDate = new Date();
     currentDate.setUTCHours(23, 59, 59, 999);
 
@@ -108,6 +120,13 @@ export default function BizConnectDetailModal({
       startDate: startDate.toISOString().split("T")[0],
       endDate: currentDate.toISOString().split("T")[0],
     };
+  };
+
+  // Handler for custom date range selection
+  const handleCustomDateChange = (start: string, end: string) => {
+    setCustomStartDate(start);
+    setCustomEndDate(end);
+    setDateRange("custom");
   };
 
   // Fetch data when modal opens or filters change
@@ -244,7 +263,14 @@ export default function BizConnectDetailModal({
             ].map((option) => (
               <button
                 key={option.value}
-                onClick={() => setDateRange(option.value as any)}
+                onClick={() => {
+                  setDateRange(option.value as any);
+                  // Reset custom dates when switching to preset ranges
+                  if (option.value !== "custom") {
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }
+                }}
                 className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
                   dateRange === option.value
                     ? "bg-blue-600 text-white shadow-lg"
@@ -265,16 +291,28 @@ export default function BizConnectDetailModal({
             Download PDF Report
           </button>
 
-          {/* Date Range Display */}
+          {/* Date Range Display - Clickable to open date picker */}
           <div className="flex gap-2 md:gap-4 justify-center">
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 rounded-lg text-xs md:text-sm">
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 hover:bg-blue-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              title="Click to select custom date range"
+            >
               <span className="text-gray-600">Start: </span>
-              <span className="font-semibold text-blue-900">{startDate}</span>
-            </div>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 rounded-lg text-xs md:text-sm">
+              <span className="font-semibold text-blue-900 group-hover:text-blue-700">
+                {startDate}
+              </span>
+            </button>
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 hover:bg-blue-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              title="Click to select custom date range"
+            >
               <span className="text-gray-600">End: </span>
-              <span className="font-semibold text-blue-900">{endDate}</span>
-            </div>
+              <span className="font-semibold text-blue-900 group-hover:text-blue-700">
+                {endDate}
+              </span>
+            </button>
           </div>
 
           {/* Total Count */}
@@ -285,9 +323,6 @@ export default function BizConnectDetailModal({
 
         {/* Records List */}
         <div className="overflow-y-auto max-h-[55vh] p-6 bg-gray-50 pb-8">
-          <div className="mb-4 p-3 bg-blue-100 rounded text-sm">
-            <strong>Debug:</strong> Loading: {loading.toString()}, Given: {givenData.length}, Received: {receivedData.length}, Current: {currentData.length}
-          </div>
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -468,6 +503,16 @@ export default function BizConnectDetailModal({
           setEditModalOpen(false);
         }}
       />
+
+      {/* Date Range Picker Modal */}
+      {isDatePickerOpen && (
+        <DateRangePicker
+          startDate={customStartDate || startDate}
+          endDate={customEndDate || endDate}
+          onDateChange={handleCustomDateChange}
+          onClose={() => setIsDatePickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

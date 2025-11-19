@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Download, IndianRupee } from "lucide-react";
+import DateRangePicker from "../DateRangePicker";
 
 interface UserDetails {
   _id?: string;
@@ -36,7 +37,7 @@ interface BizWinDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: "given" | "received";
-  initialDateRange?: "15days" | "3months" | "6months" | "tilldate";
+  initialDateRange?: "15days" | "3months" | "6months" | "tilldate" | "custom";
 }
 
 export default function BizWinDetailModal({
@@ -54,8 +55,18 @@ export default function BizWinDetailModal({
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   const calculateDateRange = (range: string) => {
+    // For custom range, use the selected custom dates
+    if (range === "custom" && customStartDate && customEndDate) {
+      return {
+        startDate: customStartDate,
+        endDate: customEndDate,
+      };
+    }
     const currentDate = new Date();
     currentDate.setUTCHours(23, 59, 59, 999);
 
@@ -97,11 +108,18 @@ export default function BizWinDetailModal({
     };
   };
 
+  // Handler for custom date range selection
+  const handleCustomDateChange = (start: string, end: string) => {
+    setCustomStartDate(start);
+    setCustomEndDate(end);
+    setDateRange("custom");
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchData();
     }
-  }, [isOpen, dateRange]);
+  }, [isOpen, dateRange, customStartDate, customEndDate]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -230,7 +248,14 @@ export default function BizWinDetailModal({
             ].map((option) => (
               <button
                 key={option.value}
-                onClick={() => setDateRange(option.value as any)}
+                onClick={() => {
+                  setDateRange(option.value as any);
+                  // Reset custom dates when switching to preset ranges
+                  if (option.value !== "custom") {
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }
+                }}
                 className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
                   dateRange === option.value
                     ? "bg-green-600 text-white shadow-lg"
@@ -251,16 +276,28 @@ export default function BizWinDetailModal({
             Download PDF Report
           </button>
 
-          {/* Date Range Display */}
+          {/* Date Range Display - Clickable to open date picker */}
           <div className="flex gap-2 md:gap-4 justify-center">
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 rounded-lg text-xs md:text-sm">
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              title="Click to select custom date range"
+            >
               <span className="text-gray-600">Start: </span>
-              <span className="font-semibold text-green-900">{startDate}</span>
-            </div>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 rounded-lg text-xs md:text-sm">
+              <span className="font-semibold text-green-900 group-hover:text-green-700">
+                {startDate}
+              </span>
+            </button>
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              title="Click to select custom date range"
+            >
               <span className="text-gray-600">End: </span>
-              <span className="font-semibold text-green-900">{endDate}</span>
-            </div>
+              <span className="font-semibold text-green-900 group-hover:text-green-700">
+                {endDate}
+              </span>
+            </button>
           </div>
 
           {/* Total Amount & Count */}
@@ -412,6 +449,16 @@ export default function BizWinDetailModal({
           )}
         </div>
       </div>
+
+      {/* Date Range Picker Modal */}
+      {isDatePickerOpen && (
+        <DateRangePicker
+          startDate={customStartDate || startDate}
+          endDate={customEndDate || endDate}
+          onDateChange={handleCustomDateChange}
+          onClose={() => setIsDatePickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Download, Calendar, MapPin, Users } from "lucide-react";
+import DateRangePicker from "../DateRangePicker";
 
 interface UserDetails {
   _id?: string;
@@ -31,7 +32,7 @@ interface MeetupRecord {
 interface MeetupsDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialDateRange?: "15days" | "3months" | "6months" | "tilldate";
+  initialDateRange?: "15days" | "3months" | "6months" | "tilldate" | "custom";
 }
 
 export default function MeetupsDetailModal({
@@ -44,9 +45,19 @@ export default function MeetupsDetailModal({
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   // Calculate date range based on selected filter (matching backend logic)
   const calculateDateRange = (range: string) => {
+    // For custom range, use the selected custom dates
+    if (range === "custom" && customStartDate && customEndDate) {
+      return {
+        startDate: customStartDate,
+        endDate: customEndDate,
+      };
+    }
     const currentDate = new Date();
     currentDate.setUTCHours(23, 59, 59, 999);
 
@@ -88,12 +99,19 @@ export default function MeetupsDetailModal({
     };
   };
 
+  // Handler for custom date range selection
+  const handleCustomDateChange = (start: string, end: string) => {
+    setCustomStartDate(start);
+    setCustomEndDate(end);
+    setDateRange("custom");
+  };
+
   // Fetch data when modal opens or filters change
   useEffect(() => {
     if (isOpen) {
       fetchData();
     }
-  }, [isOpen, dateRange]);
+  }, [isOpen, dateRange, customStartDate, customEndDate]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -174,7 +192,12 @@ export default function MeetupsDetailModal({
             ] as const).map((option) => (
               <button
                 key={option.value}
-                onClick={() => setDateRange(option.value as any)}
+                onClick={() => {
+                  setDateRange(option.value as any);
+                  // Reset custom dates when switching to preset ranges
+                  setCustomStartDate("");
+                  setCustomEndDate("");
+                }}
                 className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
                   dateRange === option.value
                     ? "bg-purple-600 text-white shadow-lg"
@@ -195,16 +218,28 @@ export default function MeetupsDetailModal({
             Download PDF Report
           </button>
 
-          {/* Date Range Display */}
+          {/* Date Range Display - Clickable to open date picker */}
           <div className="flex gap-2 md:gap-4 justify-center">
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-purple-100 rounded-lg text-xs md:text-sm">
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-purple-100 hover:bg-purple-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              title="Click to select custom date range"
+            >
               <span className="text-gray-600">Start: </span>
-              <span className="font-semibold text-purple-900">{startDate}</span>
-            </div>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-purple-100 rounded-lg text-xs md:text-sm">
+              <span className="font-semibold text-purple-900 group-hover:text-purple-700">
+                {startDate}
+              </span>
+            </button>
+            <button
+              onClick={() => setIsDatePickerOpen(true)}
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-purple-100 hover:bg-purple-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              title="Click to select custom date range"
+            >
               <span className="text-gray-600">End: </span>
-              <span className="font-semibold text-purple-900">{endDate}</span>
-            </div>
+              <span className="font-semibold text-purple-900 group-hover:text-purple-700">
+                {endDate}
+              </span>
+            </button>
           </div>
 
           {/* Total Count */}
@@ -337,6 +372,16 @@ export default function MeetupsDetailModal({
           )}
         </div>
       </div>
+
+      {/* Date Range Picker Modal */}
+      {isDatePickerOpen && (
+        <DateRangePicker
+          startDate={customStartDate || startDate}
+          endDate={customEndDate || endDate}
+          onDateChange={handleCustomDateChange}
+          onClose={() => setIsDatePickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

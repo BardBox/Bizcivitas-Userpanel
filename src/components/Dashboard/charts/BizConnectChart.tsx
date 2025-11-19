@@ -16,12 +16,14 @@ import {
   useGetReferrals3MonthCountsQuery,
   useGetReferrals6MonthCountsQuery,
   useGetReferralsTillDateCountsQuery,
+  useGetReferralsCustomRangeQuery,
 } from "../../../../store/api/dashboardApi";
-import { Plus } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 import CreateBizConnectForm from "../forms/CreateBizConnectForm";
 import BizConnectDetailModal from "./BizConnectDetailModal";
+import DateRangePicker from "../DateRangePicker";
 
-type DateRange = "15days" | "3months" | "6months" | "tilldate";
+type DateRange = "15days" | "3months" | "6months" | "tilldate" | "custom";
 
 interface DateFilterButton {
   id: DateRange;
@@ -56,6 +58,20 @@ export default function BizConnectChart({
   };
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  // Custom date range state
+  const getDefaultDates = () => {
+    const endDate = new Date().toISOString().split("T")[0];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 15);
+    return {
+      start: startDate.toISOString().split("T")[0],
+      end: endDate,
+    };
+  };
+
+  const [customDateRange, setCustomDateRange] = useState(getDefaultDates());
 
   // Conditional API calls based on selected range
   const {
@@ -90,6 +106,20 @@ export default function BizConnectChart({
     skip: selectedRange !== "tilldate",
   });
 
+  const {
+    data: dataCustomRange,
+    isLoading: loadingCustomRange,
+    error: errorCustomRange,
+  } = useGetReferralsCustomRangeQuery(
+    {
+      startDate: customDateRange.start,
+      endDate: customDateRange.end,
+    },
+    {
+      skip: selectedRange !== "custom",
+    }
+  );
+
   // Determine current data and loading state
   const getData = () => {
     switch (selectedRange) {
@@ -101,12 +131,14 @@ export default function BizConnectChart({
         return data6Months;
       case "tilldate":
         return dataTillDate;
+      case "custom":
+        return dataCustomRange;
     }
   };
 
   const isLoading =
-    loading15Days || loading3Months || loading6Months || loadingTillDate;
-  const error = error15Days || error3Months || error6Months || errorTillDate;
+    loading15Days || loading3Months || loading6Months || loadingTillDate || loadingCustomRange;
+  const error = error15Days || error3Months || error6Months || errorTillDate || errorCustomRange;
 
   // Debug errors
   if (error15Days) console.error("BizConnect 15 Days Error:", error15Days);

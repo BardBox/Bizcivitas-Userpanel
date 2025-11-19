@@ -134,7 +134,12 @@ export interface Connection {
   mutualConnections?: number;
 }
 
-type DateRange = "15days" | "3months" | "6months" | "tilldate";
+type DateRange = "15days" | "3months" | "6months" | "tilldate" | "custom";
+
+export interface CustomDateRangeParams {
+  startDate: string; // YYYY-MM-DD format
+  endDate: string; // YYYY-MM-DD format
+}
 
 // Dashboard API endpoints
 export const dashboardApi = baseApi.injectEndpoints({
@@ -143,6 +148,15 @@ export const dashboardApi = baseApi.injectEndpoints({
     // BizConnect (Invites) Chart APIs
     getReferralsMonthlyCount: builder.query<ReferralChartData, void>({
       query: () => "/referrals/monthly-count",
+      transformResponse: (response: ApiResponse<ReferralChartData>) =>
+        response.data,
+    }),
+    getReferralsCustomRange: builder.query<
+      ReferralChartData,
+      CustomDateRangeParams
+    >({
+      query: ({ startDate, endDate }) =>
+        `/referrals/custom-range?startDate=${startDate}&endDate=${endDate}`,
       transformResponse: (response: ApiResponse<ReferralChartData>) =>
         response.data,
     }),
@@ -168,6 +182,14 @@ export const dashboardApi = baseApi.injectEndpoints({
       transformResponse: (response: ApiResponse<BizWinChartData>) =>
         response.data,
     }),
+    getRecordCustomRange: builder.query<BizWinChartData, CustomDateRangeParams>(
+      {
+        query: ({ startDate, endDate }) =>
+          `/record/custom-range?startDate=${startDate}&endDate=${endDate}`,
+        transformResponse: (response: ApiResponse<BizWinChartData>) =>
+          response.data,
+      }
+    ),
     getRecord3MonthCounts: builder.query<BizWinChartData, void>({
       query: () => "/record/3-month-counts",
       transformResponse: (response: ApiResponse<BizWinChartData>) =>
@@ -187,6 +209,15 @@ export const dashboardApi = baseApi.injectEndpoints({
     // Meetups Chart APIs
     getMeetupsMeetingCount: builder.query<MeetupChartData, void>({
       query: () => "/meetup/meeting-count",
+      transformResponse: (response: ApiResponse<MeetupChartData>) =>
+        response.data,
+    }),
+    getMeetupsCustomRange: builder.query<
+      MeetupChartData,
+      CustomDateRangeParams
+    >({
+      query: ({ startDate, endDate }) =>
+        `/meetup/custom-range?startDate=${startDate}&endDate=${endDate}`,
       transformResponse: (response: ApiResponse<MeetupChartData>) =>
         response.data,
     }),
@@ -212,6 +243,16 @@ export const dashboardApi = baseApi.injectEndpoints({
       void
     >({
       query: () => "/meetings/last-15-days-invited-count",
+      transformResponse: (
+        response: ApiResponse<VisitorInvitationChartData>
+      ) => response.data,
+    }),
+    getMeetingsCustomRange: builder.query<
+      VisitorInvitationChartData,
+      CustomDateRangeParams
+    >({
+      query: ({ startDate, endDate }) =>
+        `/meetings/custom-range-invited?startDate=${startDate}&endDate=${endDate}`,
       transformResponse: (
         response: ApiResponse<VisitorInvitationChartData>
       ) => response.data,
@@ -333,24 +374,28 @@ export const {
   useGetReferrals3MonthCountsQuery,
   useGetReferrals6MonthCountsQuery,
   useGetReferralsTillDateCountsQuery,
+  useGetReferralsCustomRangeQuery,
 
   // BizWin
   useGetRecordLast15DaysCountsQuery,
   useGetRecord3MonthCountsQuery,
   useGetRecord6MonthCountsQuery,
   useGetRecordTillDateAmountsQuery,
+  useGetRecordCustomRangeQuery,
 
   // Meetups
   useGetMeetupsMeetingCountQuery,
   useGetMeetups3MonthCountsQuery,
   useGetMeetups6MonthCountsQuery,
   useGetMeetupsAllTimeCountQuery,
+  useGetMeetupsCustomRangeQuery,
 
   // Visitor Invitations
   useGetMeetingsLast15DaysInvitedCountQuery,
   useGetMeetings3MonthFortnightInvitedCountQuery,
   useGetMeetings6MonthInvitedCountQuery,
   useGetMeetingsAllTimeInvitedPeopleCountQuery,
+  useGetMeetingsCustomRangeQuery,
 
   // Other Dashboard Data
   useGetMeetingsByCommunityQuery,

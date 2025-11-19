@@ -15,7 +15,7 @@ import {
   useGetMeetingsLast15DaysInvitedCountQuery,
 } from "../../../../store/api/dashboardApi";
 
-type DateRange = "15days" | "3months" | "6months" | "tilldate";
+type DateRange = "15days" | "3months" | "6months" | "tilldate" | "custom";
 
 // Helper function to get period label based on date range
 const getPeriodLabel = (range: DateRange): string => {
@@ -28,6 +28,8 @@ const getPeriodLabel = (range: DateRange): string => {
       return "Half-Yearly Overview";
     case "tilldate":
       return "All Time Overview";
+    case "custom":
+      return "Custom Range Overview";
     default:
       return "Fortnight Overview";
   }

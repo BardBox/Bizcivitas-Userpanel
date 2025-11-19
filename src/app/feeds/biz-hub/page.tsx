@@ -57,7 +57,7 @@ export default function BizHubPage() {
   };
 
   return (
-    <div className="space-y-6 md:mt-12">
+    <div className="min-h-screen bg-gray-50 md:rounded-3xl space-y-6 md:mt-12 p-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Biz Hub</h1>

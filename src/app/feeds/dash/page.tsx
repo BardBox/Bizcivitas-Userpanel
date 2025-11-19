@@ -120,7 +120,7 @@ export default function DashboardPage() {
   const ActiveChart = chartComponents[activeChartIndex];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 md:rounded-3xl">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 md:space-y-6 md:mt-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">

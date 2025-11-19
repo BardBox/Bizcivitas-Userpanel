@@ -11,7 +11,7 @@ export default function DashboardCardComponent({ card, className = "", isActive 
   return (
     <div className={`
       ${isActive ? 'bg-[#4A62AD]' : card.bgColor}
-      rounded-xl p-4 sm:p-6 shadow-sm border
+      rounded-2xl p-4 sm:p-6 shadow-sm border
       ${isActive ? 'border-[#4A62AD] shadow-xl ring-2 ring-blue-300' : 'border-gray-100 hover:shadow-lg'}
       transition-all duration-300 ease-in-out cursor-pointer group ${className}
     `}>

@@ -44,9 +44,9 @@ export default function MyMembershipPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 md:rounded-3xl">
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 md:mt-12">
+      <div className="bg-white border-b border-gray-200 md:mt-12 md:rounded-tl-3xl md:rounded-tr-3xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
             <h1 className="text-xl font-semibold text-gray-900">My Membership</h1>

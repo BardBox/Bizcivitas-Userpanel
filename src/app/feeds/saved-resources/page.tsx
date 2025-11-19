@@ -125,7 +125,7 @@ export default function SavedResourcesPage() {
     SAVED_TABS.find((tab) => tab.id === activeTab) || SAVED_TABS[0];
 
   return (
-    <div className="space-y-4 mt-4 md:mt-8  md:space-y-6 px-3 md:px-0">
+    <div className="space-y-4 bg-gray-50 mt-4 md:mt-8  md:space-y-6 px-3 md:px-0">
       {/* Header with Breadcrumb */}
       <div className="bg-white rounded-lg shadow p-4 md:p-6">
         {/* Breadcrumb */}
@@ -141,25 +141,25 @@ export default function SavedResourcesPage() {
         </h1>
       </div>
 
-      {/* Search Bar */}
-      <div className="w-full md:max-w-md">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search saved content..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none shadow-sm"
-          />
-        </div>
-      </div>
-
-      {/* Tab Navigation */}
+      {/* Search Bar and Tab Navigation */}
       <div className="bg-white rounded-lg shadow overflow-visible">
-        <div className="border-b border-gray-200">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+          <div className="w-full lg:max-w-md px-4 py-4 lg:py-0 lg:pl-6">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search saved content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none shadow-sm"
+              />
+            </div>
+          </div>
+
+          <div className="border-b lg:border-b-0 border-gray-200">
           {/* Mobile/Tablet Dropdown Navigation (up to lg) */}
           <div className="lg:hidden p-4">
             <div className="relative" ref={dropdownRef}>
@@ -206,7 +206,7 @@ export default function SavedResourcesPage() {
           {/* Desktop Horizontal Tabs (lg and above) */}
           <div className="hidden lg:block">
             <nav
-              className="flex space-x-8 px-6 overflow-x-auto"
+              className="flex space-x-8 px-6 overflow-x-auto justify-end"
               aria-label="Tabs"
             >
               {SAVED_TABS.map((tab) => (
@@ -226,6 +226,7 @@ export default function SavedResourcesPage() {
                 </button>
               ))}
             </nav>
+          </div>
           </div>
         </div>
       </div>

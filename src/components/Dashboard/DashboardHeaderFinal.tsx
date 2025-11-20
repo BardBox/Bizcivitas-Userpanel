@@ -349,13 +349,12 @@ export default function DashboardHeaderFinal() {
 
                             {/* Search Input */}
                             <div className="flex-1 flex items-center px-3 relative">
-                                <Search className="w-4 h-4 text-gray-400 mr-2" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder={`Search ${activeCategory.label.toLowerCase()}...`}
-                                    className="w-full bg-transparent border-none focus:ring-0 text-sm text-gray-900 placeholder-gray-500 py-2.5"
+                                    className="w-full bg-transparent border-none focus:ring-0 text-sm text-gray-900 placeholder-gray-500 py-2.5 px-2"
                                 />
                                 {searchQuery && (
                                     <button onClick={() => { setSearchQuery(""); setIsSearchOpen(false); }} className="p-1 hover:bg-gray-200 rounded-full text-gray-400 transition-colors">
@@ -584,8 +583,8 @@ export default function DashboardHeaderFinal() {
                     </div>
                 )}
             </header>
-            {/* Spacer to prevent content overlap */}
-            <div className="h-16" />
+            {/* Spacer to prevent content overlap - only show when header is visible */}
+            {isHeaderVisible && <div className="h-16" />}
         </>
     );
 }

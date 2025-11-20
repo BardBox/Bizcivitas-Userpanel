@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "backend.bizcivitas.com",
       },
+      {
+        protocol: "https",
+        hostname: "icon-library.com",
+      },
     ],
     dangerouslyAllowSVG: true,
   },

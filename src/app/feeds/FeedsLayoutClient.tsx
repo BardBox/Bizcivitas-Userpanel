@@ -3,7 +3,7 @@
 import { useState, Suspense, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import DashboardSidebar from "@/components/Dashboard/dashboard-sidebar";
-import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import DashboardHeader from "@/components/Dashboard/DashboardHeaderFinal";
 import NavigationLoader from "@/components/NavigationLoader";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { X } from "lucide-react";
@@ -93,57 +93,56 @@ export default function FeedsLayoutClient({
           <DashboardSidebar isMobile={false} />
         </div>
 
-      {/* Mobile Drawer Overlay */}
-      {isMobileMenuOpen && (
-        <>
-          {/* Dark backdrop - starts below header */}
-          <div
-            className="fixed inset-0 top-16 bg-black/50 z-40 md:hidden transition-opacity duration-300"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-
-          {/* Drawer sidebar - starts below header */}
-          <div className="fixed left-0 top-16 bottom-0 w-64 z-50 md:hidden transform transition-transform duration-300 ease-in-out">
-            {/* Background with opacity for mobile drawer */}
+        {/* Mobile Drawer Overlay */}
+        {isMobileMenuOpen && (
+          <>
+            {/* Dark backdrop - starts below header */}
             <div
-              className="absolute inset-0 z-0"
-              style={{
-                backgroundImage: 'url(/background.svg)',
-                backgroundRepeat: 'repeat',
-                backgroundSize: '40%',
-                opacity: 0.5
-              }}
+              className="fixed inset-0 top-16 bg-black/50 z-40 md:hidden transition-opacity duration-300"
+              onClick={() => setIsMobileMenuOpen(false)}
             />
-            <div className="relative z-10 h-full overflow-y-auto">
-              <DashboardSidebar
-                onNavigate={() => setIsMobileMenuOpen(false)}
-                onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                isMobile={true}
+
+            {/* Drawer sidebar - starts below header */}
+            <div className="fixed left-0 top-16 bottom-0 w-64 z-50 md:hidden transform transition-transform duration-300 ease-in-out">
+              {/* Background with opacity for mobile drawer */}
+              <div
+                className="absolute inset-0 z-0"
+                style={{
+                  backgroundImage: 'url(/background.svg)',
+                  backgroundRepeat: 'repeat',
+                  backgroundSize: '40%',
+                  opacity: 0.5
+                }}
               />
+              <div className="relative z-10 h-full overflow-y-auto">
+                <DashboardSidebar
+                  onNavigate={() => setIsMobileMenuOpen(false)}
+                  onToggleMobile={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  isMobile={true}
+                />
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
 
-      {/* Main Content */}
-      <div
-        className="flex-1 flex flex-col overflow-hidden"
-        onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
-      >
-        <DashboardHeader />
-        <main
-          ref={mainRef}
-          className={`relative flex-1 overflow-y-auto pt-16 ${
-            isMainFeedsPage ? "px-3" : "px-3 md:p-12"
-          }`}
+        {/* Main Content */}
+        <div
+          className="flex-1 flex flex-col overflow-hidden"
+          onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}
         >
-          <NavigationLoader />
-          <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
-        </main>
-      </div>
+          <DashboardHeader />
+          <main
+            ref={mainRef}
+            className={`relative flex-1 overflow-y-auto pt-16 ${isMainFeedsPage ? "px-3" : "px-3 md:p-12"
+              }`}
+          >
+            <NavigationLoader />
+            <Suspense fallback={<NavigationLoader />}>{children}</Suspense>
+          </main>
+        </div>
 
-      {/* Mobile Floating Button - Hidden since hamburger is now in header */}
-      {/* {!isMobileMenuOpen && (
+        {/* Mobile Floating Button - Hidden since hamburger is now in header */}
+        {/* {!isMobileMenuOpen && (
         <button
           onClick={() => setIsMobileMenuOpen(true)}
           className="fixed top-20 left-4 md:hidden bg-orange-400 hover:bg-orange-500 text-white p-3 rounded-full shadow-lg transition-all duration-300 z-30"

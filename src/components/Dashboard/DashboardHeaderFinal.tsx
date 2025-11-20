@@ -12,13 +12,17 @@ import {
     Calendar,
     Search,
     Menu,
-    Bell
+    Bell,
+    Activity,
+    Network
 } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import { useLazySearchUsersQuery } from "@/store/api/connectionsApi";
 import { bizpulseApi } from "../../services/bizpulseApi";
 import { bizhubApi } from "../../services/bizhubApi";
 import { useGetAllEventsQuery } from "@/store/api/eventsApi.latest";
+import { getAbsoluteImageUrl } from "@/utils/imageUtils";
+import Avatar from "@/components/ui/Avatar";
 
 // --- Types & Interfaces ---
 
@@ -128,7 +132,7 @@ export default function DashboardHeaderFinal() {
                 const allPosts: SearchPost[] = [];
                 const lowerQuery = query.toLowerCase();
 
-                // Process BizPulse
+                // Process BizPulse (Admin posts)
                 if (bizpulsePosts?.data?.wallFeeds) {
                     bizpulsePosts.data.wallFeeds.forEach((post: any) => {
                         const title = stripHtml(String(post.title || post.poll?.question || ""));
@@ -140,8 +144,8 @@ export default function DashboardHeaderFinal() {
                                 title: title || "Untitled Post",
                                 content: desc.substring(0, 100),
                                 author: {
-                                    name: `${post.userId?.fname || ""} ${post.userId?.lname || ""}`.trim() || "Unknown",
-                                    avatar: post.userId?.avatar,
+                                    name: "BizCivitas Admin",
+                                    avatar: "/favicon.ico",
                                 },
                                 timeAgo: new Date(post.createdAt).toLocaleDateString(),
                                 postSource: "bizpulse",
@@ -151,20 +155,34 @@ export default function DashboardHeaderFinal() {
                     });
                 }
 
-                // Process BizHub
+                // Process BizHub (Member posts)
                 if (bizhubPosts && Array.isArray(bizhubPosts)) {
+                    console.log('BizHub Posts Array:', bizhubPosts);
+                    console.log('First BizHub Post:', bizhubPosts[0]);
                     bizhubPosts.forEach((post: any) => {
                         const title = stripHtml(String(post.title || ""));
                         const desc = stripHtml(String(post.description || ""));
 
                         if (title.toLowerCase().includes(lowerQuery) || desc.toLowerCase().includes(lowerQuery)) {
+                            console.log('Matching BizHub Post:', {
+                                title: post.title,
+                                user: post.user,
+                                userId: post.userId,
+                                author: post.author,
+                                createdBy: post.createdBy
+                            });
+
+                            // BizHub API returns user.name as the full name (not fname/lname separately)
+                            const memberName = post.user?.name || "Unknown Member";
+                            const memberAvatar = post.user?.avatar;
+
                             allPosts.push({
                                 id: post._id,
                                 title: title || "Untitled Post",
                                 content: desc.substring(0, 100),
                                 author: {
-                                    name: `${post.userId?.fname || ""} ${post.userId?.lname || ""}`.trim() || "Unknown",
-                                    avatar: post.userId?.avatar,
+                                    name: memberName,
+                                    avatar: memberAvatar,
                                 },
                                 timeAgo: new Date(post.createdAt).toLocaleDateString(),
                                 postSource: "bizhub",
@@ -415,24 +433,38 @@ export default function DashboardHeaderFinal() {
                                                                 <button
                                                                     key={post.id}
                                                                     onClick={() => navigateTo(post.postSource === "bizpulse" ? `/feeds/biz-pulse/${post.id}` : `/feeds/biz-hub/${post.id}`, post.id)}
-                                                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group"
+                                                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group relative"
                                                                 >
-                                                                    <div className="mt-1 flex-shrink-0">
-                                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${post.postSource === 'bizpulse' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
-                                                                            {post.postSource === 'bizpulse' ? <Building2 className="w-4 h-4" /> : <UserIcon className="w-4 h-4" />}
+                                                                    {/* Post Type Icon - Top Right */}
+                                                                    <div className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center ${post.postSource === 'bizpulse' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'}`}>
+                                                                        {post.postSource === 'bizpulse' ? <Activity className="w-4 h-4" /> : <Network className="w-4 h-4" />}
+                                                                    </div>
+
+                                                                    {/* Avatar */}
+                                                                    <Avatar
+                                                                        src={post.author.avatar}
+                                                                        alt={post.author.name}
+                                                                        size="md"
+                                                                        fallbackText={post.author.name}
+                                                                    />
+
+                                                                    {/* Content */}
+                                                                    <div className="flex-1 min-w-0 pr-12">
+                                                                        {/* Post Title */}
+                                                                        <p className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">{post.title}</p>
+
+                                                                        {/* Author Name & Date */}
+                                                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                            <span className="font-medium">{post.author.name}</span>
+                                                                            <span>•</span>
+                                                                            <span>{post.timeAgo}</span>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">{post.title}</p>
-                                                                        <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{post.content}</p>
-                                                                        <div className="flex items-center gap-2 mt-1.5">
-                                                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 uppercase">{post.postSource}</span>
-                                                                            <span className="text-[10px] text-gray-400">• {post.timeAgo}</span>
-                                                                        </div>
-                                                                    </div>
+
+                                                                    {/* Loading Spinner */}
                                                                     {navigatingId === post.id && (
-                                                                        <div className="flex-shrink-0">
-                                                                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                                                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                                                                            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                                                                         </div>
                                                                     )}
                                                                 </button>

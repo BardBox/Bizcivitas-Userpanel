@@ -21,7 +21,7 @@ class BizHubApiService {
 
   // Fetch all posts
   async fetchPosts(): Promise<any[]> {
-    const response = await fetch(`${this.baseUrl}/post/`, {
+    const response = await fetch(`${this.baseUrl}/post/?populate=user`, {
       headers: this.getAuthHeaders(),
       credentials: "include",
     });
@@ -29,6 +29,7 @@ class BizHubApiService {
       throw new Error(`Failed to fetch BizHub posts: ${response.statusText}`);
     }
     const json = await response.json();
+    console.log('BizHub API Response:', json?.data?.posts?.[0]); // Debug log
     return (json?.data?.posts || []) as any[];
   }
 

@@ -154,8 +154,56 @@ export default function MeetupsChart({
   const dataArray = getDataArray();
 
   // Transform API data to chart format - handle different field names
-  let chartData = dataArray.map((item: any) => ({
-    date: item.date ? item.date.split("-").slice(1).join("/") : item.period || "",
+  let chartData = dataArray.map((item: any, index: number) => {
+    let dateLabel = item.date
+      ? item.date.split("-").slice(1).join("/")
+      : item.period || "";
+
+    // Clean up labels for better readability
+    if (!item.date && item.period) {
+      const cleanPeriod = item.period.replace(/^(Fortnight \d+|Month): /, "");
+
+      if (selectedRange === "3months" || selectedRange === "6months") {
+        // Attempt to parse date to show Month Name
+        const match = cleanPeriod.match(/(\d{4})-(\d{2})/);
+        if (match) {
+          const year = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1;
+          const date = new Date(year, month, 1);
+          dateLabel = date.toLocaleString("default", { month: "long" });
+        } else {
+          dateLabel = cleanPeriod;
+        }
+      } else {
+        dateLabel = cleanPeriod;
+      }
+    }
+
+    return {
+      date: dateLabel,
+      count: item.count || 0,
+    };
+  });
+
+  // For 3 months view, aggregate fortnight data into monthly data
+  if (selectedRange === "3months" && chartData.length > 0) {
+    const monthlyData: Record<string, { count: number }> = {};
+
+    chartData.forEach((item) => {
+      if (!monthlyData[item.date]) {
+        monthlyData[item.date] = { count: 0 };
+      }
+      monthlyData[item.date].count += item.count;
+    });
+
+    chartData = Object.entries(monthlyData).map(([date, values]) => ({
+      date,
+      count: values.count,
+    }));
+  }
+
+  let displayChartData = chartData.map((item: any) => ({
+    date: item.date,
     count: item.count || 0,
   }));
 
@@ -173,38 +221,34 @@ export default function MeetupsChart({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl p-3 md:p-6 lg:p-8 shadow-sm border border-gray-100">
       {/* Chart Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-8">
-        <div>
-          <p className="text-sm text-gray-500 mb-1">Analytics</p>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Meetups Overview
-          </h2>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <h3 className="text-xl font-bold text-gray-900">
+          Meetups Overview
+        </h3>
 
-        {/* Time Filter Buttons + Create Button */}
-        <div className="flex flex-col gap-2 mt-4 sm:mt-0 w-full sm:w-auto">
-          {/* Date Filter Buttons */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto max-w-full">
             {dateFilters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => handleRangeChange(filter.id)}
-                className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all whitespace-nowrap ${
                   selectedRange === filter.id
-                    ? "bg-[#4A62AD] text-white shadow-md"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-[#4A62AD] text-white shadow-sm"
+                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                 }`}
               >
                 {filter.label}
               </button>
             ))}
           </div>
-          {/* Create Button - Full width on mobile */}
+
+          {/* Create Button */}
           <button
             onClick={() => setIsFormOpen(true)}
-            className="w-full sm:w-auto sm:px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center"
+            className="w-9 h-9 bg-[#4A62AD] text-white rounded-full hover:bg-[#3a4d8a] transition-all shadow-md hover:shadow-lg flex items-center justify-center flex-shrink-0"
             title="Create Meetup"
           >
             <Plus className="w-5 h-5" />
@@ -216,17 +260,17 @@ export default function MeetupsChart({
       <div className="mb-8">
         <div
           onClick={() => setIsDetailModalOpen(true)}
-          className="bg-gradient-to-br from-purple-50 to-purple-100 px-6 py-4 rounded-xl border border-purple-200 cursor-pointer hover:shadow-lg transition-shadow"
+          className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-4 rounded-xl border border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-purple-700 mb-1 font-medium">Total Meetups</p>
-              <p className="text-3xl font-bold text-purple-900">
+              <p className="text-sm text-blue-700 mb-1 font-medium">Total Meetups</p>
+              <p className="text-3xl font-bold text-blue-900">
                 {isLoading ? "..." : totalCount}
               </p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
@@ -303,7 +347,7 @@ export default function MeetupsChart({
                 />
                 <Bar
                   dataKey="count"
-                  fill="#7C3AED"
+                  fill="#4A62AD"
                   radius={[8, 8, 0, 0]}
                   name="Meetups"
                   maxBarSize={60}

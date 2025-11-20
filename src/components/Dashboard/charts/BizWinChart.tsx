@@ -70,6 +70,7 @@ export default function BizWinChart({
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<"given" | "received">("given");
 
   // Custom date range state
   const getDefaultDates = () => {
@@ -172,11 +173,56 @@ export default function BizWinChart({
   const dataArray = getDataArray();
 
   // Transform API data to chart format - handle different field names
-  let chartData = dataArray.map((item: any) => ({
-    date: item.date ? item.date.split("-").slice(1).join("/") : item.period || "",
-    given: item.totalGiven || 0,
-    received: item.totalReceived || 0,
-  }));
+  let chartData = dataArray.map((item: any, index: number) => {
+    let dateLabel = item.date
+      ? item.date.split("-").slice(1).join("/")
+      : item.period || "";
+
+    // Clean up labels for better readability
+    if (!item.date && item.period) {
+      const cleanPeriod = item.period.replace(/^(Fortnight \d+|Month): /, "");
+
+      if (selectedRange === "3months" || selectedRange === "6months") {
+        // Attempt to parse date to show Month Name
+        const match = cleanPeriod.match(/(\d{4})-(\d{2})/);
+        if (match) {
+          const year = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1;
+          const date = new Date(year, month, 1);
+          dateLabel = date.toLocaleString("default", { month: "long" });
+        } else {
+          dateLabel = cleanPeriod;
+        }
+      } else {
+        dateLabel = cleanPeriod;
+      }
+    }
+
+    return {
+      date: dateLabel,
+      given: item.totalGiven || 0,
+      received: item.totalReceived || 0,
+    };
+  });
+
+  // For 3 months view, aggregate fortnight data into monthly data
+  if (selectedRange === "3months" && chartData.length > 0) {
+    const monthlyData: Record<string, { given: number; received: number }> = {};
+
+    chartData.forEach((item) => {
+      if (!monthlyData[item.date]) {
+        monthlyData[item.date] = { given: 0, received: 0 };
+      }
+      monthlyData[item.date].given += item.given;
+      monthlyData[item.date].received += item.received;
+    });
+
+    chartData = Object.entries(monthlyData).map(([date, values]) => ({
+      date,
+      given: values.given,
+      received: values.received,
+    }));
+  }
 
   // Calculate totals - either from API or sum from data
   // Note: Till Date endpoint uses "totalGivenAmount" and "totalReceivedAmount" field names
@@ -196,38 +242,34 @@ export default function BizWinChart({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl p-3 md:p-6 lg:p-8 shadow-sm border border-gray-100">
       {/* Chart Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-8">
-        <div>
-          <p className="text-sm text-gray-500 mb-1">Analytics</p>
-          <h2 className="text-2xl font-bold text-gray-900">
-            BizWin Overview (TYFCB)
-          </h2>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <h3 className="text-xl font-bold text-gray-900">
+          BizWin Overview (TYFCB)
+        </h3>
 
-        {/* Time Filter Buttons + Create Button */}
-        <div className="flex flex-col gap-2 mt-4 sm:mt-0 w-full sm:w-auto">
-          {/* Date Filter Buttons */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto max-w-full">
             {dateFilters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => handleRangeChange(filter.id)}
-                className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all ${
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all whitespace-nowrap ${
                   selectedRange === filter.id
-                    ? "bg-[#4A62AD] text-white shadow-md"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-[#4A62AD] text-white shadow-sm"
+                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                 }`}
               >
                 {filter.label}
               </button>
             ))}
           </div>
-          {/* Create Button - Full width on mobile */}
+
+          {/* Create Button */}
           <button
             onClick={() => setIsFormOpen(true)}
-            className="w-full sm:w-auto sm:px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center"
+            className="w-9 h-9 bg-[#4A62AD] text-white rounded-full hover:bg-[#3a4d8a] transition-all shadow-md hover:shadow-lg flex items-center justify-center flex-shrink-0"
             title="Create BizWin"
           >
             <Plus className="w-5 h-5" />
@@ -238,7 +280,10 @@ export default function BizWinChart({
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <div
-          onClick={() => setIsDetailModalOpen(true)}
+          onClick={() => {
+            setSelectedTab("given");
+            setIsDetailModalOpen(true);
+          }}
           className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-4 rounded-xl border border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between">
@@ -256,7 +301,10 @@ export default function BizWinChart({
           </div>
         </div>
         <div
-          onClick={() => setIsDetailModalOpen(true)}
+          onClick={() => {
+            setSelectedTab("received");
+            setIsDetailModalOpen(true);
+          }}
           className="bg-gradient-to-br from-green-50 to-green-100 px-6 py-4 rounded-xl border border-green-200 cursor-pointer hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between">
@@ -375,6 +423,7 @@ export default function BizWinChart({
       <BizWinDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
+        initialTab={selectedTab}
         initialDateRange={selectedRange}
       />
     </div>

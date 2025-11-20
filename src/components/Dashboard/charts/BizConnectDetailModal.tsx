@@ -55,7 +55,18 @@ export default function BizConnectDetailModal({
   initialDateRange = "15days",
 }: BizConnectDetailModalProps) {
   const [activeTab, setActiveTab] = useState<"given" | "received">(initialTab);
+
+  // Sync activeTab with initialTab when it changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const [dateRange, setDateRange] = useState(initialDateRange);
+
+  // Sync dateRange with initialDateRange when it changes
+  useEffect(() => {
+    setDateRange(initialDateRange);
+  }, [initialDateRange]);
   const [givenData, setGivenData] = useState<InviteDetail[]>([]);
   const [receivedData, setReceivedData] = useState<InviteDetail[]>([]);
   const [loading, setLoading] = useState(false);
@@ -143,8 +154,13 @@ export default function BizConnectDetailModal({
       setStartDate(start);
       setEndDate(end);
 
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const apiUrl = `${backendUrl}/referrals/detailed-by-date`;
+
+      console.log("Fetching BizConnect Data from:", apiUrl);
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/referrals/detailed-by-date`,
+        apiUrl,
         {
           method: "POST",
           headers: {
@@ -158,6 +174,15 @@ export default function BizConnectDetailModal({
           }),
         }
       );
+
+      console.log("BizConnect API Response Status:", response.status);
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") === -1) {
+        const text = await response.text();
+        console.error("Received non-JSON response:", text.substring(0, 200));
+        throw new Error("Server returned non-JSON response");
+      }
 
       const data = await response.json();
 
@@ -232,21 +257,19 @@ export default function BizConnectDetailModal({
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab("given")}
-            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
-              activeTab === "given"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${activeTab === "given"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
           >
             Given ({givenData.length})
           </button>
           <button
             onClick={() => setActiveTab("received")}
-            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
-              activeTab === "received"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${activeTab === "received"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
           >
             Received ({receivedData.length})
           </button>
@@ -271,11 +294,10 @@ export default function BizConnectDetailModal({
                     setCustomEndDate("");
                   }
                 }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
-                  dateRange === option.value
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 {option.label}
               </button>
@@ -388,106 +410,105 @@ export default function BizConnectDetailModal({
                       key={record.id || record._id}
                       className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                     >
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <div className="flex gap-3 flex-1">
-                        {/* Avatar */}
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-                            {avatarUrl ? (
-                              <img
-                                key={`avatar-img-${record.id || record._id}`}
-                                src={avatarUrl}
-                                alt={userName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextSibling) {
-                                    (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div
-                                key={`avatar-initials-${record.id || record._id}`}
-                                className="w-full h-full flex items-center justify-center bg-blue-600 text-white font-bold text-sm"
-                              >
-                                {userInitials}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex gap-3 flex-1">
+                          {/* Avatar */}
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                              {avatarUrl ? (
+                                <img
+                                  key={`avatar-img-${record.id || record._id}`}
+                                  src={avatarUrl}
+                                  alt={userName}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    if (e.currentTarget.nextSibling) {
+                                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  key={`avatar-initials-${record.id || record._id}`}
+                                  className="w-full h-full flex items-center justify-center bg-blue-600 text-white font-bold text-sm"
+                                >
+                                  {userInitials}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-gray-900 text-sm mb-1 break-words">
+                              {userName}
+                            </h3>
+                            {displayUser?.business && (
+                              <p className="text-xs text-gray-600 mb-1 break-words">
+                                {displayUser.business}
+                              </p>
+                            )}
+
+                            <div className="space-y-1 mt-2">
+                              {record.contactRelation && (
+                                <p className="text-xs text-blue-600">
+                                  Contact Relation: <span className="font-medium">{record.contactRelation}</span>
+                                </p>
+                              )}
+                              {invitedName && invitedName !== "N/A" && (
+                                <p className="text-xs text-gray-700">
+                                  Invited: <span className="font-medium">{invitedName}</span>
+                                </p>
+                              )}
+                              {record.status && (
+                                <p className={`text-xs ${record.status === "got the business" ? "text-green-600" :
+                                  record.status === "contacted" ? "text-blue-600" :
+                                    record.status === "not contacted yet" ? "text-yellow-600" :
+                                      record.status === "no response" ? "text-red-600" :
+                                        "text-gray-600"
+                                  }`}>
+                                  Status: <span className="font-medium capitalize">{record.status}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Date and Actions */}
+                        <div className="sm:w-2/5 flex-shrink-0">
+                          <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
+                            <p className="text-xs text-gray-600 mb-1">
+                              Date: <span className="font-semibold text-blue-900">{formatDate(record.createdAt || record.date || "")}</span>
+                            </p>
+
+                            {/* Edit and Delete buttons (only for Given tab) */}
+                            {activeTab === "given" && (
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={() => handleEdit(record)}
+                                  className="flex-1 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                  title="Edit referral"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(record._id || record.id)}
+                                  className="flex-1 px-3 py-1.5 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                  title="Delete referral"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  Delete
+                                </button>
                               </div>
                             )}
                           </div>
                         </div>
-
-                        {/* Details */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-gray-900 text-sm mb-1 break-words">
-                            {userName}
-                          </h3>
-                          {displayUser?.business && (
-                            <p className="text-xs text-gray-600 mb-1 break-words">
-                              {displayUser.business}
-                            </p>
-                          )}
-
-                          <div className="space-y-1 mt-2">
-                            {record.contactRelation && (
-                              <p className="text-xs text-blue-600">
-                                Contact Relation: <span className="font-medium">{record.contactRelation}</span>
-                              </p>
-                            )}
-                            {invitedName && invitedName !== "N/A" && (
-                              <p className="text-xs text-gray-700">
-                                Invited: <span className="font-medium">{invitedName}</span>
-                              </p>
-                            )}
-                            {record.status && (
-                              <p className={`text-xs ${
-                                record.status === "got the business" ? "text-green-600" :
-                                record.status === "contacted" ? "text-blue-600" :
-                                record.status === "not contacted yet" ? "text-yellow-600" :
-                                record.status === "no response" ? "text-red-600" :
-                                "text-gray-600"
-                              }`}>
-                                Status: <span className="font-medium capitalize">{record.status}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Date and Actions */}
-                      <div className="sm:w-2/5 flex-shrink-0">
-                        <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
-                          <p className="text-xs text-gray-600 mb-1">
-                            Date: <span className="font-semibold text-blue-900">{formatDate(record.createdAt || record.date || "")}</span>
-                          </p>
-
-                          {/* Edit and Delete buttons (only for Given tab) */}
-                          {activeTab === "given" && (
-                            <div className="flex gap-2 mt-2">
-                              <button
-                                onClick={() => handleEdit(record)}
-                                className="flex-1 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors flex items-center justify-center gap-1"
-                                title="Edit referral"
-                              >
-                                <Edit className="w-3 h-3" />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(record._id || record.id)}
-                                className="flex-1 px-3 py-1.5 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors flex items-center justify-center gap-1"
-                                title="Delete referral"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
         </div>

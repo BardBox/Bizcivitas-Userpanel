@@ -106,6 +106,11 @@ export default function MeetupsDetailModal({
     setDateRange("custom");
   };
 
+  // Sync dateRange with initialDateRange when it changes
+  useEffect(() => {
+    setDateRange(initialDateRange);
+  }, [initialDateRange]);
+
   // Fetch data when modal opens or filters change
   useEffect(() => {
     if (isOpen) {
@@ -120,8 +125,13 @@ export default function MeetupsDetailModal({
       setStartDate(start);
       setEndDate(end);
 
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const apiUrl = `${backendUrl}/meetup/detailed-by-date`;
+
+      console.log("Fetching Meetups Data from:", apiUrl);
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/meetup/detailed-by-date`,
+        apiUrl,
         {
           method: "POST",
           headers: {
@@ -135,6 +145,15 @@ export default function MeetupsDetailModal({
           }),
         }
       );
+
+      console.log("Meetups API Response Status:", response.status);
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") === -1) {
+        const text = await response.text();
+        console.error("Received non-JSON response:", text.substring(0, 200));
+        throw new Error("Server returned non-JSON response");
+      }
 
       const data = await response.json();
 
@@ -198,11 +217,10 @@ export default function MeetupsDetailModal({
                   setCustomStartDate("");
                   setCustomEndDate("");
                 }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
-                  dateRange === option.value
-                    ? "bg-purple-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                  ? "bg-purple-600 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 {option.label}
               </button>
@@ -261,7 +279,7 @@ export default function MeetupsDetailModal({
             </div>
           ) : (
             <div className="space-y-4 pb-4">
-              {meetupsData.map((meetup) => {
+              {meetupsData.map((meetup, index) => {
                 // Get creator details
                 const creator = meetup.creatorDetails ||
                   (typeof meetup.createdBy === 'object' ? meetup.createdBy : null);
@@ -293,7 +311,7 @@ export default function MeetupsDetailModal({
 
                 return (
                   <div
-                    key={meetup._id}
+                    key={meetup._id || index}
                     className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row gap-3">

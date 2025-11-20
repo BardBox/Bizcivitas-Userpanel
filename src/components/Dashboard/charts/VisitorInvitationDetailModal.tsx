@@ -13,11 +13,9 @@ interface VisitorRecord {
   mobile?: string;
   amount?: number;
   status?: string;
-  meeting?: {
-    _id: string;
-    title: string;
-    date: string;
-  };
+  avatar?: string;
+  meetingTitle?: string;
+  meetingDate?: string;
   createdAt: string;
 }
 
@@ -97,6 +95,11 @@ export default function VisitorInvitationDetailModal({
     setDateRange("custom");
   };
 
+  // Sync dateRange with initialDateRange when it changes
+  useEffect(() => {
+    setDateRange(initialDateRange);
+  }, [initialDateRange]);
+
   useEffect(() => {
     if (isOpen) {
       fetchData();
@@ -110,8 +113,11 @@ export default function VisitorInvitationDetailModal({
       setStartDate(start);
       setEndDate(end);
 
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const apiUrl = `${backendUrl}/meetings/detailed-by-date`;
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/meeting/detailed-by-date`,
+        apiUrl,
         {
           method: "POST",
           headers: {
@@ -126,10 +132,26 @@ export default function VisitorInvitationDetailModal({
         }
       );
 
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") === -1) {
+        const text = await response.text();
+        console.error("Received non-JSON response:", text.substring(0, 200));
+        throw new Error("Server returned non-JSON response");
+      }
+
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setVisitorsData(data.data.visitors || []);
+        // Extract the array from the response
+        // The API returns { data: { invitedUsers: [...] } }
+        const visitorsList = data.data.invitedUsers || data.data.visitors || [];
+
+        if (Array.isArray(visitorsList)) {
+          setVisitorsData(visitorsList);
+        } else {
+          console.error("Unexpected data format:", data);
+          setVisitorsData([]);
+        }
       } else {
         console.error("API error:", data);
       }
@@ -202,11 +224,10 @@ export default function VisitorInvitationDetailModal({
                   setCustomStartDate("");
                   setCustomEndDate("");
                 }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
-                  dateRange === option.value
-                    ? "bg-orange-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                  ? "bg-orange-600 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 {option.label}
               </button>
@@ -265,103 +286,151 @@ export default function VisitorInvitationDetailModal({
             </div>
           ) : (
             <div className="space-y-4 pb-4">
-              {visitorsData.map((visitor) => (
-                <div
-                  key={visitor._id}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="space-y-3">
-                    {/* Name */}
-                    <h3 className="font-bold text-gray-900 text-base break-words">
-                      {visitor.visitorName}
-                    </h3>
+              {visitorsData.map((visitor, index) => {
+                // Calculate initials
+                const name = visitor.visitorName || "Unknown Visitor";
+                const nameParts = name.split(" ");
+                let initials = name.substring(0, 2).toUpperCase();
 
-                    {/* Details Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Left Column */}
-                      <div className="space-y-2">
-                        {visitor.email && (
-                          <div className="flex items-start gap-2">
-                            <Mail className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                            <span className="text-xs text-gray-700 break-all">{visitor.email}</span>
-                          </div>
-                        )}
+                if (nameParts.length >= 2) {
+                  initials = `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+                }
 
-                        {visitor.businessCategory && (
-                          <div className="flex items-start gap-2">
-                            <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                            <div className="text-xs text-gray-700">
-                              <span className="font-medium">Category:</span> {visitor.businessCategory}
-                              {visitor.businessSubcategory && (
-                                <span className="block text-gray-600">
-                                  Subcategory: {visitor.businessSubcategory}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                // Get avatar URL
+                const avatarUrl = visitor.avatar
+                  ? visitor.avatar.startsWith('http')
+                    ? visitor.avatar
+                    : `${process.env.NEXT_PUBLIC_BACKEND_URL}/image/${visitor.avatar}`
+                  : null;
 
-                        {visitor.mobile && (
-                          <div className="flex items-start gap-2">
-                            <Phone className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                            <span className="text-xs text-gray-700">{visitor.mobile}</span>
+                return (
+                  <div
+                    key={visitor._id || index}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex gap-4">
+                      {/* Avatar */}
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-100">
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextSibling) {
+                                  (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={`w-full h-full flex items-center justify-center bg-orange-100 text-orange-700 font-bold text-lg ${avatarUrl ? 'hidden' : 'flex'}`}
+                          >
+                            {initials}
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* Right Column */}
-                      <div className="space-y-2">
-                        {visitor.amount !== undefined && visitor.amount !== null && (
-                          <div className="flex items-start gap-2">
-                            <IndianRupee className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                            <span className="text-xs text-gray-700">
-                              <span className="font-medium">Amount:</span> ₹{visitor.amount}
-                            </span>
-                          </div>
-                        )}
+                      <div className="flex-1 min-w-0 space-y-3">
+                        {/* Name */}
+                        <h3 className="font-bold text-gray-900 text-base break-words pt-1">
+                          {visitor.visitorName}
+                        </h3>
 
-                        {visitor.status && (
-                          <div className="flex items-start gap-2">
-                            <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(visitor.status)}`}>
-                              Status: {visitor.status}
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* Left Column */}
+                          <div className="space-y-2">
+                            {visitor.email && (
+                              <div className="flex items-start gap-2">
+                                <Mail className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <span className="text-xs text-gray-700 break-all">{visitor.email}</span>
+                              </div>
+                            )}
+
+                            {visitor.businessCategory && (
+                              <div className="flex items-start gap-2">
+                                <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-xs text-gray-700">
+                                  <span className="font-medium">Category:</span> {visitor.businessCategory}
+                                  {visitor.businessSubcategory && (
+                                    <span className="block text-gray-600">
+                                      Subcategory: {visitor.businessSubcategory}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {visitor.mobile && (
+                              <div className="flex items-start gap-2">
+                                <Phone className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <span className="text-xs text-gray-700">{visitor.mobile}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right Column */}
+                          <div className="space-y-2">
+                            {visitor.amount !== undefined && visitor.amount !== null && (
+                              <div className="flex items-start gap-2">
+                                <IndianRupee className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <span className="text-xs text-gray-700">
+                                  <span className="font-medium">Amount:</span> ₹{visitor.amount}
+                                </span>
+                              </div>
+                            )}
+
+                            {visitor.status && (
+                              <div className="flex items-start gap-2">
+                                <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(visitor.status)}`}>
+                                  Status: {visitor.status}
+                                </div>
+                              </div>
+                            )}
+
+                            {visitor.meetingTitle && visitor.meetingTitle !== "N/A" && (
+                              <div className="flex items-start gap-2">
+                                <Calendar className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-xs text-gray-700">
+                                  <span className="font-medium block">{visitor.meetingTitle}</span>
+                                  {visitor.meetingDate && (
+                                    <span className="text-gray-600">
+                                      {formatDate(visitor.meetingDate)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="text-xs text-gray-600">
+                              <span className="font-medium">Created:</span> {formatDate(visitor.createdAt)}
                             </div>
                           </div>
-                        )}
-
-                        {visitor.meeting && (
-                          <div className="flex items-start gap-2">
-                            <Calendar className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                            <div className="text-xs text-gray-700">
-                              <span className="font-medium block">{visitor.meeting.title}</span>
-                              <span className="text-gray-600">
-                                {formatDate(visitor.meeting.date)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="text-xs text-gray-600">
-                          <span className="font-medium">Created:</span> {formatDate(visitor.createdAt)}
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* Date Range Picker Modal */}
-      {isDatePickerOpen && (
-        <DateRangePicker
-          startDate={customStartDate || startDate}
-          endDate={customEndDate || endDate}
-          onDateChange={handleCustomDateChange}
-          onClose={() => setIsDatePickerOpen(false)}
-        />
-      )}
-    </div>
+      {
+        isDatePickerOpen && (
+          <DateRangePicker
+            startDate={customStartDate || startDate}
+            endDate={customEndDate || endDate}
+            onDateChange={handleCustomDateChange}
+            onClose={() => setIsDatePickerOpen(false)}
+          />
+        )
+      }
+    </div >
   );
 }

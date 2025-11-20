@@ -59,6 +59,16 @@ export default function BizWinDetailModal({
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
 
+  // Sync activeTab with initialTab when it changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  // Sync dateRange with initialDateRange when it changes
+  useEffect(() => {
+    setDateRange(initialDateRange);
+  }, [initialDateRange]);
+
   const calculateDateRange = (range: string) => {
     // For custom range, use the selected custom dates
     if (range === "custom" && customStartDate && customEndDate) {
@@ -217,21 +227,19 @@ export default function BizWinDetailModal({
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab("given")}
-            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
-              activeTab === "given"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${activeTab === "given"
+              ? "bg-green-500 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
           >
             Given ({givenData.length})
           </button>
           <button
             onClick={() => setActiveTab("received")}
-            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${
-              activeTab === "received"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${activeTab === "received"
+              ? "bg-green-500 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
           >
             Received ({receivedData.length})
           </button>
@@ -256,11 +264,10 @@ export default function BizWinDetailModal({
                     setCustomEndDate("");
                   }
                 }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${
-                  dateRange === option.value
-                    ? "bg-green-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                  ? "bg-green-600 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 {option.label}
               </button>

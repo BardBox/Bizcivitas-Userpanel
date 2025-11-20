@@ -197,7 +197,7 @@ export default function VisitorInvitationDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-orange-600 to-red-600">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-[#4A62AD]">
           <h2 className="text-base md:text-lg lg:text-xl font-bold text-white">Visitor Invitation Data</h2>
           <button
             onClick={onClose}
@@ -209,59 +209,61 @@ export default function VisitorInvitationDetailModal({
 
         {/* Date Range Filters */}
         <div className="p-4 md:p-6 border-b border-gray-200 space-y-4">
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-            {[
-              { value: "15days", label: "15 Days" },
-              { value: "3months", label: "3 Months" },
-              { value: "6months", label: "6 Months" },
-              { value: "tilldate", label: "Till Date" },
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  setDateRange(option.value as any);
-                  // Reset custom dates when switching to preset ranges
-                  setCustomStartDate("");
-                  setCustomEndDate("");
-                }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
-                  ? "bg-orange-600 text-white shadow-lg"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+              {[
+                { value: "15days", label: "15 Days" },
+                { value: "3months", label: "3 Months" },
+                { value: "6months", label: "6 Months" },
+                { value: "tilldate", label: "Till Date" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setDateRange(option.value as any);
+                    // Reset custom dates when switching to preset ranges
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                  className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                    ? "bg-[#4A62AD] text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Download PDF Button */}
-          <button
-            onClick={handleDownloadPDF}
-            className="w-full py-2.5 md:py-3 bg-orange-600 text-white text-sm md:text-base font-semibold rounded-xl hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
-          >
-            <Download className="w-4 h-4 md:w-5 md:h-5" />
-            Download PDF Report
-          </button>
+            {/* Download PDF Button */}
+            <button
+              onClick={handleDownloadPDF}
+              className="w-full md:w-auto px-6 py-2.5 md:py-3 bg-[#4A62AD] text-white text-sm md:text-base font-semibold rounded-xl hover:bg-[#3b4e8a] transition-colors flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Download className="w-4 h-4 md:w-5 md:h-5" />
+              Download PDF Report
+            </button>
+          </div>
 
           {/* Date Range Display - Clickable to open date picker */}
           <div className="flex gap-2 md:gap-4 justify-center">
             <button
               onClick={() => setIsDatePickerOpen(true)}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-orange-100 hover:bg-orange-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
               title="Click to select custom date range"
             >
               <span className="text-gray-600">Start: </span>
-              <span className="font-semibold text-orange-900 group-hover:text-orange-700">
+              <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
                 {startDate}
               </span>
             </button>
             <button
               onClick={() => setIsDatePickerOpen(true)}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-orange-100 hover:bg-orange-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
               title="Click to select custom date range"
             >
               <span className="text-gray-600">End: </span>
-              <span className="font-semibold text-orange-900 group-hover:text-orange-700">
+              <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
                 {endDate}
               </span>
             </button>
@@ -277,7 +279,7 @@ export default function VisitorInvitationDetailModal({
         <div className="overflow-y-auto max-h-[55vh] p-6 bg-gray-50 pb-8">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4A62AD]"></div>
             </div>
           ) : visitorsData.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
@@ -326,7 +328,7 @@ export default function VisitorInvitationDetailModal({
                             />
                           ) : null}
                           <div
-                            className={`w-full h-full flex items-center justify-center bg-orange-100 text-orange-700 font-bold text-lg ${avatarUrl ? 'hidden' : 'flex'}`}
+                            className={`w-full h-full flex items-center justify-center bg-[#4A62AD] text-white font-bold text-lg ${avatarUrl ? 'hidden' : 'flex'}`}
                           >
                             {initials}
                           </div>
@@ -345,14 +347,14 @@ export default function VisitorInvitationDetailModal({
                           <div className="space-y-2">
                             {visitor.email && (
                               <div className="flex items-start gap-2">
-                                <Mail className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <Mail className="w-4 h-4 text-[#4A62AD] flex-shrink-0 mt-0.5" />
                                 <span className="text-xs text-gray-700 break-all">{visitor.email}</span>
                               </div>
                             )}
 
                             {visitor.businessCategory && (
                               <div className="flex items-start gap-2">
-                                <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <MapPin className="w-4 h-4 text-[#4A62AD] flex-shrink-0 mt-0.5" />
                                 <div className="text-xs text-gray-700">
                                   <span className="font-medium">Category:</span> {visitor.businessCategory}
                                   {visitor.businessSubcategory && (
@@ -366,7 +368,7 @@ export default function VisitorInvitationDetailModal({
 
                             {visitor.mobile && (
                               <div className="flex items-start gap-2">
-                                <Phone className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <Phone className="w-4 h-4 text-[#4A62AD] flex-shrink-0 mt-0.5" />
                                 <span className="text-xs text-gray-700">{visitor.mobile}</span>
                               </div>
                             )}
@@ -376,7 +378,7 @@ export default function VisitorInvitationDetailModal({
                           <div className="space-y-2">
                             {visitor.amount !== undefined && visitor.amount !== null && (
                               <div className="flex items-start gap-2">
-                                <IndianRupee className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <IndianRupee className="w-4 h-4 text-[#4A62AD] flex-shrink-0 mt-0.5" />
                                 <span className="text-xs text-gray-700">
                                   <span className="font-medium">Amount:</span> ₹{visitor.amount}
                                 </span>
@@ -393,7 +395,7 @@ export default function VisitorInvitationDetailModal({
 
                             {visitor.meetingTitle && visitor.meetingTitle !== "N/A" && (
                               <div className="flex items-start gap-2">
-                                <Calendar className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                                <Calendar className="w-4 h-4 text-[#4A62AD] flex-shrink-0 mt-0.5" />
                                 <div className="text-xs text-gray-700">
                                   <span className="font-medium block">{visitor.meetingTitle}</span>
                                   {visitor.meetingDate && (

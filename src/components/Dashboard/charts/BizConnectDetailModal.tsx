@@ -238,12 +238,11 @@ export default function BizConnectDetailModal({
 
   const currentData = activeTab === "given" ? givenData : receivedData;
   const totalCount = currentData.length;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-[#4A62AD]">
           <h2 className="text-base md:text-lg lg:text-xl font-bold text-white">BizConnect Data</h2>
           <button
             onClick={onClose}
@@ -258,7 +257,7 @@ export default function BizConnectDetailModal({
           <button
             onClick={() => setActiveTab("given")}
             className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${activeTab === "given"
-              ? "bg-blue-500 text-white"
+              ? "bg-blue-100 text-blue-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
           >
@@ -267,7 +266,7 @@ export default function BizConnectDetailModal({
           <button
             onClick={() => setActiveTab("received")}
             className={`flex-1 py-3 md:py-4 px-4 md:px-6 text-sm md:text-base font-semibold transition-colors ${activeTab === "received"
-              ? "bg-blue-500 text-white"
+              ? "bg-green-100 text-green-700"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
           >
@@ -277,61 +276,63 @@ export default function BizConnectDetailModal({
 
         {/* Date Range Filters */}
         <div className="p-4 md:p-6 border-b border-gray-200 space-y-4">
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-            {[
-              { value: "15days", label: "15 Days" },
-              { value: "3months", label: "3 Months" },
-              { value: "6months", label: "6 Months" },
-              { value: "tilldate", label: "Till Date" },
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  setDateRange(option.value as any);
-                  // Reset custom dates when switching to preset ranges
-                  if (option.value !== "custom") {
-                    setCustomStartDate("");
-                    setCustomEndDate("");
-                  }
-                }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
-                  ? "bg-blue-600 text-white shadow-lg"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+              {[
+                { value: "15days", label: "15 Days" },
+                { value: "3months", label: "3 Months" },
+                { value: "6months", label: "6 Months" },
+                { value: "tilldate", label: "Till Date" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setDateRange(option.value as any);
+                    // Reset custom dates when switching to preset ranges
+                    if (option.value !== "custom") {
+                      setCustomStartDate("");
+                      setCustomEndDate("");
+                    }
+                  }}
+                  className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                    ? "bg-[#4A62AD] text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Download PDF Button */}
-          <button
-            onClick={handleDownloadPDF}
-            className="w-full py-2.5 md:py-3 bg-blue-600 text-white text-sm md:text-base font-semibold rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
-          >
-            <Download className="w-4 h-4 md:w-5 md:h-5" />
-            Download PDF Report
-          </button>
+            {/* Download PDF Button */}
+            <button
+              onClick={handleDownloadPDF}
+              className="w-full md:w-auto px-6 py-2.5 md:py-3 bg-[#4A62AD] text-white text-sm md:text-base font-semibold rounded-xl hover:bg-[#3b4e8a] transition-colors flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Download className="w-4 h-4 md:w-5 md:h-5" />
+              Download PDF Report
+            </button>
+          </div>
 
           {/* Date Range Display - Clickable to open date picker */}
           <div className="flex gap-2 md:gap-4 justify-center">
             <button
               onClick={() => setIsDatePickerOpen(true)}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 hover:bg-blue-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
               title="Click to select custom date range"
             >
               <span className="text-gray-600">Start: </span>
-              <span className="font-semibold text-blue-900 group-hover:text-blue-700">
+              <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
                 {startDate}
               </span>
             </button>
             <button
               onClick={() => setIsDatePickerOpen(true)}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 hover:bg-blue-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
               title="Click to select custom date range"
             >
               <span className="text-gray-600">End: </span>
-              <span className="font-semibold text-blue-900 group-hover:text-blue-700">
+              <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
                 {endDate}
               </span>
             </button>
@@ -347,7 +348,7 @@ export default function BizConnectDetailModal({
         <div className="overflow-y-auto max-h-[55vh] p-6 bg-gray-50 pb-8">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4A62AD]"></div>
             </div>
           ) : currentData.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
@@ -431,7 +432,7 @@ export default function BizConnectDetailModal({
                               ) : (
                                 <div
                                   key={`avatar-initials-${record.id || record._id}`}
-                                  className="w-full h-full flex items-center justify-center bg-blue-600 text-white font-bold text-sm"
+                                  className="w-full h-full flex items-center justify-center bg-[#4A62AD] text-white font-bold text-sm"
                                 >
                                   {userInitials}
                                 </div>
@@ -477,9 +478,9 @@ export default function BizConnectDetailModal({
 
                         {/* Date and Actions */}
                         <div className="sm:w-2/5 flex-shrink-0">
-                          <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
+                          <div className="p-2 bg-green-50 rounded-lg border border-green-100">
                             <p className="text-xs text-gray-600 mb-1">
-                              Date: <span className="font-semibold text-blue-900">{formatDate(record.createdAt || record.date || "")}</span>
+                              Date: <span className="font-semibold text-[#4A62AD]">{formatDate(record.createdAt || record.date || "")}</span>
                             </p>
 
                             {/* Edit and Delete buttons (only for Given tab) */}

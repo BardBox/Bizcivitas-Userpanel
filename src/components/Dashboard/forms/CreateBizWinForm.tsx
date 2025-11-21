@@ -87,8 +87,9 @@ export default function CreateBizWinForm({
     setIsSubmitting(true);
 
     try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/record/create`,
+        `${backendUrl}/record/create`,
         {
           method: "POST",
           headers: {
@@ -103,6 +104,13 @@ export default function CreateBizWinForm({
           }),
         }
       );
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") === -1) {
+        const text = await response.text();
+        console.error("Received non-JSON response:", text.substring(0, 200));
+        throw new Error("Server returned non-JSON response");
+      }
 
       const data = await response.json();
 
@@ -130,10 +138,10 @@ export default function CreateBizWinForm({
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Create BizWin (TYFCB)">
-        <form onSubmit={handleSubmit} className="p-4 lg:p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4 bg-white">
           {/* To User */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-blue-900 mb-2">
+            <label className="flex items-center gap-2 text-xs font-semibold text-blue-900 mb-1">
               <UserIcon className="w-5 h-5 text-blue-600" />
               Thank You To <span className="text-red-500">*</span>
             </label>
@@ -141,7 +149,7 @@ export default function CreateBizWinForm({
               <button
                 type="button"
                 onClick={() => setIsUserModalOpen(true)}
-                className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-blue-200 rounded-xl text-left flex items-center justify-between hover:border-blue-400 hover:bg-white/90 transition-all shadow-sm"
+                className="w-full px-3 py-2 bg-white/70 backdrop-blur-sm border-2 border-blue-200 rounded-xl text-left flex items-center justify-between hover:border-blue-400 hover:bg-white/90 transition-all shadow-sm"
               >
                 <span className={formData.to ? "text-gray-900 font-medium" : "text-gray-400"}>
                   {formData.to || "Click to select user..."}
@@ -168,7 +176,7 @@ export default function CreateBizWinForm({
               name="amount"
               value={formData.amount}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all shadow-sm"
+              className="w-full px-3 py-2 bg-white/70 backdrop-blur-sm border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all shadow-sm text-sm"
               placeholder="Enter amount"
             />
             {errors.amount && (
@@ -189,8 +197,8 @@ export default function CreateBizWinForm({
               name="comments"
               value={formData.comments}
               onChange={handleChange}
-              rows={5}
-              className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all resize-none shadow-sm"
+              rows={3}
+              className="w-full px-3 py-2 bg-white/70 backdrop-blur-sm border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all resize-none shadow-sm text-sm"
               placeholder="Enter your comments"
             />
             {errors.comments && (
@@ -216,14 +224,14 @@ export default function CreateBizWinForm({
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all shadow-sm"
+              className="w-full sm:flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all shadow-sm text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {isSubmitting ? "Creating..." : "Create BizWin"}
             </button>

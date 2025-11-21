@@ -20,6 +20,7 @@ import {
 } from "../../../../store/api/dashboardApi";
 import { Plus } from "lucide-react";
 import VisitorInvitationDetailModal from "./VisitorInvitationDetailModal";
+import CreateVisitorInvitationForm from "../forms/CreateVisitorInvitationForm";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate" | "custom";
 
@@ -56,6 +57,7 @@ export default function VisitorInvitationChart({
   };
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Custom date range state
   const getDefaultDates = () => {
@@ -75,6 +77,7 @@ export default function VisitorInvitationChart({
     data: data15Days,
     isLoading: loading15Days,
     error: error15Days,
+    refetch: refetch15Days,
   } = useGetMeetingsLast15DaysInvitedCountQuery(undefined, {
     skip: selectedRange !== "15days",
   });
@@ -83,6 +86,7 @@ export default function VisitorInvitationChart({
     data: data3Months,
     isLoading: loading3Months,
     error: error3Months,
+    refetch: refetch3Months,
   } = useGetMeetings3MonthFortnightInvitedCountQuery(undefined, {
     skip: selectedRange !== "3months",
   });
@@ -91,6 +95,7 @@ export default function VisitorInvitationChart({
     data: data6Months,
     isLoading: loading6Months,
     error: error6Months,
+    refetch: refetch6Months,
   } = useGetMeetings6MonthInvitedCountQuery(undefined, {
     skip: selectedRange !== "6months",
   });
@@ -99,6 +104,7 @@ export default function VisitorInvitationChart({
     data: dataTillDate,
     isLoading: loadingTillDate,
     error: errorTillDate,
+    refetch: refetchTillDate,
   } = useGetMeetingsAllTimeInvitedPeopleCountQuery(undefined, {
     skip: selectedRange !== "tilldate",
   });
@@ -107,6 +113,7 @@ export default function VisitorInvitationChart({
     data: dataCustomRange,
     isLoading: loadingCustomRange,
     error: errorCustomRange,
+    refetch: refetchCustomRange,
   } = useGetMeetingsCustomRangeQuery(
     {
       startDate: customDateRange.start,
@@ -226,16 +233,15 @@ export default function VisitorInvitationChart({
         </h3>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto max-w-full">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 w-full sm:w-auto">
             {dateFilters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => handleRangeChange(filter.id)}
-                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all whitespace-nowrap ${
-                  selectedRange === filter.id
+                className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all whitespace-nowrap flex justify-center ${selectedRange === filter.id
                     ? "bg-[#4A62AD] text-white shadow-sm"
                     : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 {filter.label}
               </button>
@@ -244,7 +250,7 @@ export default function VisitorInvitationChart({
 
           {/* Create Button */}
           <button
-            onClick={() => alert("Visitor Invitation form coming soon!")}
+            onClick={() => setIsInviteModalOpen(true)}
             className="w-9 h-9 bg-[#4A62AD] text-white rounded-full hover:bg-[#3a4d8a] transition-all shadow-md hover:shadow-lg flex items-center justify-center flex-shrink-0"
             title="Create Visitor Invitation"
           >
@@ -259,14 +265,14 @@ export default function VisitorInvitationChart({
           onClick={() => setIsDetailModalOpen(true)}
           className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-4 rounded-xl border border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-sm text-blue-700 mb-1 font-medium">Total Invitations</p>
               <p className="text-3xl font-bold text-blue-900">
                 {isLoading ? "..." : totalCount}
               </p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
@@ -360,6 +366,20 @@ export default function VisitorInvitationChart({
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         initialDateRange={selectedRange}
+      />
+
+      {/* Create Visitor Invitation Form */}
+      <CreateVisitorInvitationForm
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSuccess={() => {
+          // Refetch data based on current range
+          if (selectedRange === "15days") refetch15Days();
+          if (selectedRange === "3months") refetch3Months();
+          if (selectedRange === "6months") refetch6Months();
+          if (selectedRange === "tilldate") refetchTillDate();
+          if (selectedRange === "custom") refetchCustomRange();
+        }}
       />
     </div>
   );

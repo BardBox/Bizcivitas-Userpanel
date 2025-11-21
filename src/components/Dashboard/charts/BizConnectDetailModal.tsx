@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, Calendar, Edit, Trash2 } from "lucide-react";
+import { X, Download, Calendar, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import { useUpdateReferralSlipMutation, useDeleteReferralSlipMutation } from "../../../../store/api/dashboardApi";
 import EditReferralModal from "./EditReferralModal";
@@ -56,12 +56,15 @@ export default function BizConnectDetailModal({
 }: BizConnectDetailModalProps) {
   const [activeTab, setActiveTab] = useState<"given" | "received">(initialTab);
 
-  // Sync activeTab with initialTab when it changes
+  // Sync activeTab with initialTab when it changes or modal opens
   useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
+    if (isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
 
   const [dateRange, setDateRange] = useState(initialDateRange);
+  const [showFilters, setShowFilters] = useState(true);
 
   // Sync dateRange with initialDateRange when it changes
   useEffect(() => {
@@ -276,71 +279,88 @@ export default function BizConnectDetailModal({
 
         {/* Date Range Filters */}
         <div className="p-4 md:p-6 border-b border-gray-200 space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-              {[
-                { value: "15days", label: "15 Days" },
-                { value: "3months", label: "3 Months" },
-                { value: "6months", label: "6 Months" },
-                { value: "tilldate", label: "Till Date" },
-              ].map((option) => (
+          {showFilters && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                  {[
+                    { value: "15days", label: "15 Days" },
+                    { value: "3months", label: "3 Months" },
+                    { value: "6months", label: "6 Months" },
+                    { value: "tilldate", label: "Till Date" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setDateRange(option.value as any);
+                        // Reset custom dates when switching to preset ranges
+                        if (option.value !== "custom") {
+                          setCustomStartDate("");
+                          setCustomEndDate("");
+                        }
+                      }}
+                      className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
+                        ? "bg-[#4A62AD] text-white shadow-lg"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Download PDF Button */}
                 <button
-                  key={option.value}
-                  onClick={() => {
-                    setDateRange(option.value as any);
-                    // Reset custom dates when switching to preset ranges
-                    if (option.value !== "custom") {
-                      setCustomStartDate("");
-                      setCustomEndDate("");
-                    }
-                  }}
-                  className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-lg font-semibold transition-all ${dateRange === option.value
-                    ? "bg-[#4A62AD] text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                  onClick={handleDownloadPDF}
+                  className="px-4 py-2 bg-[#4A62AD] text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-[#3b4e8a] transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
-                  {option.label}
+                  <Download className="w-4 h-4" />
+                  Download PDF Report
                 </button>
-              ))}
+              </div>
+
+              {/* Date Range Display - Clickable to open date picker */}
+              <div className="flex gap-2 md:gap-4 justify-center">
+                <button
+                  onClick={() => setIsDatePickerOpen(true)}
+                  className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+                  title="Click to select custom date range"
+                >
+                  <span className="text-gray-600">Start: </span>
+                  <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
+                    {startDate}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setIsDatePickerOpen(true)}
+                  className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
+                  title="Click to select custom date range"
+                >
+                  <span className="text-gray-600">End: </span>
+                  <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
+                    {endDate}
+                  </span>
+                </button>
+              </div>
             </div>
+          )}
 
-            {/* Download PDF Button */}
+          {/* Total Count & Toggle */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm md:text-base text-gray-700 font-medium">
+              Total BizConnect {activeTab === "given" ? "Given" : "Received"}: {totalCount}
+            </span>
             <button
-              onClick={handleDownloadPDF}
-              className="w-full md:w-auto px-6 py-2.5 md:py-3 bg-[#4A62AD] text-white text-sm md:text-base font-semibold rounded-xl hover:bg-[#3b4e8a] transition-colors flex items-center justify-center gap-2 shadow-lg"
+              onClick={() => setShowFilters(!showFilters)}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-[#4A62AD]"
+              title={showFilters ? "Hide filters" : "Show filters"}
             >
-              <Download className="w-4 h-4 md:w-5 md:h-5" />
-              Download PDF Report
+              {showFilters ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
             </button>
-          </div>
-
-          {/* Date Range Display - Clickable to open date picker */}
-          <div className="flex gap-2 md:gap-4 justify-center">
-            <button
-              onClick={() => setIsDatePickerOpen(true)}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
-              title="Click to select custom date range"
-            >
-              <span className="text-gray-600">Start: </span>
-              <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
-                {startDate}
-              </span>
-            </button>
-            <button
-              onClick={() => setIsDatePickerOpen(true)}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-green-100 hover:bg-green-200 rounded-lg text-xs md:text-sm transition-colors cursor-pointer group"
-              title="Click to select custom date range"
-            >
-              <span className="text-gray-600">End: </span>
-              <span className="font-semibold text-[#4A62AD] group-hover:text-[#3b4e8a]">
-                {endDate}
-              </span>
-            </button>
-          </div>
-
-          {/* Total Count */}
-          <div className="text-center text-sm md:text-base text-gray-700 font-medium">
-            Total BizConnect {activeTab === "given" ? "Given" : "Received"}: {totalCount}
           </div>
         </div>
 

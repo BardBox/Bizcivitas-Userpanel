@@ -243,12 +243,12 @@ export default function BizConnectChart({
         </h3>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto max-w-full">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 w-full sm:w-auto">
             {dateFilters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => handleRangeChange(filter.id)}
-                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all whitespace-nowrap ${selectedRange === filter.id
+                className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all whitespace-nowrap flex justify-center ${selectedRange === filter.id
                   ? "bg-[#4A62AD] text-white shadow-sm"
                   : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                   }`}

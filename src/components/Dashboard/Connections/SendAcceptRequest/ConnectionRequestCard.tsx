@@ -35,21 +35,21 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
   const UserInfo = () => (
     <div className="flex-1 min-w-0 px-4">
       <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`}>
-        <h3 className="font-bold text-blue-600 text-lg truncate mb-1 transition-all duration-300 group-hover:text-blue-700 group-hover:scale-105 cursor-pointer">
+        <h3 className="font-bold text-blue-600 text-lg truncate mb-1 cursor-pointer">
           {userName}
         </h3>
       </Link>
       {jobTitle && (
-        <p className="text-sm text-gray-600 font-medium truncate mb-1 transition-colors duration-300 group-hover:text-gray-700">
+        <p className="text-sm text-gray-600 font-medium truncate mb-1">
           {jobTitle}
         </p>
       )}
       {companyName && (
-        <p className="text-sm text-gray-700 font-semibold truncate mb-1 transition-colors duration-300 group-hover:text-gray-800">
+        <p className="text-sm text-gray-700 font-semibold truncate mb-1">
           {companyName}
         </p>
       )}
-      <p className="text-xs text-gray-500 truncate transition-colors duration-300 group-hover:text-gray-600">{userEmail}</p>
+      <p className="text-xs text-gray-500 truncate">{userEmail}</p>
     </div>
   );
 
@@ -76,14 +76,14 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
       {request.type === "received" ? (
         // RECEIVED REQUEST LAYOUT: Avatar - Info - Actions
         <div className="flex items-center gap-4">
-          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
             <Avatar
               src={displayUser.avatar}
               alt={userName}
               size="xl"
               fallbackText={userName}
               showMembershipBorder={false}
-              className="cursor-pointer group-hover:shadow-lg transition-shadow duration-300"
+              className="cursor-pointer"
             />
           </Link>
           <UserInfo />
@@ -92,21 +92,21 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
             <button
               onClick={() => onAccept?.(request.connectionId)}
               disabled={isProcessing}
-              className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-110 hover:rotate-12"
+              className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
               title="Accept request"
               aria-label="Accept connection request"
             >
-              <Check className="h-5 w-5 group-hover:animate-pulse" />
+              <Check className="h-5 w-5" />
             </button>
             {/* Reject Button */}
             <button
               onClick={() => onReject?.(request.connectionId)}
               disabled={isProcessing}
-              className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-110 hover:rotate-12"
+              className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
               title="Reject request"
               aria-label="Reject connection request"
             >
-              <X className="h-5 w-5 group-hover:animate-pulse" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -118,22 +118,22 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
             <button
               onClick={() => onWithdraw?.(request.connectionId)}
               disabled={isProcessing}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-110"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
               aria-label="Withdraw connection request"
             >
-              <X className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
+              <X className="h-4 w-4" />
               Withdraw
             </button>
           </div>
           <UserInfo />
-          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
             <Avatar
               src={displayUser.avatar}
               alt={userName}
               size="xl"
               fallbackText={userName}
               showMembershipBorder={false}
-              className="cursor-pointer group-hover:shadow-lg transition-shadow duration-300"
+              className="cursor-pointer"
             />
           </Link>
         </div>

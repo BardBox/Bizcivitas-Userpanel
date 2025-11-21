@@ -78,8 +78,9 @@ export default function CreateBizConnectForm({
     setIsSubmitting(true);
 
     try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/referrals/create`,
+        `${backendUrl}/referrals/create`,
         {
           method: "POST",
           headers: {
@@ -98,6 +99,13 @@ export default function CreateBizConnectForm({
           }),
         }
       );
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") === -1) {
+        const text = await response.text();
+        console.error("Received non-JSON response:", text.substring(0, 200));
+        throw new Error("Server returned non-JSON response");
+      }
 
       const data = await response.json();
 
@@ -132,14 +140,14 @@ export default function CreateBizConnectForm({
       onClose={onClose}
       title="Create BizConnect"
     >
-      <form onSubmit={handleSubmit} className="p-4 lg:p-8 space-y-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <form onSubmit={handleSubmit} className="p-4 space-y-4 bg-white">
         {/* Two Column Layout for Large Screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Column */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* To User */}
             <div className="group">
-              <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+              <label className="block text-xs font-semibold text-blue-900 mb-1 flex items-center gap-2">
                 <UserIcon className="w-4 h-4 text-blue-600" />
                 Thank You To <span className="text-red-500">*</span>
               </label>
@@ -147,7 +155,7 @@ export default function CreateBizConnectForm({
                 <button
                   type="button"
                   onClick={() => setShowUserSearch(true)}
-                  className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl text-left flex items-center justify-between hover:border-blue-400 hover:bg-white transition-all shadow-sm bg-white/80 backdrop-blur-sm"
+                  className="w-full px-3 py-2 border-2 border-blue-200 rounded-xl text-left flex items-center justify-between hover:border-blue-400 hover:bg-white transition-all shadow-sm bg-white/80 backdrop-blur-sm"
                 >
                   <span className={formData.to ? "text-gray-900 font-medium" : "text-gray-500"}>
                     {formData.to || "Select user..."}
@@ -173,7 +181,7 @@ export default function CreateBizConnectForm({
                 name="referralName"
                 value={formData.referralName}
                 onChange={handleChange}
-                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500"
+                className="w-full px-3 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Enter referral name"
               />
               {errors.referralName && (
@@ -194,7 +202,7 @@ export default function CreateBizConnectForm({
                 name="telephone"
                 value={formData.telephone}
                 onChange={handleChange}
-                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500"
+                className="w-full px-3 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Enter 10-digit phone number"
                 maxLength={10}
               />
@@ -216,14 +224,14 @@ export default function CreateBizConnectForm({
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500"
+                className="w-full px-3 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Enter email (optional)"
               />
             </div>
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Address */}
             <div className="group">
               <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
@@ -234,8 +242,8 @@ export default function CreateBizConnectForm({
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                rows={5}
-                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white resize-none text-gray-900 placeholder-gray-500"
+                rows={3}
+                className="w-full px-3 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white resize-none text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Enter address (optional)"
               />
             </div>
@@ -250,8 +258,8 @@ export default function CreateBizConnectForm({
                 name="comments"
                 value={formData.comments}
                 onChange={handleChange}
-                rows={7}
-                className="w-full px-4 py-3.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white resize-none text-gray-900 placeholder-gray-500"
+                rows={4}
+                className="w-full px-3 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm bg-white/80 backdrop-blur-sm hover:bg-white resize-none text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Enter comments"
               />
             </div>
@@ -272,14 +280,14 @@ export default function CreateBizConnectForm({
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:flex-1 px-6 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-semibold transition-all shadow-sm hover:shadow-md"
+            className="w-full sm:flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-semibold transition-all shadow-sm hover:shadow-md text-sm"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full sm:flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
+            className="w-full sm:flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0 text-sm"
           >
             {isSubmitting ? "Creating..." : "Create Referral"}
           </button>

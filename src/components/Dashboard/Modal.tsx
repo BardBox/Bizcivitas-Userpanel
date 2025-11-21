@@ -8,6 +8,8 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  maxWidth?: string;
+  overflowVisible?: boolean;
 }
 
 export default function Modal({
@@ -15,26 +17,28 @@ export default function Modal({
   onClose,
   title,
   children,
+  maxWidth = "max-w-2xl",
+  overflowVisible = false,
 }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       {/* Modal Content */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4 border-2 border-gray-200">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${maxWidth} max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'} border-2 border-gray-200`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
-          <h2 className="text-2xl font-bold text-white">{title}</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-blue-500 rounded-t-2xl">
+          <h2 className="text-xl font-bold text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors"
+            className="p-1 hover:bg-white/20 rounded-full transition-colors"
           >
             <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className={overflowVisible ? '' : "overflow-y-auto max-h-[calc(90vh-140px)]"}>
           {children}
         </div>
       </div>

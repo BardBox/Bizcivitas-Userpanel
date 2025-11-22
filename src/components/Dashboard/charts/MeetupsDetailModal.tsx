@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, Calendar, MapPin, Users, ChevronDown, ChevronUp, Edit2, Save, FileText, Clock } from "lucide-react";
+import { X, Download, Calendar, MapPin, Users, ChevronDown, ChevronUp, Edit2, Save, FileText, Clock, Trash2 } from "lucide-react";
 import DateRangePicker from "../DateRangePicker";
+import DeleteConfirmModal from "../../modals/DeleteConfirmModal";
 
 interface UserDetails {
   _id?: string;
@@ -62,6 +63,8 @@ export default function MeetupsDetailModal({
     time: ""
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteMeetupId, setDeleteMeetupId] = useState<string | null>(null);
+  const [isDeletingMeetup, setIsDeletingMeetup] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -156,6 +159,47 @@ export default function MeetupsDetailModal({
       alert("An error occurred while saving.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteMeetup = (meetupId: string) => {
+    setDeleteMeetupId(meetupId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteMeetupId) return;
+    setIsDeletingMeetup(true);
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
+      const baseUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+
+      const response = await fetch(`${baseUrl}/meetup/${deleteMeetupId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove from local state
+        setMeetupsData(prev => prev.filter(m => (m._id || m.id) !== deleteMeetupId));
+        // If the deleted meetup was expanded, collapse it
+        if (expandedMeetupId === deleteMeetupId) {
+          setExpandedMeetupId(null);
+        }
+        setDeleteMeetupId(null);
+      } else {
+        console.error("Failed to delete meetup. Response:", data);
+        alert(`Failed to delete meetup: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error deleting meetup:", error);
+      alert("An error occurred while deleting.");
+    } finally {
+      setIsDeletingMeetup(false);
     }
   };
 
@@ -638,13 +682,22 @@ export default function MeetupsDetailModal({
                         {/* Action Buttons (Edit & Expand) */}
                         <div className="absolute bottom-2 right-2 flex gap-2">
                           {isCreator && (
-                            <button
-                              onClick={() => handleEditClick(meetup)}
-                              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-[#4A62AD]"
-                              title="Edit details"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleEditClick(meetup)}
+                                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-[#4A62AD]"
+                                title="Edit details"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMeetup(meetup._id || meetup.id || "")}
+                                className="p-1.5 hover:bg-red-50 rounded-full transition-colors text-gray-500 hover:text-red-500"
+                                title="Delete meetup"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
                           <button
                             onClick={() => toggleExpand(meetup._id || meetup.id || "")}
@@ -746,6 +799,19 @@ export default function MeetupsDetailModal({
           onClose={() => setIsDatePickerOpen(false)}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deleteMeetupId}
+        onClose={() => setDeleteMeetupId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Meetup"
+        message="Are you sure you want to delete this meetup? This action cannot be undone."
+        itemName="meetup"
+        buttonText="Delete"
+        isDeleting={isDeletingMeetup}
+        showNote={false}
+      />
     </div>
   );
 }

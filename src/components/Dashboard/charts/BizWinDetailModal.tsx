@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, IndianRupee, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Download, IndianRupee, ChevronDown, ChevronUp, Edit2, Trash2, Save } from "lucide-react";
 import DateRangePicker from "../DateRangePicker";
+import DeleteConfirmModal from "../../modals/DeleteConfirmModal";
 
 interface UserDetails {
   _id?: string;
@@ -59,6 +60,16 @@ export default function BizWinDetailModal({
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+
+  // Edit & Delete State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    amount: "",
+    comments: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Sync activeTab with initialTab when it changes or modal opens
   useEffect(() => {
@@ -177,6 +188,103 @@ export default function BizWinDetailModal({
       console.error("Error fetching BizWin details:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+
+
+  const handleEditClick = (record: BizWinRecord) => {
+    setEditingId(record.id || record._id || null);
+    setEditFormData({
+      amount: record.amount.toString(),
+      comments: record.comments || "",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId) return;
+    setIsSaving(true);
+
+    try {
+      const backendUrl = (process as any).env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const response = await fetch(`${backendUrl}/record/${editingId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({
+          amount: parseFloat(editFormData.amount),
+          comments: editFormData.comments,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Update local state
+        setReceivedData((prev) =>
+          prev.map((r) =>
+            (r.id || r._id) === editingId
+              ? { ...r, amount: parseFloat(editFormData.amount), comments: editFormData.comments }
+              : r
+          )
+        );
+        // Recalculate total (approximate)
+        // Ideally we should refetch, but for UI responsiveness we update locally
+        // We need to find the old amount to subtract and add new amount
+        // But simpler is to just update the record in the array and recalculate total from array
+        // However, state update is async.
+        // Let's just refetch data to be safe and accurate
+        fetchData();
+
+        setEditingId(null);
+      } else {
+        console.error("Failed to update record:", data);
+        alert(`Failed to update record: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error updating record:", error);
+      alert("An error occurred while saving.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+
+    try {
+      const backendUrl = (process as any).env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const response = await fetch(`${backendUrl}/record/${deleteId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Update local state
+        setReceivedData((prev) => prev.filter((r) => (r.id || r._id) !== deleteId));
+        // Refetch to update totals correctly
+        fetchData();
+        setDeleteId(null);
+      } else {
+        console.error("Failed to delete record:", data);
+        alert(`Failed to delete record: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      alert("An error occurred while deleting.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -385,10 +493,13 @@ export default function BizWinDetailModal({
                     }
                   }
 
+
+                  const isEditing = (record.id || record._id) === editingId;
+
                   return (
                     <div
                       key={record.id || record._id}
-                      className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                      className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow relative group"
                     >
                       <div className="flex flex-col sm:flex-row gap-3">
                         <div className="flex gap-3 flex-1">
@@ -441,9 +552,19 @@ export default function BizWinDetailModal({
                             <div className="space-y-1 mt-2">
                               <div className="flex items-center gap-1.5">
                                 <IndianRupee className="w-3 h-3 text-[#4A62AD] flex-shrink-0" />
-                                <span className="text-sm font-bold text-green-700">
-                                  {formatCurrency(record.amount)}
-                                </span>
+                                {isEditing ? (
+                                  <input
+                                    type="number"
+                                    value={editFormData.amount}
+                                    onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                                    className="text-sm font-bold text-green-700 border border-gray-300 rounded px-2 py-0.5 w-24 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Amount"
+                                  />
+                                ) : (
+                                  <span className="text-sm font-bold text-green-700">
+                                    {formatCurrency(record.amount)}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-xs text-[#4A62AD]">
                                 Status: <span className="font-medium">Got the business</span>
@@ -453,15 +574,28 @@ export default function BizWinDetailModal({
                         </div>
 
                         {/* Comments and Date */}
-                        <div className="sm:w-2/5 flex-shrink-0">
-                          <div className="p-2 bg-green-50 rounded-lg border border-green-100">
-                            {record.comments && (
-                              <>
+                        <div className="sm:w-2/5 flex-shrink-0 flex flex-col justify-between">
+                          <div className="p-2 bg-green-50 rounded-lg border border-green-100 h-full">
+                            {isEditing ? (
+                              <div className="mb-2">
                                 <p className="text-xs text-green-800 font-semibold mb-1">Comments:</p>
-                                <p className="text-xs text-gray-700 line-clamp-2 italic mb-2">
-                                  "{record.comments}"
-                                </p>
-                              </>
+                                <textarea
+                                  value={editFormData.comments}
+                                  onChange={(e) => setEditFormData({ ...editFormData, comments: e.target.value })}
+                                  className="w-full text-xs text-gray-700 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                  rows={2}
+                                  placeholder="Add comments..."
+                                />
+                              </div>
+                            ) : (
+                              record.comments && (
+                                <>
+                                  <p className="text-xs text-green-800 font-semibold mb-1">Comments:</p>
+                                  <p className="text-xs text-gray-700 line-clamp-2 italic mb-2">
+                                    "{record.comments}"
+                                  </p>
+                                </>
+                              )
                             )}
                             <p className="text-xs text-gray-600">
                               Date: <span className="font-semibold text-[#4A62AD]">{formatDate(record.createdAt || record.date || "")}</span>
@@ -469,8 +603,52 @@ export default function BizWinDetailModal({
                           </div>
                         </div>
                       </div>
+
+                      {/* Action Buttons (Only for Received tab) */}
+                      {activeTab === "received" && (
+                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={handleSaveEdit}
+                                disabled={isSaving}
+                                className="p-1.5 bg-green-100 hover:bg-green-200 rounded-full text-green-600 transition-colors"
+                                title="Save"
+                              >
+                                <Save className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                disabled={isSaving}
+                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"
+                                title="Cancel"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleEditClick(record)}
+                                className="p-1.5 bg-blue-50 hover:bg-blue-100 rounded-full text-blue-600 transition-colors"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(record.id || record._id || "")}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 rounded-full text-red-600 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
+
                 })}
             </div>
           )}
@@ -486,6 +664,19 @@ export default function BizWinDetailModal({
           onClose={() => setIsDatePickerOpen(false)}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Record"
+        message="Are you sure you want to delete this record? This action cannot be undone."
+        itemName="record"
+        buttonText="Delete"
+        isDeleting={isDeleting}
+        showNote={false}
+      />
     </div>
   );
 }

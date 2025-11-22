@@ -10,15 +10,21 @@ interface DeleteConfirmModalProps {
   title?: string;
   message?: string;
   isDeleting?: boolean;
+  itemName?: string;
+  buttonText?: string;
+  showNote?: boolean;
 }
 
 export default function DeleteConfirmModal({
   isOpen,
   onClose,
   onConfirm,
-  title = "Delete Post",
-  message = "Are you sure you want to delete this post? This action cannot be undone.",
+  title = "Delete Item",
+  message = "Are you sure you want to delete this item? This action cannot be undone.",
   isDeleting = false,
+  itemName = "item",
+  buttonText = "Delete",
+  showNote = true,
 }: DeleteConfirmModalProps) {
   if (!isOpen) return null;
 
@@ -62,11 +68,13 @@ export default function DeleteConfirmModal({
             {message}
           </p>
 
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-            <p className="text-xs text-gray-600">
-              <strong>Note:</strong> Once deleted, this post will be permanently removed from the system and cannot be recovered.
-            </p>
-          </div>
+          {showNote && (
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <p className="text-xs text-gray-600">
+                <strong>Note:</strong> Once deleted, this {itemName} will be permanently removed from the system and cannot be recovered.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -81,11 +89,10 @@ export default function DeleteConfirmModal({
           <button
             onClick={handleConfirm}
             disabled={isDeleting}
-            className={`px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-all transform hover:scale-105 ${
-              isDeleting
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl"
-            }`}
+            className={`px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-all transform hover:scale-105 ${isDeleting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl"
+              }`}
           >
             {isDeleting ? (
               <div className="flex items-center space-x-2">
@@ -93,7 +100,7 @@ export default function DeleteConfirmModal({
                 <span>Deleting...</span>
               </div>
             ) : (
-              "Delete Post"
+              buttonText
             )}
           </button>
         </div>

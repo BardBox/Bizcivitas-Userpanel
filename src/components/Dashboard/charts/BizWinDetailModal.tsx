@@ -176,10 +176,11 @@ export default function BizWinDetailModal({
 
       if (response.ok && data.success) {
 
-        setGivenData(data.data.tyfcbGiven || []);
-        setReceivedData(data.data.tyfcbReceived || []);
-        setTotalGivenAmount(data.data.totalGivenAmount || 0);
-        setTotalReceivedAmount(data.data.totalReceivedAmount || 0);
+        // Swap the assignments because backend returns them in reverse
+        setGivenData(data.data.tyfcbReceived || []);
+        setReceivedData(data.data.tyfcbGiven || []);
+        setTotalGivenAmount(data.data.totalReceivedAmount || 0);
+        setTotalReceivedAmount(data.data.totalGivenAmount || 0);
 
       } else {
         console.error("BizWin API error:", data);
@@ -463,12 +464,13 @@ export default function BizWinDetailModal({
             <div className="space-y-4">
               {currentData
                 .filter((record) => {
-                  const user = activeTab === "given" ? record.toUser : record.fromUser;
+                  // Since we swapped the data, the user logic is also reversed
+                  const user = activeTab === "given" ? record.fromUser : record.toUser;
                   return user !== null && user !== undefined;
                 })
                 .map((record) => {
-                  // API returns toUser and fromUser as objects with user details
-                  const user = activeTab === "given" ? record.toUser : record.fromUser;
+                  // Since we swapped the data, the user logic is also reversed
+                  const user = activeTab === "given" ? record.fromUser : record.toUser;
                   const displayUser = typeof user === 'object' ? user : null;
 
                   let userName = "Unknown User";

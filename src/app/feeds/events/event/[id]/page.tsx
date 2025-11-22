@@ -102,7 +102,7 @@ export default function EventDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen mt-0 bg-gray-50">
       {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -135,7 +135,7 @@ export default function EventDetailPage({
           {/* Event Image */}
           {event.img && (
             <div
-              className="relative w-full aspect-video bg-gray-100 cursor-pointer"
+              className="relative w-full h-64 md:h-80 lg:h-96 bg-gray-100 cursor-pointer"
               onClick={() => setIsGalleryOpen(true)}
             >
               <Image
@@ -146,29 +146,29 @@ export default function EventDetailPage({
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-white pointer-events-none">
-                <div className="flex flex-wrap gap-2 mb-3">
+              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 lg:p-6 text-white pointer-events-none">
+                <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${accessMode.color}`}
+                    className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-semibold ${accessMode.color}`}
                   >
                     {accessMode.text}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-blue-600 text-white">
+                  <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-semibold bg-blue-600 text-white">
                     {getEventTypeDisplay(event.eventType)}
                   </span>
                 </div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-lg">
+                <h1 className="text-lg md:text-2xl lg:text-3xl font-bold mb-1 md:mb-2 drop-shadow-lg">
                   {event.eventName}
                 </h1>
                 {event.subtitle && (
-                  <p className="text-lg text-white/90 drop-shadow-md">{event.subtitle}</p>
+                  <p className="text-sm md:text-base lg:text-lg text-white/90 drop-shadow-md">{event.subtitle}</p>
                 )}
               </div>
             </div>
           )}
 
           {/* Quick Info Bar */}
-          <div className="px-6 py-4 bg-gray-50 border-t grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="px-4 py-3 md:px-6 md:py-4 bg-gray-50 border-t grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
             <div className="flex items-center text-sm">
               <Calendar className="h-5 w-5 text-blue-600 mr-2" />
               <div>

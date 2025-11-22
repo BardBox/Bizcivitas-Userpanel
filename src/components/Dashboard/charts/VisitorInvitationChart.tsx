@@ -263,9 +263,9 @@ export default function VisitorInvitationChart({
       <div className="mb-8">
         <div
           onClick={() => setIsDetailModalOpen(true)}
-          className="bg-gradient-to-br from-blue-50 to-blue-100 px-6 py-4 rounded-xl border border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
+          className="bg-gradient-to-br from-blue-50 to-blue-100 px-4 py-4 rounded-xl border border-blue-200 cursor-pointer hover:shadow-lg transition-shadow max-w-sm"
         >
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm text-blue-700 mb-1 font-medium">Total Invitations</p>
               <p className="text-3xl font-bold text-blue-900">

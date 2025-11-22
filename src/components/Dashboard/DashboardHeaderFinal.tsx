@@ -306,7 +306,7 @@ export default function DashboardHeaderFinal() {
                 className={`fixed top-0 left-0 right-0 z-40 bg-blue-500 shadow-sm border-b border-blue-600 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"
                     }`}
             >
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+                <div className="mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
                     {/* Left: Mobile Menu & Logo Area */}
                     <div className="flex items-center gap-3">
@@ -317,12 +317,15 @@ export default function DashboardHeaderFinal() {
                             <Menu className="w-6 h-6" />
                         </button>
 
-                        {/* Optional: Add Logo here if needed */}
-                        {/* <div className="font-bold text-xl text-blue-600">BizCivitas</div> */}
+                        {/* Logo/Brand */}
+                        <div className="font-bold text-xl text-white hidden md:block"></div>
                     </div>
 
-                    {/* Center: Search Bar (Desktop) */}
-                    <div className={`hidden md:flex flex-1 max-w-2xl relative transition-opacity duration-300 ${showSearchBar ? "opacity-100" : "opacity-0 pointer-events-none"}`} ref={desktopSearchRef}>
+                    {/* Right Side: Search Bar + Actions */}
+                    <div className="flex items-center gap-3 md:gap-4">
+                        {/* Search Bar (Desktop) */}
+                        {showSearchBar && (
+                            <div className="hidden md:flex max-w-xl md:max-w-sm relative" ref={desktopSearchRef}>
                         <div className={`w-full flex items-center bg-white rounded-lg border ${isSearchOpen ? 'border-blue-300 ring-1 ring-blue-300' : 'border-transparent'} transition-all duration-200`}>
 
                             {/* Category Selector */}
@@ -517,10 +520,9 @@ export default function DashboardHeaderFinal() {
                                 )}
                             </div>
                         </div>
-                    </div>
+                            </div>
+                        )}
 
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-2 md:gap-4">
                         {/* Search Toggle (Desktop & Mobile) */}
                         <button
                             className="p-2 text-white hover:bg-blue-600 rounded-full"

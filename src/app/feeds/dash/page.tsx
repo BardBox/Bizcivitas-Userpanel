@@ -121,16 +121,16 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 md:rounded-3xl">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 md:space-y-6 md:mt-12">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-3 md:space-y-4 md:mt-8 lg:mt-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
             Dashboard
           </h1>
         </div>
 
         {/* Dashboard Cards Grid - Clickable to switch charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4">
           {dashboardCards.map((card, index) => (
             <div
               key={card.id}
@@ -146,7 +146,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Chart Section */}
-        <div className="mt-4 md:mt-6">
+        <div className="mt-3 md:mt-4">
           <ActiveChart
             selectedRange={selectedRange}
             onRangeChange={setSelectedRange}

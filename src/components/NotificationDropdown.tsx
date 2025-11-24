@@ -543,10 +543,26 @@ export default function NotificationDropdown({
     const newIsOpen = !isOpen;
     setIsOpen(newIsOpen);
 
-    // Dispatch custom event to close FloatingDrawer when notification dropdown opens
+    // Dispatch custom event for state change
+    window.dispatchEvent(
+      new CustomEvent("notificationDropdownStateChanged", {
+        detail: { isOpen: newIsOpen },
+      })
+    );
+
+    // Legacy event for backward compatibility (if needed)
     if (newIsOpen) {
       window.dispatchEvent(new Event("notificationDropdownOpened"));
     }
+  };
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+    window.dispatchEvent(
+      new CustomEvent("notificationDropdownStateChanged", {
+        detail: { isOpen: false },
+      })
+    );
   };
 
   return (
@@ -569,11 +585,11 @@ export default function NotificationDropdown({
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
+            onClick={closeDropdown}
           />
 
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-20 max-h-96 overflow-hidden">
+          <div className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 bg-white rounded-lg shadow-lg border z-50 max-h-[calc(100vh-5rem)] sm:max-h-96 overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b bg-gray-50">
               <div className="flex items-center justify-between">
@@ -685,7 +701,7 @@ export default function NotificationDropdown({
               <div className="p-3 border-t bg-gray-50">
                 <button
                   onClick={() => {
-                    setIsOpen(false);
+                    closeDropdown();
                     router.push("/feeds/notifications");
                   }}
                   className="w-full text-sm text-blue-600 hover:text-blue-800"

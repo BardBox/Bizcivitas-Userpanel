@@ -237,13 +237,13 @@ export default function BizConnectChart({
     <div className="bg-white rounded-2xl p-3 md:p-6 lg:p-8 shadow-sm border border-gray-100">
       {/* Chart Header */}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
         <h3 className="text-xl font-bold text-gray-900">
           BizConnect Overview
         </h3>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 w-full sm:w-auto">
+          <div className="grid grid-cols-2 xl:flex xl:items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 w-full xl:w-auto">
             {dateFilters.map((filter) => (
               <button
                 key={filter.id}
@@ -270,7 +270,7 @@ export default function BizConnectChart({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-8">
         <div
           onClick={() => {
             setSelectedTab("given");

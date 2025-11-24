@@ -223,20 +223,20 @@ export default function MeetupsChart({
   return (
     <div className="bg-white rounded-2xl p-3 md:p-6 lg:p-8 shadow-sm border border-gray-100">
       {/* Chart Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
         <h3 className="text-xl font-bold text-gray-900">
           Meetups Overview
         </h3>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 w-full sm:w-auto">
+          <div className="grid grid-cols-2 xl:flex xl:items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 w-full xl:w-auto">
             {dateFilters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => handleRangeChange(filter.id)}
                 className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all whitespace-nowrap flex justify-center ${selectedRange === filter.id
-                    ? "bg-[#4A62AD] text-white shadow-sm"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                  ? "bg-[#4A62AD] text-white shadow-sm"
+                  : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                   }`}
               >
                 {filter.label}

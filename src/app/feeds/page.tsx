@@ -193,20 +193,18 @@ export default function DashboardPage() {
     <div className="relative min-h-screen">
       {/* Main content */}
       <div
-        className={`transition-all duration-300 no-scrollbar ${
-          isDrawerOpen ? "xl:mr-80 lg:mr-20" : "mr-0"
-        }`}
+        className={`transition-all duration-300 no-scrollbar ${isDrawerOpen ? "xl:mr-80 lg:mr-20" : "mr-0"
+          }`}
       >
         <div className="md:max-w-[95%] lg:max-w-[70%] mx-auto  space-y-3">
           {/* Filter Toggle Button */}
-          <div className="flex justify-end mt-4 md:mt-12">
+          <div className="flex justify-end mt-4">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                showFilters
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${showFilters
                   ? "bg-orange-500 text-white shadow-md"
                   : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200"
-              }`}
+                }`}
             >
               <Filter className="w-5 h-5" />
               <span className="font-medium">Filter</span>
@@ -244,9 +242,8 @@ export default function DashboardPage() {
                       )}
                     </span>
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
-                        isDropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -254,33 +251,30 @@ export default function DashboardPage() {
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                       <button
                         onClick={() => handleTabChange("all")}
-                        className={`w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors duration-150 first:rounded-t-lg flex items-center gap-2 ${
-                          activeTab === "all"
+                        className={`w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors duration-150 first:rounded-t-lg flex items-center gap-2 ${activeTab === "all"
                             ? "text-orange-600 bg-orange-50 font-medium"
                             : "text-gray-700"
-                        }`}
+                          }`}
                       >
                         <Sparkles className="w-5 h-5" />
                         All
                       </button>
                       <button
                         onClick={() => handleTabChange("bizpulse")}
-                        className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-2 ${
-                          activeTab === "bizpulse"
+                        className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-2 ${activeTab === "bizpulse"
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-700"
-                        }`}
+                          }`}
                       >
                         <Activity className="w-5 h-5" />
                         BizPulse
                       </button>
                       <button
                         onClick={() => handleTabChange("bizhub")}
-                        className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 last:rounded-b-lg flex items-center gap-2 ${
-                          activeTab === "bizhub"
+                        className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 last:rounded-b-lg flex items-center gap-2 ${activeTab === "bizhub"
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-700"
-                        }`}
+                          }`}
                       >
                         <Network className="w-5 h-5" />
                         BizHub
@@ -295,33 +289,30 @@ export default function DashboardPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleTabChange("all")}
-                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${
-                      activeTab === "all"
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${activeTab === "all"
                         ? "bg-orange-500 text-white shadow-md"
                         : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     <Sparkles className="w-5 h-5" />
                     <span className="font-medium">All</span>
                   </button>
                   <button
                     onClick={() => handleTabChange("bizpulse")}
-                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${
-                      activeTab === "bizpulse"
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${activeTab === "bizpulse"
                         ? "bg-blue-500 text-white shadow-md"
                         : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     <Activity className="w-5 h-5" />
                     <span className="font-medium">BizPulse</span>
                   </button>
                   <button
                     onClick={() => handleTabChange("bizhub")}
-                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${
-                      activeTab === "bizhub"
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${activeTab === "bizhub"
                         ? "bg-blue-500 text-white shadow-md"
                         : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     <Network className="w-5 h-5" />
                     <span className="font-medium">BizHub</span>
@@ -333,7 +324,7 @@ export default function DashboardPage() {
 
           <InfiniteScroll
             dataLength={posts.length}
-            next={() => {}}
+            next={() => { }}
             hasMore={hasMore}
             loader={
               <div className="text-center flex justify-center items-center">

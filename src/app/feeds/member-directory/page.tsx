@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, ChangeEvent } from "react";
+import React, { useState, useMemo, ChangeEvent, useTransition } from "react";
 import { Users, Filter, X, Search, ChevronRight, Home } from "lucide-react";
 import Link from "next/link";
 import UserCard from "@/components/Dashboard/UserCard";
@@ -11,7 +11,6 @@ import {
 } from "@/store/api";
 import { usePagination } from "@/components/Dashboard/Pagination/usePagination";
 import Pagination from "@/components/Dashboard/Pagination/Pagination";
-import type { User } from "../../../../types/user.types";
 
 // -------------------- Types --------------------
 interface CardMember {
@@ -39,6 +38,7 @@ interface EmptyStateProps {
 
 // -------------------- Main Component --------------------
 export default function MemberDirectoryPage() {
+  const [isPending, startTransition] = useTransition();
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<UserSearchParams>({
@@ -336,7 +336,7 @@ export default function MemberDirectoryPage() {
           />
         )}
 
-        {/* Members Grid */}
+        {/* Members Grid - NO FLICKERING */}
         {!isLoading && !error && filteredMembers.length > 0 && (
           <>
             <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
@@ -345,7 +345,12 @@ export default function MemberDirectoryPage() {
               {filteredMembers.length} members
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            <div
+              className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 transition-opacity duration-200 ${
+                isPending ? "opacity-60" : "opacity-100"
+              }`}
+              style={{ minHeight: "500px" }}
+            >
               {currentMembers.map((member) => (
                 <UserCard
                   key={member.id}

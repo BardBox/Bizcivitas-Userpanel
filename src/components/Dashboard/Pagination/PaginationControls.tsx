@@ -42,8 +42,6 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     onPageChange?.(page);
-    // Smooth scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Calculate visible page numbers
@@ -108,7 +106,6 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         onClick={() => {
           goToPreviousPage();
           onPageChange?.(currentPage - 1);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         disabled={!hasPreviousPage}
         className={`flex items-center gap-1 ${buttonClass}`}
@@ -173,7 +170,6 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         onClick={() => {
           goToNextPage();
           onPageChange?.(currentPage + 1);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         disabled={!hasNextPage}
         className={`flex items-center gap-1 ${buttonClass}`}

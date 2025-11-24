@@ -48,16 +48,7 @@ export default function FeedsLayoutClient({
   // Listen for hamburger menu toggle from header
   useEffect(() => {
     const handleToggleMobileMenu = () => {
-      setIsMobileMenuOpen((prev) => {
-        const newState = !prev;
-        // Notify header about menu state change
-        window.dispatchEvent(
-          new CustomEvent("mobileMenuStateChanged", {
-            detail: { isOpen: newState },
-          })
-        );
-        return newState;
-      });
+      setIsMobileMenuOpen((prev) => !prev);
     };
 
     window.addEventListener("toggleMobileMenu", handleToggleMobileMenu);
@@ -133,7 +124,7 @@ export default function FeedsLayoutClient({
           <DashboardHeader />
           <main
             ref={mainRef}
-            className={`relative flex-1 overflow-y-auto pt-16 ${isMainFeedsPage ? "px-3" : "px-3 md:p-12"
+            className={`relative flex-1 overflow-y-auto ${isMainFeedsPage ? "px-3" : "px-3 md:p-12"
               }`}
           >
             <NavigationLoader />

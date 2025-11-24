@@ -23,6 +23,7 @@ import BizNeeds from "@/components/Dashboard/MyProfile/BizNeeds/BizNeeds";
 import WeeklyPresentation from "@/components/Dashboard/MyProfile/WeeklyPresentation";
 import ViewOnlyConnections from "@/components/Dashboard/Connections/ViewOnlyConnections";
 import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
+import ConnectionSkills from "@/components/Dashboard/Connections/ConnectionSkills";
 
 interface ConnectionDetailsClientProps {
   slug: string;
@@ -368,7 +369,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
       key: "business",
       title: "Business Details",
       component: BusinessDetails,
-      props: { 
+      props: {
         professionalDetails: normalizedData!.business,
         isConnected: connectionStatus.status === "connected",
       },
@@ -517,10 +518,16 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
                 personalDetails={normalizedData!.personal}
                 mySkillItems={normalizedData!.skills}
                 isEditing={false} // Always read-only
-                onEditStateChange={() => {}} // No-op
+                onEditStateChange={() => { }} // No-op
                 targetUserId={connectionProfile!._id}
                 isOwnProfile={false}
+                showSkills={false}
                 formRef={React.createRef<HTMLFormElement>()}
+              />
+              <ConnectionSkills
+                skills={normalizedData!.skills}
+                targetUserId={connectionProfile!._id || ""}
+                currentUserId={currentUser?._id || currentUser?.id}
               />
             </AccordionItem>
 
@@ -531,7 +538,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
               // Common props for MyProfile components
               const commonProps = {
                 isEditing: false,
-                onEditStateChange: () => {},
+                onEditStateChange: () => { },
                 formRef: React.createRef<HTMLFormElement>(),
               };
 
@@ -587,34 +594,34 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
             )}
           </div>
         </div>
-      </div>
 
-      {/* Confirmation Dialog */}
-      {showConfirmDialog && (
-        <ConfirmDialog
-          isOpen={showConfirmDialog}
-          onClose={() => setShowConfirmDialog(false)}
-          onConfirm={confirmRemoveConnection}
-          title={
-            connectionStatus.status === "connected"
-              ? "Remove Connection"
-              : "Cancel Connection Request"
-          }
-          message={
-            connectionStatus.status === "connected"
-              ? `Are you sure you want to remove ${personalCardData?.fname} ${personalCardData?.lname} from your connections?`
-              : `Are you sure you want to cancel the connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}?`
-          }
-          confirmText={
-            connectionStatus.status === "connected"
-              ? "Remove"
-              : "Cancel Request"
-          }
-          cancelText="Go Back"
-          isDestructive={true}
-          isLoading={isDeleting}
-        />
-      )}
+        {/* Confirmation Dialog */}
+        {showConfirmDialog && (
+          <ConfirmDialog
+            isOpen={showConfirmDialog}
+            onClose={() => setShowConfirmDialog(false)}
+            onConfirm={confirmRemoveConnection}
+            title={
+              connectionStatus.status === "connected"
+                ? "Remove Connection"
+                : "Cancel Connection Request"
+            }
+            message={
+              connectionStatus.status === "connected"
+                ? `Are you sure you want to remove ${personalCardData?.fname} ${personalCardData?.lname} from your connections?`
+                : `Are you sure you want to cancel the connection request sent to ${personalCardData?.fname} ${personalCardData?.lname}?`
+            }
+            confirmText={
+              connectionStatus.status === "connected"
+                ? "Remove"
+                : "Cancel Request"
+            }
+            cancelText="Go Back"
+            isDestructive={true}
+            isLoading={isDeleting}
+          />
+        )}
+      </div>
     </div>
   );
 };

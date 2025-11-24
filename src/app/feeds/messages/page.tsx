@@ -13,6 +13,7 @@ import {
   Edit2,
   Trash2,
   X,
+  ChevronDown,
 } from "lucide-react";
 import ConfirmDialog from "@/components/Dashboard/Connections/ConfirmDialog";
 import MessageInput from "@/components/MessageInput";
@@ -35,7 +36,6 @@ import { initializeSocket } from "@/lib/socket";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 import toast from "react-hot-toast";
 import Breadcrumb from "@/components/Breadcrumb";
-import ScrollToTop from "@/components/ScrollToTop";
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -59,6 +59,7 @@ export default function MessagesPage() {
   const chatMenuRef = useRef<HTMLDivElement | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();
@@ -124,14 +125,14 @@ export default function MessagesPage() {
           // Open existing chat by setting it directly
           setSelectedChat(existingChat as Chat);
           toast.success("Chat opened");
-          
+
           // Mark as read
           const other = (existingChat.users || existingChat.participants || []).find((u) => u._id !== currentUserId);
           if (other?._id) {
             markAsRead({ chatId: existingChat._id, targetUserId: other._id }).catch((err) => {
             });
           }
-          
+
           // Clean up URL after opening chat
           router.replace('/feeds/messages', { scroll: false });
         } else {
@@ -141,14 +142,14 @@ export default function MessagesPage() {
             .then(async (createdChat) => {
               // Refetch chats to update the sidebar with new chat
               const refetchResult = await refetch();
-              
+
               // Find the newly created chat in the refetched list
               const updatedChats = refetchResult.data || [];
               const newChat = updatedChats.find((chat: Chat) => {
                 const users = chat.users || chat.participants || [];
                 return users.some((u) => u._id === userId);
               });
-              
+
               // Set selected chat using the chat from refetched list
               if (newChat) {
                 setSelectedChat(newChat as Chat);
@@ -158,14 +159,14 @@ export default function MessagesPage() {
                 setSelectedChat(createdChat as Chat);
                 toast.success("Chat opened");
               }
-              
+
               // Clean up URL after opening chat
               router.replace('/feeds/messages', { scroll: false });
             })
             .catch((error) => {
               console.error("Failed to open chat:", error);
               toast.error("Failed to open chat");
-              
+
               // Clean up URL even on error
               router.replace('/feeds/messages', { scroll: false });
             });
@@ -203,7 +204,7 @@ export default function MessagesPage() {
           // if selected chat matches incoming message's chat, refetch chat details or append
           if (selectedChat && payload?.chatId === selectedChat._id) {
             // refetch the selected chat's messages
-            try { refetchChatMessages && refetchChatMessages(); } catch {}
+            try { refetchChatMessages && refetchChatMessages(); } catch { }
           }
         });
 
@@ -237,39 +238,39 @@ export default function MessagesPage() {
   // Combine chats and members for search
   const searchResults = searchQuery.trim()
     ? [
-        // Existing chats matching search
-        ...chats
-          .map((chat) => {
-            const users = chat.users || chat.participants || [];
-            const otherUser = users.find((u) => u._id !== currentUserId);
-            const fullName = otherUser?.fullName || `${otherUser?.fname || ""} ${otherUser?.lname || ""}`.trim();
+      // Existing chats matching search
+      ...chats
+        .map((chat) => {
+          const users = chat.users || chat.participants || [];
+          const otherUser = users.find((u) => u._id !== currentUserId);
+          const fullName = otherUser?.fullName || `${otherUser?.fname || ""} ${otherUser?.lname || ""}`.trim();
 
-            if (fullName.toLowerCase().includes(searchQuery.toLowerCase())) {
-              return { type: "chat" as const, data: chat };
-            }
-            return null;
-          })
-          .filter(Boolean),
-        // Only show members WITHOUT existing chats (prevent duplicates)
-        ...allMembers
-          .filter((member) =>
-            member._id !== currentUserId &&
-            !existingChatUserIds.includes(member._id) // Exclude members with existing chats
-          )
-          .map((member) => {
-            const fullName = `${member.fname || ""} ${member.lname || ""}`.trim();
-            if (fullName.toLowerCase().includes(searchQuery.toLowerCase())) {
-              // Ensure member has fullName property
-              const mappedMember = {
-                ...member,
-                fullName: fullName,
-              };
-              return { type: "member" as const, data: mappedMember as any, hasExistingChat: false };
-            }
-            return null;
-          })
-          .filter(Boolean),
-      ]
+          if (fullName.toLowerCase().includes(searchQuery.toLowerCase())) {
+            return { type: "chat" as const, data: chat };
+          }
+          return null;
+        })
+        .filter(Boolean),
+      // Only show members WITHOUT existing chats (prevent duplicates)
+      ...allMembers
+        .filter((member) =>
+          member._id !== currentUserId &&
+          !existingChatUserIds.includes(member._id) // Exclude members with existing chats
+        )
+        .map((member) => {
+          const fullName = `${member.fname || ""} ${member.lname || ""}`.trim();
+          if (fullName.toLowerCase().includes(searchQuery.toLowerCase())) {
+            // Ensure member has fullName property
+            const mappedMember = {
+              ...member,
+              fullName: fullName,
+            };
+            return { type: "member" as const, data: mappedMember as any, hasExistingChat: false };
+          }
+          return null;
+        })
+        .filter(Boolean),
+    ]
     : chats.map((chat) => ({ type: "chat" as const, data: chat }));
 
   // Control dropdown visibility based on search query
@@ -343,6 +344,25 @@ export default function MessagesPage() {
     };
   }, [showChatMenu]);
 
+  // Handle scroll to bottom visibility
+  useEffect(() => {
+    const container = messagesAreaRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Show button if we are more than 200px away from bottom
+      const isNotAtBottom = scrollHeight - scrollTop - clientHeight > 200;
+      setShowScrollBottom(isNotAtBottom);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    // Check initial state
+    handleScroll();
+
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [selectedChat, chatMessages]); // Re-bind when chat or messages change
+
   // Handler for starting a conversation with a member
   const handleStartConversation = async (member: UserForChat) => {
     try {
@@ -368,7 +388,7 @@ export default function MessagesPage() {
     const c = chats.find((ch) => ch._id === chatId) || null;
     // Immediately update UI with local chat so the right panel responds instantly
     setSelectedChat(c as Chat | null);
-    
+
     // Push state to browser history so back button works
     if (c) {
       window.history.pushState({ chatOpen: true }, '', window.location.pathname + window.location.search);
@@ -482,14 +502,14 @@ export default function MessagesPage() {
   // Handle delete message
   const handleDeleteMessage = async (messageId: string) => {
     if (!selectedChat) return;
-    
+
     // Confirmation dialog
     const confirmed = window.confirm("Are you sure you want to delete this message?");
     if (!confirmed) {
       setMenuOpenForMessage(null);
       return;
     }
-    
+
     try {
       await deleteMessage({ messageIds: [messageId], chatId: selectedChat._id }).unwrap();
       toast.success("Message deleted");
@@ -583,21 +603,17 @@ export default function MessagesPage() {
   ];
 
   return (
-    <div className="fixed inset-0 md:relative md:inset-auto md:h-full flex flex-col bg-gray-50 overflow-hidden pt-16 md:pt-0 md:mt-12">
+    <div className="fixed inset-0 md:relative md:inset-auto md:h-full flex flex-col bg-gray-50 overflow-hidden pt-16 md:pt-0 ">
       {/* Breadcrumb - Hidden on mobile when chat is selected */}
-      <div className={`flex-shrink-0 bg-white border-b border-gray-200 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
+      <div className={`flex-shrink-0 bg-white border-b border-gray-200 ${selectedChat ? 'hidden lg:block' : 'block'}`}>
         <Breadcrumb items={breadcrumbItems} />
       </div>
 
-      {/* Header - Only show on mobile when no chat selected */}
-      <div className={`flex-shrink-0 bg-white border-b border-gray-200 px-3 sm:px-4 py-3 sm:py-4 ${selectedChat ? 'hidden sm:block' : 'block'}`}>
-        <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Messages</h1>
-        <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Chat with your connections</p>
-      </div>
+
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar - Full width on mobile, fixed width on larger screens */}
-        <div className={`${selectedChat ? 'hidden sm:flex' : 'flex'} sm:w-80 md:w-96 w-full bg-white border-r border-gray-200 flex-col overflow-hidden`}>
+        <div className={`${selectedChat ? 'hidden lg:flex' : 'flex'} lg:w-80 xl:w-96 w-full bg-white border-r border-gray-200 flex-col overflow-hidden`}>
           {/* Sidebar Header */}
           <div className="bg-teal-600 p-3 sm:p-4 text-white">
             <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Chats</h2>
@@ -748,7 +764,7 @@ export default function MessagesPage() {
             {/* Hide sidebar list when dropdown is showing */}
             {showDropdown && searchQuery.trim().length > 0 ? null : isLoading ? (
               <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
+                <div className="text-center">
                   <Loader2 className="w-5 h-5 text-teal-600 animate-spin mx-auto mb-2" />
                   <p className="text-sm text-gray-600">Loading...</p>
                 </div>
@@ -768,7 +784,7 @@ export default function MessagesPage() {
                 </div>
               </div>
             ) : (
-        <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200">
                 {searchResults.map((result: any) => {
                   if (result.type === "chat") {
                     const chat = result.data;
@@ -779,9 +795,8 @@ export default function MessagesPage() {
                     return (
                       <div
                         key={chat._id}
-                        className={`p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 group relative border-b border-gray-100 last:border-b-0 ${
-                          selectedChat?._id === chat._id ? "bg-teal-50 border-l-4 border-l-teal-600" : "bg-white"
-                        }`}
+                        className={`p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 group relative border-b border-gray-100 last:border-b-0 ${selectedChat?._id === chat._id ? "bg-teal-50 border-l-4 border-l-teal-600" : "bg-white"
+                          }`}
                       >
                         <div
                           onClick={() => handleChatClick(chat._id)}
@@ -856,16 +871,16 @@ export default function MessagesPage() {
                           </button>
 
                           {chatMenuOpenForChatId === chat._id && (
-                            <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-50 min-w-[180px]">
+                            <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-50 min-w-[220px]">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDeleteChat(chat._id, chat);
                                 }}
-                               
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
                               >
                                 <Trash2 className="w-4 h-4" />
-
+                                Delete Conversation
                               </button>
                             </div>
                           )}
@@ -883,9 +898,8 @@ export default function MessagesPage() {
                       <div
                         key={`member-${member._id}`}
                         onClick={() => handleStartConversation(member)}
-                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 ${
-                          hasChat ? "border-l-2 border-blue-300" : "border-l-2 border-green-500"
-                        }`}
+                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 ${hasChat ? "border-l-2 border-blue-300" : "border-l-2 border-green-500"
+                          }`}
                       >
                         <div className="flex-shrink-0 w-10 h-10">
                           {member.avatar ? (
@@ -931,9 +945,9 @@ export default function MessagesPage() {
         </div>
 
         {/* Chat panel - Full width on mobile when chat selected */}
-        <div className={`${selectedChat ? 'flex' : 'hidden sm:flex'} flex-1 bg-white flex-col overflow-hidden h-full`}>
+        <div className={`${selectedChat ? 'flex' : 'hidden lg:flex'} flex-1 bg-white flex-col overflow-hidden h-full`}>
           {selectedChat ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full relative">
               {/* Chat Header - WhatsApp style with back button - FIXED */}
               <div className="flex-shrink-0 bg-teal-700 p-2 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-sm">
                 {/* Back button - only on mobile */}
@@ -942,7 +956,7 @@ export default function MessagesPage() {
                     setSelectedChat(null);
                     router.back();
                   }}
-                  className="sm:hidden p-2 hover:bg-teal-600 rounded-full transition-colors"
+                  className="lg:hidden p-2 hover:bg-teal-600 rounded-full transition-colors"
                   aria-label="Back to chats"
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1003,7 +1017,7 @@ export default function MessagesPage() {
                   </button>
 
                   {showChatMenu && (
-                    <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-10 min-w-[180px]">
+                    <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-10 min-w-[220px]">
                       <button
                         onClick={() => handleDeleteChat()}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
@@ -1067,9 +1081,9 @@ export default function MessagesPage() {
                           }
                           return false;
                         })();
-                        
+
                         const isEditing = editingMessageId === msg._id;
-                        
+
                         return (
                           <div key={msg._id || idx} className={`flex items-end group ${isSent ? 'justify-end' : 'justify-start'} w-full`}>
                             {/* Avatar for received messages */}
@@ -1089,7 +1103,7 @@ export default function MessagesPage() {
                             )}
 
                             <div className="relative flex items-center gap-2 max-w-[75%]">
-                              <div className={`break-words inline-block shadow-md ${isSent ? 'bg-white text-gray-900 border border-gray-200 rounded-lg rounded-tr-none' : 'bg-gray-50 text-gray-900 border border-gray-200 rounded-lg rounded-tl-none'} px-4 py-2.5`}> 
+                              <div className={`break-words inline-block shadow-md ${isSent ? 'bg-white text-gray-900 border border-gray-200 rounded-lg rounded-tr-none' : 'bg-gray-50 text-gray-900 border border-gray-200 rounded-lg rounded-tl-none'} px-4 py-2.5`}>
                                 {isEditing ? (
                                   <div className="flex flex-col gap-2">
                                     <input
@@ -1142,7 +1156,7 @@ export default function MessagesPage() {
                                   >
                                     <MoreVertical className="w-4 h-4 text-gray-600" />
                                   </button>
-                                  
+
                                   {menuOpenForMessage === msg._id && (
                                     <div className="absolute right-0 top-8 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-10 min-w-[120px]">
                                       <button
@@ -1205,8 +1219,8 @@ export default function MessagesPage() {
                       setMessageInput("");
 
                       // refresh chats list and the messages for the selected chat
-                      try { refetch(); } catch {}
-                      try { refetchChatMessages && refetchChatMessages(); } catch {}
+                      try { refetch(); } catch { }
+                      try { refetchChatMessages && refetchChatMessages(); } catch { }
 
                       // scroll to bottom
                       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -1223,9 +1237,20 @@ export default function MessagesPage() {
                   variant="rounded"
                 />
               </div>
+
+              {/* Scroll to Bottom Button */}
+              {showScrollBottom && (
+                <button
+                  onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+                  className="absolute bottom-24 right-4 z-50 p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                  aria-label="Scroll to bottom"
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              )}
             </div>
           ) : (
-            <div className="hidden sm:flex flex-1 flex-col items-center justify-center text-center p-8 text-gray-500">
+            <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-center p-8 text-gray-500">
               <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 mb-3 text-gray-300" />
               <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-1">Select a conversation</h3>
               <p className="text-xs sm:text-sm text-gray-500">Choose a chat on the left or search for a member to start chatting.</p>
@@ -1246,8 +1271,8 @@ export default function MessagesPage() {
         message={
           chatToDelete
             ? `Are you sure you want to delete this conversation with ${getUserFullName(
-                getOtherParticipant(chatToDelete.chat)
-              )}?`
+              getOtherParticipant(chatToDelete.chat)
+            )}?`
             : "Are you sure you want to delete this conversation?"
         }
         confirmText="Delete"
@@ -1257,14 +1282,7 @@ export default function MessagesPage() {
       />
 
       {/* Scroll to Top Button - only shows in chat view */}
-      {selectedChat && (
-        <ScrollToTop
-          threshold={25}
-          scrollPercentage={40}
-          scrollToTop={false}
-          containerRef={messagesAreaRef}
-        />
-      )}
+
     </div>
   );
 }

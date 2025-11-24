@@ -32,6 +32,8 @@ export default function FloatingDrawer({
   const [manuallyToggled, setManuallyToggled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
 
   // Set initial state based on screen size
   useEffect(() => {
@@ -109,6 +111,28 @@ export default function FloatingDrawer({
       window.removeEventListener("userDropdownOpened", handleUserDropdownOpen);
   }, [onToggle]);
 
+  // Listen for mobile menu state changes
+  useEffect(() => {
+    const handleMobileMenuChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setIsMobileMenuOpen(customEvent.detail.isOpen);
+    };
+
+    window.addEventListener("mobileMenuStateChanged", handleMobileMenuChange);
+    return () => window.removeEventListener("mobileMenuStateChanged", handleMobileMenuChange);
+  }, []);
+
+  // Listen for notification dropdown state changes
+  useEffect(() => {
+    const handleNotificationDropdownChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setIsNotificationDropdownOpen(customEvent.detail.isOpen);
+    };
+
+    window.addEventListener("notificationDropdownStateChanged", handleNotificationDropdownChange);
+    return () => window.removeEventListener("notificationDropdownStateChanged", handleNotificationDropdownChange);
+  }, []);
+
   const toggleDrawer = () => {
     const newState = !isOpen;
     setIsOpen(newState);
@@ -120,9 +144,8 @@ export default function FloatingDrawer({
     <>
       <button
         onClick={toggleDrawer}
-        className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-l-lg shadow-lg transition-all duration-300 ${
-          isOpen ? "right-96" : "right-0"
-        }`}
+        className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-l-lg shadow-lg transition-all duration-300 ${isOpen ? "right-96" : "right-0"
+          } ${isMobileMenuOpen || isNotificationDropdownOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
         title={isOpen ? "Close drawer" : "Open drawer"}
       >
         <svg
@@ -142,9 +165,8 @@ export default function FloatingDrawer({
 
       {/* Floating Drawer */}
       <div
-        className={`fixed w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        } ${isHeaderVisible ? "top-17" : "top-0"}`}
+        className={`fixed w-[85%] right-0 h-full md:w-96 bg-white shadow-2xl transition-all duration-300 z-40 ${isOpen ? "translate-x-0" : "translate-x-full"
+          } ${isHeaderVisible ? "top-17" : "top-0"}`}
       >
         <div className="h-full overflow-y-auto custom-scrollbar">
           <style jsx>{`
@@ -205,8 +227,8 @@ export default function FloatingDrawer({
                   const detailUrl = isPoll
                     ? "/feeds/biz-pulse?category=pulse-polls"
                     : post.postSource === "bizpulse"
-                    ? `/feeds/biz-pulse/${post.id}`
-                    : `/feeds/biz-hub/${post.id}`;
+                      ? `/feeds/biz-pulse/${post.id}`
+                      : `/feeds/biz-hub/${post.id}`;
 
                   return (
                     <Link href={detailUrl} key={post.id}>
@@ -218,11 +240,10 @@ export default function FloatingDrawer({
                           </h4>
                           {/* Source Icon */}
                           <div
-                            className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
-                              post.postSource === "bizpulse"
+                            className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${post.postSource === "bizpulse"
                                 ? "bg-blue-500"
                                 : "bg-purple-500"
-                            }`}
+                              }`}
                           >
                             {post.postSource === "bizpulse" ? (
                               <Activity className="w-4 h-4 text-white" />
@@ -272,7 +293,7 @@ export default function FloatingDrawer({
       </div>
 
       {/* Backdrop - Only show on mobile screens */}
-      {isOpen && <div className="" onClick={toggleDrawer} />}
+      {isOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" onClick={toggleDrawer} />}
     </>
   );
 }

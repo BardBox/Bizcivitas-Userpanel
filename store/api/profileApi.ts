@@ -95,6 +95,7 @@ interface EndorseSkillResponse {
     _id: string;
     name: string;
     score: number;
+    endorsedByMe?: boolean;
   };
 }
 

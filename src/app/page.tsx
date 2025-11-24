@@ -38,10 +38,10 @@ function HomePageContent() {
         (process.env.NODE_ENV === "development"
           ? "http://localhost:3000"
           : (() => {
-              throw new Error(
-                "NEXT_PUBLIC_BACKEND_URL environment variable is not set. This is required for authentication to work."
-              );
-            })());
+            throw new Error(
+              "NEXT_PUBLIC_BACKEND_URL environment variable is not set. This is required for authentication to work."
+            );
+          })());
       const loginUrl = `${backendUrl}/users/login`;
 
       debugLogin(formData, loginUrl);

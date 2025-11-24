@@ -14,6 +14,7 @@ import {
   useGetMeetupsMeetingCountQuery,
   useGetMeetingsLast15DaysInvitedCountQuery,
 } from "../../../../store/api/dashboardApi";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 type DateRange = "15days" | "3months" | "6months" | "tilldate" | "custom";
 
@@ -38,6 +39,7 @@ const getPeriodLabel = (range: DateRange): string => {
 export default function DashboardPage() {
   const [activeChartIndex, setActiveChartIndex] = useState(0);
   const [selectedRange, setSelectedRange] = useState<DateRange>("15days");
+  const { isCollapsed } = useSidebar();
 
   // Get user membership type from Redux store
   const user = useSelector((state: RootState) => state.auth.user);
@@ -51,7 +53,7 @@ export default function DashboardPage() {
     membershipType.includes("industria");
 
   // Fetch dashboard data for cards
-  const { data: bizConnectData, isLoading: bizConnectLoading} = useGetReferralsMonthlyCountQuery();
+  const { data: bizConnectData, isLoading: bizConnectLoading } = useGetReferralsMonthlyCountQuery();
   const { data: bizWinData, isLoading: bizWinLoading } = useGetRecordLast15DaysCountsQuery();
   const { data: meetupsData, isLoading: meetupsLoading } = useGetMeetupsMeetingCountQuery();
   const { data: visitorData, isLoading: visitorLoading } = useGetMeetingsLast15DaysInvitedCountQuery(undefined, {
@@ -100,16 +102,16 @@ export default function DashboardPage() {
   // Conditionally add Visitor Invitation card only for core, flagship, and industria members
   const dashboardCards = canSeeVisitorInvitation
     ? [
-        ...baseDashboardCards,
-        {
-          id: "4",
-          title: `Visitor Invitation`,
-          value: isLoading ? "..." : String(visitorCount),
-          icon: "/dashboard/dash/invite.svg",
-          bgColor: "bg-white",
-          iconColor: "text-dashboard-gray",
-        },
-      ]
+      ...baseDashboardCards,
+      {
+        id: "4",
+        title: `Visitor Invitation`,
+        value: isLoading ? "..." : String(visitorCount),
+        icon: "/dashboard/dash/invite.svg",
+        bgColor: "bg-white",
+        iconColor: "text-dashboard-gray",
+      },
+    ]
     : baseDashboardCards;
 
   // Conditionally add VisitorInvitationChart only for eligible members
@@ -130,7 +132,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Dashboard Cards Grid - Clickable to switch charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className={`grid grid-cols-1 ${isCollapsed ? "md:grid-cols-2" : ""} lg:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4`}>
           {dashboardCards.map((card, index) => (
             <div
               key={card.id}

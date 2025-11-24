@@ -120,6 +120,7 @@ export default function DashboardHeaderFinal() {
                 searchParams.fname = nameParts[0];
                 searchParams.lname = nameParts.slice(1).join(" ");
             }
+            console.log('🔍 Searching members with params:', searchParams);
             searchUsers(searchParams);
         } else if (category === "posts") {
             setIsSearchingPosts(true);
@@ -234,6 +235,17 @@ export default function DashboardHeaderFinal() {
         return () => clearTimeout(timer);
     }, [searchQuery, searchCategory, allEvents]);
 
+    // Debug member results
+    useEffect(() => {
+        console.log('👥 Member Results Updated:', {
+            memberResults,
+            isSearchingMembers,
+            length: memberResults?.length,
+            searchQuery,
+            searchCategory
+        });
+    }, [memberResults, isSearchingMembers, searchQuery, searchCategory]);
+
     // Click Outside Handler
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -300,6 +312,17 @@ export default function DashboardHeaderFinal() {
         </div>
     );
 
+    // Listen for mobile menu state changes from layout
+    useEffect(() => {
+        const handleMobileMenuChange = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            setIsMobileMenuOpen(customEvent.detail.isOpen);
+        };
+
+        window.addEventListener("mobileMenuStateChanged", handleMobileMenuChange);
+        return () => window.removeEventListener("mobileMenuStateChanged", handleMobileMenuChange);
+    }, []);
+
     return (
         <>
             <header
@@ -309,220 +332,220 @@ export default function DashboardHeaderFinal() {
                 <div className="mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
                     {/* Left: Mobile Menu & Logo Area */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-shrink-0">
                         <button
                             onClick={() => window.dispatchEvent(new CustomEvent("toggleMobileMenu"))}
                             className="md:hidden p-2 rounded-md text-white hover:bg-blue-600 transition-colors"
                         >
-                            <Menu className="w-6 h-6" />
+                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
 
                         {/* Logo/Brand */}
                         <div className="font-bold text-xl text-white hidden md:block"></div>
                     </div>
 
-                    {/* Right Side: Search Bar + Actions */}
-                    <div className="flex items-center gap-3 md:gap-4">
-                        {/* Search Bar (Desktop) */}
-                        {showSearchBar && (
-                            <div className="hidden md:flex max-w-xl md:max-w-sm relative" ref={desktopSearchRef}>
-                        <div className={`w-full flex items-center bg-white rounded-lg border ${isSearchOpen ? 'border-blue-300 ring-1 ring-blue-300' : 'border-transparent'} transition-all duration-200`}>
+                    {/* Center: Search Bar (Desktop - Toggleable) */}
+                    {showSearchBar && (
+                        <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-auto" ref={desktopSearchRef}>
+                            <div className={`w-full flex items-center bg-white rounded-lg border ${isSearchOpen ? 'border-blue-300 ring-1 ring-blue-300 rounded-b-none' : 'border-transparent'} transition-all duration-200 relative`}>
 
-                            {/* Category Selector */}
-                            <div className="relative">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                                    className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-200 rounded-l-lg transition-colors border-r border-gray-200"
-                                >
-                                    <CategoryIcon className={`w-4 h-4 ${activeCategory.color}`} />
-                                    <span className={`text-sm font-medium ${activeCategory.color}`}>{activeCategory.label}</span>
-                                    <ChevronDown className="w-3 h-3 text-gray-500" />
-                                </button>
-
-                                {/* Category Dropdown */}
-                                {isCategoryDropdownOpen && (
-                                    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        {categories.map((cat) => (
-                                            <button
-                                                key={cat.value}
-                                                onClick={() => {
-                                                    setSearchCategory(cat.value);
-                                                    setIsCategoryDropdownOpen(false);
-                                                    // Trigger search immediately if query exists
-                                                    if (searchQuery.trim().length >= 2) handleSearch(searchQuery, cat.value);
-                                                }}
-                                                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${searchCategory === cat.value ? "bg-blue-50/50" : ""
-                                                    }`}
-                                            >
-                                                <cat.icon className={`w-4 h-4 ${cat.color}`} />
-                                                <span className={`text-sm font-medium ${searchCategory === cat.value ? 'text-gray-900' : 'text-gray-600'}`}>
-                                                    {cat.label}
-                                                </span>
-                                                {searchCategory === cat.value && (
-                                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Search Input */}
-                            <div className="flex-1 flex items-center px-3 relative">
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder={`Search ${activeCategory.label.toLowerCase()}...`}
-                                    className="w-full bg-transparent border-none focus:ring-0 text-sm text-gray-900 placeholder-gray-500 py-2.5 px-2"
-                                />
-                                {searchQuery && (
-                                    <button onClick={() => { setSearchQuery(""); setIsSearchOpen(false); }} className="p-1 hover:bg-gray-200 rounded-full text-gray-400 transition-colors">
-                                        <X className="w-4 h-4" />
+                                {/* Category Selector */}
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                                        className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-200 rounded-l-lg transition-colors border-r border-gray-200"
+                                    >
+                                        <CategoryIcon className={`w-4 h-4 ${activeCategory.color}`} />
+                                        <span className={`text-sm font-medium ${activeCategory.color}`}>{activeCategory.label}</span>
+                                        <ChevronDown className="w-3 h-3 text-gray-500" />
                                     </button>
-                                )}
 
-                                {/* Search Results Dropdown */}
-                                {isSearchOpen && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 max-h-[480px] overflow-y-auto z-50 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                                    {/* Category Dropdown */}
+                                    {isCategoryDropdownOpen && (
+                                        <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {categories.map((cat) => (
+                                                <button
+                                                    key={cat.value}
+                                                    onClick={() => {
+                                                        setSearchCategory(cat.value);
+                                                        setIsCategoryDropdownOpen(false);
+                                                        // Trigger search immediately if query exists
+                                                        if (searchQuery.trim().length >= 2) handleSearch(searchQuery, cat.value);
+                                                    }}
+                                                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${searchCategory === cat.value ? "bg-blue-50/50" : ""
+                                                        }`}
+                                                >
+                                                    <cat.icon className={`w-4 h-4 ${cat.color}`} />
+                                                    <span className={`text-sm font-medium ${searchCategory === cat.value ? 'text-gray-900' : 'text-gray-600'}`}>
+                                                        {cat.label}
+                                                    </span>
+                                                    {searchCategory === cat.value && (
+                                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
 
-                                        {/* MEMBERS */}
-                                        {searchCategory === "members" && (
-                                            <>
-                                                {isSearchingMembers ? renderLoading("Finding members...") :
-                                                    memberResults && memberResults.length > 0 ? (
-                                                        <>
-                                                            {renderHeader(memberResults.length, "Members")}
-                                                            {memberResults.filter(u => u._id).map(user => (
-                                                                <button
-                                                                    key={user._id!}
-                                                                    onClick={() => navigateTo(`/feeds/connections/${user._id!}?from=member-directory`, user._id!)}
-                                                                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group"
-                                                                >
-                                                                    <div className="relative flex-shrink-0">
-                                                                        {user.avatar ? (
-                                                                            <Image src={user.avatar} alt={user.fname} width={40} height={40} className="rounded-full object-cover" />
-                                                                        ) : (
-                                                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                                                                {user.fname?.[0]}
+                                {/* Search Input */}
+                                <div className="flex-1 flex items-center px-3 relative">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder={`Search ${activeCategory.label.toLowerCase()}...`}
+                                        className="w-full bg-transparent border-none focus:ring-0 text-sm text-gray-900 placeholder-gray-500 py-2.5 px-2"
+                                    />
+                                    {searchQuery && (
+                                        <button onClick={() => { setSearchQuery(""); setIsSearchOpen(false); }} className="p-1 hover:bg-gray-200 rounded-full text-gray-400 transition-colors">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+
+                                    {/* Search Results Dropdown */}
+                                    {isSearchOpen && (
+                                        <div className="absolute top-full left-0 right-0 mt-0 bg-white rounded-b-xl shadow-2xl border-x border-b border-gray-200 max-h-[480px] overflow-y-auto z-50 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+
+                                            {/* MEMBERS */}
+                                            {searchCategory === "members" && (
+                                                <>
+                                                    {isSearchingMembers ? renderLoading("Finding members...") :
+                                                        memberResults && memberResults.length > 0 ? (
+                                                            <>
+                                                                {renderHeader(memberResults.length, "Members")}
+                                                                {memberResults.filter(u => u._id).map(user => (
+                                                                    <button
+                                                                        key={user._id!}
+                                                                        onClick={() => navigateTo(`/feeds/connections/${user._id!}?from=member-directory`, user._id!)}
+                                                                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group"
+                                                                    >
+                                                                        <div className="relative flex-shrink-0">
+                                                                            {user.avatar ? (
+                                                                                <Image src={user.avatar} alt={user.fname} width={40} height={40} className="rounded-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                                                                    {user.fname?.[0]}
+                                                                                </div>
+                                                                            )}
+                                                                            {navigatingId === user._id && (
+                                                                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-full">
+                                                                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{user.fname} {user.lname}</p>
+                                                                            <p className="text-xs text-gray-500 truncate">{user.business || "Member"}</p>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </>
+                                                        ) : renderNoResults("No members found matching your search.")}
+                                                </>
+                                            )}
+
+                                            {/* POSTS */}
+                                            {searchCategory === "posts" && (
+                                                <>
+                                                    {isSearchingPosts ? renderLoading("Searching posts...") :
+                                                        postResults.length > 0 ? (
+                                                            <>
+                                                                {renderHeader(postResults.length, "Posts")}
+                                                                {postResults.map(post => (
+                                                                    <button
+                                                                        key={post.id}
+                                                                        onClick={() => navigateTo(post.postSource === "bizpulse" ? `/feeds/biz-pulse/${post.id}` : `/feeds/biz-hub/${post.id}`, post.id)}
+                                                                        className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group relative"
+                                                                    >
+                                                                        {/* Post Type Icon - Top Right */}
+                                                                        <div className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center ${post.postSource === 'bizpulse' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'}`}>
+                                                                            {post.postSource === 'bizpulse' ? <Activity className="w-4 h-4" /> : <Network className="w-4 h-4" />}
+                                                                        </div>
+
+                                                                        {/* Avatar */}
+                                                                        <Avatar
+                                                                            src={post.author.avatar}
+                                                                            alt={post.author.name}
+                                                                            size="md"
+                                                                            fallbackText={post.author.name}
+                                                                        />
+
+                                                                        {/* Content */}
+                                                                        <div className="flex-1 min-w-0 pr-12">
+                                                                            {/* Post Title */}
+                                                                            <p className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">{post.title}</p>
+
+                                                                            {/* Author Name & Date */}
+                                                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                                <span className="font-medium">{post.author.name}</span>
+                                                                                <span>•</span>
+                                                                                <span>{post.timeAgo}</span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Loading Spinner */}
+                                                                        {navigatingId === post.id && (
+                                                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                                                                                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                                                                             </div>
                                                                         )}
-                                                                        {navigatingId === user._id && (
-                                                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-full">
+                                                                    </button>
+                                                                ))}
+                                                            </>
+                                                        ) : renderNoResults("No posts found.")}
+                                                </>
+                                            )}
+
+                                            {/* EVENTS */}
+                                            {searchCategory === "events" && (
+                                                <>
+                                                    {eventResults.length > 0 ? (
+                                                        <>
+                                                            {renderHeader(eventResults.length, "Events")}
+                                                            {eventResults.map(event => (
+                                                                <button
+                                                                    key={event.id}
+                                                                    onClick={() => navigateTo(`/feeds/events/event/${event.id}`, event.id)}
+                                                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group"
+                                                                >
+                                                                    <div className="flex-shrink-0 relative">
+                                                                        {event.banner ? (
+                                                                            <Image src={event.banner} alt={event.title} width={48} height={48} className="rounded-lg object-cover" />
+                                                                        ) : (
+                                                                            <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                                                                                <Calendar className="w-6 h-6" />
+                                                                            </div>
+                                                                        )}
+                                                                        {navigatingId === event.id && (
+                                                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
                                                                                 <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                                                                             </div>
                                                                         )}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{user.fname} {user.lname}</p>
-                                                                        <p className="text-xs text-gray-500 truncate">{user.business || "Member"}</p>
+                                                                        <p className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:text-purple-600 transition-colors">{event.title}</p>
+                                                                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                                                                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {event.eventDate}</span>
+                                                                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.venue}</span>
+                                                                        </div>
                                                                     </div>
                                                                 </button>
                                                             ))}
                                                         </>
-                                                    ) : renderNoResults("No members found matching your search.")}
-                                            </>
-                                        )}
-
-                                        {/* POSTS */}
-                                        {searchCategory === "posts" && (
-                                            <>
-                                                {isSearchingPosts ? renderLoading("Searching posts...") :
-                                                    postResults.length > 0 ? (
-                                                        <>
-                                                            {renderHeader(postResults.length, "Posts")}
-                                                            {postResults.map(post => (
-                                                                <button
-                                                                    key={post.id}
-                                                                    onClick={() => navigateTo(post.postSource === "bizpulse" ? `/feeds/biz-pulse/${post.id}` : `/feeds/biz-hub/${post.id}`, post.id)}
-                                                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group relative"
-                                                                >
-                                                                    {/* Post Type Icon - Top Right */}
-                                                                    <div className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center ${post.postSource === 'bizpulse' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'}`}>
-                                                                        {post.postSource === 'bizpulse' ? <Activity className="w-4 h-4" /> : <Network className="w-4 h-4" />}
-                                                                    </div>
-
-                                                                    {/* Avatar */}
-                                                                    <Avatar
-                                                                        src={post.author.avatar}
-                                                                        alt={post.author.name}
-                                                                        size="md"
-                                                                        fallbackText={post.author.name}
-                                                                    />
-
-                                                                    {/* Content */}
-                                                                    <div className="flex-1 min-w-0 pr-12">
-                                                                        {/* Post Title */}
-                                                                        <p className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">{post.title}</p>
-
-                                                                        {/* Author Name & Date */}
-                                                                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                                            <span className="font-medium">{post.author.name}</span>
-                                                                            <span>•</span>
-                                                                            <span>{post.timeAgo}</span>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Loading Spinner */}
-                                                                    {navigatingId === post.id && (
-                                                                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                                                            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                                                        </div>
-                                                                    )}
-                                                                </button>
-                                                            ))}
-                                                        </>
-                                                    ) : renderNoResults("No posts found.")}
-                                            </>
-                                        )}
-
-                                        {/* EVENTS */}
-                                        {searchCategory === "events" && (
-                                            <>
-                                                {eventResults.length > 0 ? (
-                                                    <>
-                                                        {renderHeader(eventResults.length, "Events")}
-                                                        {eventResults.map(event => (
-                                                            <button
-                                                                key={event.id}
-                                                                onClick={() => navigateTo(`/feeds/events/event/${event.id}`, event.id)}
-                                                                className="w-full px-4 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left group"
-                                                            >
-                                                                <div className="flex-shrink-0 relative">
-                                                                    {event.banner ? (
-                                                                        <Image src={event.banner} alt={event.title} width={48} height={48} className="rounded-lg object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
-                                                                            <Calendar className="w-6 h-6" />
-                                                                        </div>
-                                                                    )}
-                                                                    {navigatingId === event.id && (
-                                                                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
-                                                                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <p className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:text-purple-600 transition-colors">{event.title}</p>
-                                                                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                                                                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {event.eventDate}</span>
-                                                                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.venue}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </button>
-                                                        ))}
-                                                    </>
-                                                ) : renderNoResults("No upcoming events found.")}
-                                            </>
-                                        )}
-                                    </div>
-                                )}
+                                                    ) : renderNoResults("No upcoming events found.")}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                            </div>
-                        )}
+                    )}
 
+                    {/* Right Side: Actions */}
+                    <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
                         {/* Search Toggle (Desktop & Mobile) */}
                         <button
                             className="p-2 text-white hover:bg-blue-600 rounded-full"
@@ -616,7 +639,7 @@ export default function DashboardHeaderFinal() {
                         </div>
                     </div>
                 )}
-            </header>
+            </header >
             {/* Spacer to prevent content overlap - only show when header is visible */}
             {isHeaderVisible && <div className="h-16" />}
         </>

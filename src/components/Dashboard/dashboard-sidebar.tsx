@@ -21,7 +21,7 @@ import ProfileSection from "./ProfileSection";
 
 const Arrow = ({ collapsed }: { collapsed: boolean }) => (
   <svg
-    className="w-4 h-4 text-white"
+    className="w-5 h-5 text-white"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -46,9 +46,8 @@ const SidebarIcon = memo(
     isCollapsed?: boolean;
   }) => (
     <div
-      className={`transition-all duration-300 ${
-        isCollapsed ? "w-6 h-6" : "w-5 h-5"
-      }`}
+      className={`transition-all duration-300 ${isCollapsed ? "w-8 h-8" : "w-5 h-5"
+        }`}
       style={{
         WebkitMask: `url(${src}) center/contain no-repeat`,
         mask: `url(${src}) center/contain no-repeat`,
@@ -143,12 +142,12 @@ const navigationSections = [
         text: "Account Settings",
         icon: "/dashboard/sidebaricons/settings.svg",
       },
-      {
-        href: "#",
-        text: "Logout",
-        lucideIcon: LogOut,
-        isLogout: true,
-      },
+      // {
+      //   href: "#",
+      //   text: "Logout",
+      //   lucideIcon: LogOut,
+      //   isLogout: true,
+      // },
     ],
   },
 ];
@@ -210,24 +209,22 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`h-full z-50 fixed md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${
-        isCollapsed ? "w-24" : "w-64 xl:w-72"
-      }`}
+      className={`h-full z-50 md:relative flex flex-col border-r border-gray-200 bg-gradient-to-b from-slate-50 to-white transition-all duration-300 group/sidebar ${isCollapsed ? "w-24" : "w-64 xl:w-72"
+        }`}
     >
-      {/* Logo - Hidden on mobile */}
-      {!isMobile && (
-        <div className="pt-6 px-5 mb-6 flex justify-center">
-          <Link href="/feeds" className="transition-transform hover:scale-105">
-            <Image
-              src={isCollapsed ? "/favicon.ico" : "/bizcivitas.svg"}
-              width={150}
-              height={40}
-              alt="BizCivitas"
-              priority
-            />
-          </Link>
-        </div>
-      )}
+      {/* Logo */}
+      <div className="pt-6 px-5 mb-6 flex justify-center">
+        <Link href="/feeds" className="transition-transform hover:scale-105 flex justify-center">
+          <Image
+            src={isCollapsed ? "/favicon.ico" : "/bizcivitas.svg"}
+            width={isCollapsed ? 40 : 150}
+            height={40}
+            alt="BizCivitas"
+            priority
+            className={isCollapsed ? "w-10 h-10 object-contain" : "w-auto h-10"}
+          />
+        </Link>
+      </div>
 
       {/* Profile */}
       <ProfileSection isCollapsed={isCollapsed} onNavigate={onNavigate} />
@@ -293,6 +290,23 @@ export default function DashboardSidebar({
           );
         })}
       </nav>
+
+      {/* Logout Button */}
+      <div className="p-2 border-t border-gray-200 bg-white">
+        <button
+          onClick={handleLogout}
+          className={`w-full group flex items-center rounded-md transition-all duration-300 text-gray-600 hover:bg-red-50 hover:text-red-600 ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"
+            }`}
+          title={isCollapsed ? "Logout" : undefined}
+        >
+          <LogOut
+            strokeWidth={2.5}
+            className={`transition-all duration-300 ${isCollapsed ? "w-8 h-8" : "w-5 h-5"
+              } text-gray-500 group-hover:text-red-600`}
+          />
+          {!isCollapsed && <span className="ml-3 truncate text-sm font-medium">Logout</span>}
+        </button>
+      </div>
     </aside>
   );
 }
@@ -324,15 +338,14 @@ const SidebarLink = memo(
         )}
         {LucideIcon ? (
           <LucideIcon
-            className={`transition-all duration-300 ${
-              isCollapsed ? "w-6 h-6" : "w-5 h-5"
-            } ${
-              isLogout
-                ? "text-red-600"
+            strokeWidth={2.5}
+            className={`transition-all duration-300 ${isCollapsed ? "w-8 h-8" : "w-5 h-5"
+              } ${isLogout
+                ? "text-gray-500 group-hover:text-red-600"
                 : isActive
-                ? "text-blue-600"
-                : "text-gray-500"
-            }`}
+                  ? "text-blue-600"
+                  : "text-gray-500"
+              }`}
           />
         ) : icon ? (
           <SidebarIcon
@@ -345,13 +358,12 @@ const SidebarLink = memo(
       </>
     );
 
-    const className = `group flex items-center rounded-md transition-all duration-300 ${
-      isLogout
-        ? "text-red-600 hover:bg-red-50 hover:text-red-700"
-        : isActive
+    const className = `group flex items-center rounded-md transition-all duration-300 ${isLogout
+      ? "text-gray-600 hover:bg-red-50 hover:text-red-600"
+      : isActive
         ? "bg-blue-50/50 text-blue-700 font-semibold"
         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-    } ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"}`;
+      } ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"}`;
 
     return (
       <li>

@@ -68,7 +68,7 @@ const UserCard: React.FC<UserCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative bg-white rounded-2xl border-2 border-gray-100 p-3 xl:p-6 cursor-pointer transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 hover:border-transparent overflow-hidden"
+      className="group relative bg-white rounded-2xl border-2 border-gray-100 p-3 xl:p-6 cursor-pointer transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 hover:border-transparent overflow-hidden min-h-[280px] flex flex-col"
     >
       {/* Animated gradient border on hover using brand colors */}
       <div
@@ -98,7 +98,7 @@ const UserCard: React.FC<UserCardProps> = ({
       )}
 
       {/* Avatar Section */}
-      <div className="flex flex-col items-center mb-6">
+      <div className="flex flex-col items-center mb-6 flex-1">
         <div className="relative mb-4">
           <div className="rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
             <Avatar

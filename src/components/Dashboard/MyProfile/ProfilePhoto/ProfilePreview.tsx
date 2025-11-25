@@ -66,22 +66,22 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
           {/* Profile image with membership border */}
           <div
             className={`${sizeClasses[size]} rounded-full p-1
-               ${
-                 isCoreMember
-                   ? "bg-gradient-to-tr from-orange-500 via-red-500 to-pink-500"
-                   : "bg-gradient-to-tr from-blue-500 to-purple-500"
-               }`}
+               ${isCoreMember
+                ? "bg-gradient-to-tr from-orange-500 via-red-500 to-pink-500"
+                : "bg-gradient-to-tr from-blue-500 to-purple-500"
+              }`}
           >
             <div
               className="w-full h-full rounded-full overflow-hidden bg-white cursor-pointer"
               onClick={() => setShowPreviewModal(true)}
             >
-              <Image
+              <img
                 src={currentImageUrl || "/images/default-avatar.svg"}
                 alt="Profile"
-                width={size === "large" ? 128 : size === "medium" ? 80 : 48}
-                height={size === "large" ? 128 : size === "medium" ? 80 : 48}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "/images/default-avatar.svg";
+                }}
               />
             </div>
           </div>
@@ -90,14 +90,12 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
           {showMembershipBadge && isCoreMember && (
             <div className="absolute -top-1 -right-1">
               <div
-                className={`${
-                  size === "large" ? "w-8 h-8" : "w-6 h-6"
-                } bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white`}
+                className={`${size === "large" ? "w-8 h-8" : "w-6 h-6"
+                  } bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white`}
               >
                 <span
-                  className={`text-yellow-800 ${
-                    size === "large" ? "text-base" : "text-xs"
-                  }`}
+                  className={`text-yellow-800 ${size === "large" ? "text-base" : "text-xs"
+                    }`}
                 >
                   👑
                 </span>
@@ -133,9 +131,8 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
         {/* User name */}
         <div className="text-center">
           <h3
-            className={`font-semibold text-gray-900 ${
-              size === "large" ? "text-xl" : "text-base"
-            }`}
+            className={`font-semibold text-gray-900 ${size === "large" ? "text-xl" : "text-base"
+              }`}
           >
             {user
               ? `${user.fname || ""} ${user.lname || ""}`.trim()
@@ -143,9 +140,8 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
           </h3>
           {user?.membershipType && (
             <p
-              className={`text-gray-600 ${
-                size === "large" ? "text-base" : "text-sm"
-              }`}
+              className={`text-gray-600 ${size === "large" ? "text-base" : "text-sm"
+                }`}
             >
               {user.membershipType} Member
             </p>
@@ -214,9 +210,9 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
         onEdit={
           showEditButton
             ? () => {
-                setShowPreviewModal(false);
-                setShowUploadModal(true);
-              }
+              setShowPreviewModal(false);
+              setShowUploadModal(true);
+            }
             : undefined
         }
       />

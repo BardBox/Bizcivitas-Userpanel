@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Download, IndianRupee, ChevronDown, ChevronUp, Edit2, Trash2, Save } from "lucide-react";
 import DateRangePicker from "../DateRangePicker";
 import DeleteConfirmModal from "../../modals/DeleteConfirmModal";
+import { DashboardPDFGenerator } from "@/utils/pdfGenerator";
 
 interface UserDetails {
   _id?: string;
@@ -176,11 +177,11 @@ export default function BizWinDetailModal({
 
       if (response.ok && data.success) {
 
-        // Swap the assignments because backend returns them in reverse
-        setGivenData(data.data.tyfcbReceived || []);
-        setReceivedData(data.data.tyfcbGiven || []);
-        setTotalGivenAmount(data.data.totalReceivedAmount || 0);
-        setTotalReceivedAmount(data.data.totalGivenAmount || 0);
+        // Normal data assignments - given gets given data, received gets received data
+        setGivenData(data.data.tyfcbGiven || []);
+        setReceivedData(data.data.tyfcbReceived || []);
+        setTotalGivenAmount(data.data.totalGivenAmount || 0);
+        setTotalReceivedAmount(data.data.totalReceivedAmount || 0);
 
       } else {
         console.error("BizWin API error:", data);
@@ -312,7 +313,54 @@ export default function BizWinDetailModal({
   };
 
   const handleDownloadPDF = () => {
-    alert("PDF download functionality will be implemented");
+    try {
+      const pdfGenerator = new DashboardPDFGenerator();
+
+      // Get current data
+      const currentData = activeTab === "given" ? givenData : receivedData;
+      const currentTotal = activeTab === "given" ? totalGivenAmount : totalReceivedAmount;
+
+      // Format data for PDF
+      const records = currentData.map((record) => {
+        // Use the same logic as the modal display (lines 515-528)
+        const user = activeTab === "given" ? record.toUser : record.fromUser;
+        const displayUser = typeof user === 'object' ? user : null;
+
+        let userName = "Unknown User";
+        let userBusiness = "-";
+
+        if (displayUser) {
+          // Try to get full name from fname + lname first, fallback to name field
+          if (displayUser.fname && displayUser.lname) {
+            userName = `${displayUser.fname} ${displayUser.lname}`.trim();
+          } else if (displayUser.name) {
+            userName = displayUser.name;
+          }
+          userBusiness = displayUser.business || displayUser.companyName || "-";
+        } else if (typeof user === 'string') {
+          userName = user;
+        }
+
+        return {
+          userName,
+          business: userBusiness,
+          amount: record.amount,
+          comments: record.comments || "-",
+          date: formatDate(record.createdAt || record.date || ""),
+        };
+      });
+
+      pdfGenerator.generateBizWinPDF(
+        records,
+        activeTab,
+        { start: startDate, end: endDate },
+        currentData.length,
+        currentTotal
+      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   if (!isOpen) return null;
@@ -464,13 +512,13 @@ export default function BizWinDetailModal({
             <div className="space-y-4">
               {currentData
                 .filter((record) => {
-                  // Since we swapped the data, the user logic is also reversed
-                  const user = activeTab === "given" ? record.fromUser : record.toUser;
+                  // Normal logic: given tab shows toUser (who you gave to), received tab shows fromUser (who gave to you)
+                  const user = activeTab === "given" ? record.toUser : record.fromUser;
                   return user !== null && user !== undefined;
                 })
                 .map((record) => {
-                  // Since we swapped the data, the user logic is also reversed
-                  const user = activeTab === "given" ? record.fromUser : record.toUser;
+                  // Normal logic: given tab shows toUser (who you gave to), received tab shows fromUser (who gave to you)
+                  const user = activeTab === "given" ? record.toUser : record.fromUser;
                   const displayUser = typeof user === 'object' ? user : null;
 
                   let userName = "Unknown User";

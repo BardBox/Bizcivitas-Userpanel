@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Download, Mail, Phone, MapPin, IndianRupee, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import DateRangePicker from "../DateRangePicker";
+import { DashboardPDFGenerator } from "@/utils/pdfGenerator";
 
 interface VisitorRecord {
   _id: string;
@@ -164,7 +165,43 @@ export default function VisitorInvitationDetailModal({
   };
 
   const handleDownloadPDF = () => {
-    alert("PDF download functionality will be implemented");
+    try {
+      const pdfGenerator = new DashboardPDFGenerator();
+
+      // Get current user info for "invited by"
+      const userStr = localStorage.getItem("user");
+      let currentUserName = "Unknown";
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          currentUserName = user.name || `${user.fname || ""} ${user.lname || ""}`.trim() || "Unknown";
+        } catch (e) {
+          console.error("Error parsing user:", e);
+        }
+      }
+
+      // Format data for PDF
+      const records = visitorsData.map((visitor) => ({
+        meetingTitle: visitor.meetingTitle || "N/A",
+        visitorName: visitor.visitorName || "Unknown",
+        email: visitor.email,
+        mobile: visitor.mobile,
+        businessCategory: visitor.businessCategory
+          ? `${visitor.businessCategory}${visitor.businessSubcategory ? ` - ${visitor.businessSubcategory}` : ""}`
+          : undefined,
+        invitedBy: currentUserName,
+        date: formatDate(visitor.createdAt || visitor.meetingDate || ""),
+      }));
+
+      pdfGenerator.generateVisitorInvitationsPDF(
+        records,
+        { start: startDate, end: endDate },
+        visitorsData.length
+      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   const formatDate = (dateString: string) => {

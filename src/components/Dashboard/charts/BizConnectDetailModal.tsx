@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useUpdateReferralSlipMutation, useDeleteReferralSlipMutation } from "../../../../store/api/dashboardApi";
 import EditReferralModal from "./EditReferralModal";
 import DateRangePicker from "../DateRangePicker";
+import { DashboardPDFGenerator } from "@/utils/pdfGenerator";
 
 interface UserDetails {
   _id?: string;
@@ -16,6 +17,7 @@ interface UserDetails {
   avatar?: string;
   business?: string;
   businessSubcategory?: string;
+  companyName?: string;
   email?: string;
 }
 
@@ -203,8 +205,56 @@ export default function BizConnectDetailModal({
   };
 
   const handleDownloadPDF = () => {
-    // TODO: Implement PDF generation
-    alert("PDF download functionality will be implemented");
+    try {
+      const pdfGenerator = new DashboardPDFGenerator();
+
+      // Format data for PDF
+      const records = currentData.map((record) => {
+        const displayUser = activeTab === "given"
+          ? (record.toUserDetails || record.to)
+          : (record.fromUserDetails || record.from);
+
+        // Get user name - backend returns "toUser" or "fromUser" string field
+        let userName = "Unknown User";
+        if (activeTab === "given" && record.toUser) {
+          userName = record.toUser;
+        } else if (activeTab === "received" && record.fromUser) {
+          userName = record.fromUser;
+        } else if (displayUser?.fname && displayUser?.lname) {
+          userName = `${displayUser.fname} ${displayUser.lname}`.trim();
+        } else if (displayUser?.name) {
+          userName = displayUser.name;
+        }
+
+        // Get business - check nested structure from backend
+        let business = "-";
+        if (typeof displayUser === 'object' && displayUser !== null) {
+          business = displayUser.business || displayUser.companyName || "-";
+        }
+
+        return {
+          userName,
+          business,
+          invitedName: record.referralName || record.referral || "N/A",
+          telephone: record.telephone || "-",
+          email: record.email || "-",
+          contactRelation: record.contactRelation || "-",
+          status: record.status || "Not Contacted Yet",
+          date: formatDate(record.createdAt || record.date || ""),
+          comments: record.comments || "-",
+        };
+      });
+
+      pdfGenerator.generateBizConnectPDF(
+        records,
+        activeTab,
+        { start: startDate, end: endDate },
+        totalCount
+      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   const handleDelete = async (referralId: string) => {

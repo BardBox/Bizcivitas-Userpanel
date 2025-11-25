@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Download, Calendar, MapPin, Users, ChevronDown, ChevronUp, Edit2, Save, FileText, Clock, Trash2 } from "lucide-react";
 import DateRangePicker from "../DateRangePicker";
 import DeleteConfirmModal from "../../modals/DeleteConfirmModal";
+import { DashboardPDFGenerator } from "@/utils/pdfGenerator";
 
 interface UserDetails {
   _id?: string;
@@ -324,7 +325,42 @@ export default function MeetupsDetailModal({
   };
 
   const handleDownloadPDF = () => {
-    alert("PDF download functionality will be implemented");
+    try {
+      const pdfGenerator = new DashboardPDFGenerator();
+
+      // Format data for PDF
+      const records = meetupsData.map((meetup) => {
+        const creatorDetails = meetup.creatorDetails || meetup.createdBy;
+        let organizerName = "Unknown";
+
+        if (typeof creatorDetails === 'object' && creatorDetails !== null) {
+          if (creatorDetails.fname && creatorDetails.lname) {
+            organizerName = `${creatorDetails.fname} ${creatorDetails.lname}`.trim();
+          } else if (creatorDetails.name) {
+            organizerName = creatorDetails.name;
+          }
+        }
+
+        return {
+          title: meetup.title || "Untitled Meetup",
+          organizer: organizerName,
+          date: formatDate(meetup.date),
+          time: meetup.time || "-",
+          place: meetup.meetingPlace || "-",
+          attendees: Array.isArray(meetup.attendees) ? meetup.attendees.length : 0,
+          agenda: meetup.agenda,
+        };
+      });
+
+      pdfGenerator.generateMeetupsPDF(
+        records,
+        { start: startDate, end: endDate },
+        meetupsData.length
+      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   const formatDate = (dateString: string) => {

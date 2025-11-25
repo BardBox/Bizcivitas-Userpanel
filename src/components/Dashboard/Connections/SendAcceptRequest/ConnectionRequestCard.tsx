@@ -54,88 +54,133 @@ const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({
   );
 
   return (
-    <div className="group relative bg-white rounded-2xl border-2 border-gray-100 p-4 cursor-pointer transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.01] hover:-translate-y-1 hover:border-transparent overflow-hidden">
-      {/* Animated gradient border on hover using brand colors */}
-      <div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
-        style={{
-          padding: '2px',
-          background: 'linear-gradient(135deg, var(--color-brand-orange), var(--color-brand-blue), var(--color-brand-green-dark))'
-        }}
-      >
-        <div className="absolute inset-[2px] bg-white rounded-2xl"></div>
-      </div>
-
-      {/* Glow effect on hover using brand colors */}
-      <div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 -z-20"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 157, 0, 0.2), rgba(51, 89, 255, 0.2), rgba(29, 178, 18, 0.2))'
-        }}
-      ></div>
+    <div className="bg-white rounded-lg border border-gray-200 p-2 md:p-3 transition-all duration-200 hover:shadow-md hover:border-blue-300">
       {request.type === "received" ? (
-        // RECEIVED REQUEST LAYOUT: Avatar - Info - Actions
-        <div className="flex items-center gap-4">
+        // RECEIVED REQUEST LAYOUT: Compact list on mobile, normal on desktop
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Avatar */}
           <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
-            <Avatar
-              src={displayUser.avatar}
-              alt={userName}
-              size="xl"
-              fallbackText={userName}
-              showMembershipBorder={false}
-              className="cursor-pointer"
-            />
+            <div className="block md:hidden">
+              <Avatar
+                src={displayUser.avatar}
+                alt={userName}
+                size="sm"
+                fallbackText={userName}
+                showMembershipBorder={false}
+                className="cursor-pointer"
+              />
+            </div>
+            <div className="hidden md:block">
+              <Avatar
+                src={displayUser.avatar}
+                alt={userName}
+                size="md"
+                fallbackText={userName}
+                showMembershipBorder={false}
+                className="cursor-pointer"
+              />
+            </div>
           </Link>
-          <UserInfo />
-          <div className="flex-shrink-0 flex gap-3">
-            {/* Accept Button */}
+
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`}>
+              <h3 className="font-semibold text-blue-600 text-xs md:text-sm truncate hover:text-blue-700 cursor-pointer leading-none m-0 p-0">
+                {userName}
+              </h3>
+            </Link>
+            {jobTitle && (
+              <p className="text-[10px] md:text-xs text-gray-600 truncate leading-none mt-0.5 m-0 p-0">
+                {jobTitle}
+              </p>
+            )}
+            {companyName && (
+              <p className="text-[10px] md:text-xs text-gray-500 truncate leading-none mt-0.5 m-0 p-0">
+                {companyName}
+              </p>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex-shrink-0 flex items-center gap-1.5 md:gap-2">
             <button
               onClick={() => onAccept?.(request.connectionId)}
               disabled={isProcessing}
-              className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-              title="Accept request"
+              className="p-1.5 md:p-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all duration-200 disabled:opacity-50"
+              title="Accept"
               aria-label="Accept connection request"
             >
-              <Check className="h-5 w-5" />
+              <Check className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </button>
-            {/* Reject Button */}
             <button
               onClick={() => onReject?.(request.connectionId)}
               disabled={isProcessing}
-              className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-              title="Reject request"
+              className="p-1.5 md:p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-200 disabled:opacity-50"
+              title="Reject"
               aria-label="Reject connection request"
             >
-              <X className="h-5 w-5" />
+              <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </button>
           </div>
         </div>
       ) : (
-        // SENT REQUEST LAYOUT: Withdraw - Info - Avatar
-        <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
-            {/* Withdraw Button */}
+        // SENT REQUEST LAYOUT: Compact list on mobile, normal on desktop
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Avatar - First */}
+          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
+            <div className="block md:hidden">
+              <Avatar
+                src={displayUser.avatar}
+                alt={userName}
+                size="sm"
+                fallbackText={userName}
+                showMembershipBorder={false}
+                className="cursor-pointer"
+              />
+            </div>
+            <div className="hidden md:block">
+              <Avatar
+                src={displayUser.avatar}
+                alt={userName}
+                size="md"
+                fallbackText={userName}
+                showMembershipBorder={false}
+                className="cursor-pointer"
+              />
+            </div>
+          </Link>
+
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`}>
+              <h3 className="font-semibold text-blue-600 text-xs md:text-sm truncate hover:text-blue-700 cursor-pointer leading-none m-0 p-0">
+                {userName}
+              </h3>
+            </Link>
+            {jobTitle && (
+              <p className="text-[10px] md:text-xs text-gray-600 truncate leading-none mt-0.5 m-0 p-0">
+                {jobTitle}
+              </p>
+            )}
+            {companyName && (
+              <p className="text-[10px] md:text-xs text-gray-500 truncate leading-none mt-0.5 m-0 p-0">
+                {companyName}
+              </p>
+            )}
+          </div>
+
+          {/* Withdraw Button - Last */}
+          <div className="flex-shrink-0 flex items-center">
             <button
               onClick={() => onWithdraw?.(request.connectionId)}
               disabled={isProcessing}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-              aria-label="Withdraw connection request"
+              className="flex items-center justify-center gap-1 px-2.5 py-1.5 md:px-3 md:py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-md text-[10px] md:text-xs font-medium transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+              aria-label="Withdraw"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
               Withdraw
             </button>
           </div>
-          <UserInfo />
-          <Link href={`/feeds/connections/${displayUser.id}?from=connect-members`} className="flex-shrink-0">
-            <Avatar
-              src={displayUser.avatar}
-              alt={userName}
-              size="xl"
-              fallbackText={userName}
-              showMembershipBorder={false}
-              className="cursor-pointer"
-            />
-          </Link>
         </div>
       )}
     </div>

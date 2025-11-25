@@ -605,19 +605,19 @@ function ConnectionsPageContent() {
       {activeTab === "requests" && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Sent/Received Sub-Tabs */}
-          <div className="flex gap-2 border-b border-gray-200 mb-6">
+          <div className="flex gap-1 sm:gap-2 border-b border-gray-200 mb-6 overflow-x-auto">
             {/* Received Sub-Tab */}
             <button
               onClick={() => setRequestsSubTab("received")}
-              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${requestsSubTab === "received"
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${requestsSubTab === "received"
                 ? "border-b-2 border-blue-600 text-blue-600"
                 : "text-gray-600 hover:text-gray-900"
                 }`}
             >
-              <Inbox className="h-5 w-5" />
-              Received
+              <Inbox className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span>Received</span>
               {receivedCount > 0 && (
-                <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="bg-blue-100 text-blue-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold">
                   {receivedCount}
                 </span>
               )}
@@ -626,15 +626,15 @@ function ConnectionsPageContent() {
             {/* Sent Sub-Tab */}
             <button
               onClick={() => setRequestsSubTab("sent")}
-              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${requestsSubTab === "sent"
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${requestsSubTab === "sent"
                 ? "border-b-2 border-blue-600 text-blue-600"
                 : "text-gray-600 hover:text-gray-900"
                 }`}
             >
-              <Send className="h-5 w-5" />
-              Sent
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span>Sent</span>
               {sentCount > 0 && (
-                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold">
                   {sentCount}
                 </span>
               )}
@@ -693,12 +693,12 @@ function ConnectionsPageContent() {
             </div>
           )}
 
-          {/* Requests Grid */}
+          {/* Requests List */}
           {!requestsLoading && !requestsError && requests.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {requests.map((request: any) => (
+            <div className="space-y-2">
+              {requests.map((request: any, index: number) => (
                 <ConnectionRequestCard
-                  key={request._id}
+                  key={request._id || request.id || `request-${index}`}
                   request={request}
                   onAccept={requestsSubTab === "received" ? handleAccept : undefined}
                   onReject={requestsSubTab === "received" ? handleReject : undefined}

@@ -309,6 +309,54 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     toast("Message feature coming soon", { icon: "💬" });
   };
 
+  // Helper function to get breadcrumb info based on referrer
+  const getBreadcrumbInfo = (from: string | null) => {
+    switch (from) {
+      case "member-directory":
+        return {
+          label: "Member Directory",
+          path: "/feeds/member-directory",
+          showSubLevel: false
+        };
+      case "pagination-demo":
+        return {
+          label: "Pagination Demo",
+          path: "/feeds/pagination-demo",
+          showSubLevel: false
+        };
+      case "my-network":
+        return {
+          label: "My Network",
+          path: "/feeds/connections?tab=my-network",
+          showSubLevel: true,
+          parentLabel: "Connections",
+          parentPath: "/feeds/connections"
+        };
+      case "requests":
+        return {
+          label: "Requests",
+          path: "/feeds/connections?tab=requests",
+          showSubLevel: true,
+          parentLabel: "Connections",
+          parentPath: "/feeds/connections"
+        };
+      case "messages":
+        return {
+          label: "Messages",
+          path: "/feeds/connections?tab=messages",
+          showSubLevel: true,
+          parentLabel: "Connections",
+          parentPath: "/feeds/connections"
+        };
+      default:
+        return {
+          label: "Connections",
+          path: "/feeds/connections",
+          showSubLevel: false
+        };
+    }
+  };
+
   // ⚡ PERFORMANCE: Show skeleton instead of blank screen
   // Remove loading skeleton completely - show content immediately
   if (!isMounted) {
@@ -337,6 +385,9 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     !isPageLoading &&
     (apiError || !connectionProfile || !normalizedData || !personalCardData)
   ) {
+    // Get breadcrumb info for the error page
+    const errorBreadcrumbInfo = getBreadcrumbInfo(referrerTab);
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -348,11 +399,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
           </p>
           <button
             onClick={() => {
-              if (referrerTab) {
-                router.push(`/feeds/connections?tab=${referrerTab}`);
-              } else {
-                router.back();
-              }
+              router.push(errorBreadcrumbInfo.path);
             }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mr-2"
           >
@@ -423,19 +470,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
     (section) => section.hasData
   );
 
-  // Helper function to get tab label
-  const getTabLabel = (tab: string | null) => {
-    switch (tab) {
-      case "my-network":
-        return "My Network";
-      case "requests":
-        return "Requests";
-      case "messages":
-        return "Messages";
-      default:
-        return "Connections";
-    }
-  };
+  const breadcrumbInfo = getBreadcrumbInfo(referrerTab);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -452,31 +487,28 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
                 <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-              <button
-                onClick={() => {
-                  if (referrerTab) {
-                    router.push(`/feeds/connections?tab=${referrerTab}`);
-                  } else {
-                    router.push("/feeds/connections");
-                  }
-                }}
-                className="text-[11px] sm:text-[13px] md:text-[14px] hover:text-blue-600 transition-colors"
-              >
-                Connections
-              </button>
-              {referrerTab && (
+
+              {/* Show parent level if applicable (e.g., Connections) */}
+              {breadcrumbInfo.showSubLevel && breadcrumbInfo.parentLabel && (
                 <>
-                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
                   <button
-                    onClick={() => {
-                      router.push(`/feeds/connections?tab=${referrerTab}`);
-                    }}
-                    className="hover:text-blue-600 transition-colors text-[11px] sm:text-[13px] md:text-[14px]"
+                    onClick={() => router.push(breadcrumbInfo.parentPath!)}
+                    className="text-[11px] sm:text-[13px] md:text-[14px] hover:text-blue-600 transition-colors"
                   >
-                    {getTabLabel(referrerTab)}
+                    {breadcrumbInfo.parentLabel}
                   </button>
+                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
                 </>
               )}
+
+              {/* Show referrer page/tab */}
+              <button
+                onClick={() => router.push(breadcrumbInfo.path)}
+                className="text-[11px] sm:text-[13px] md:text-[14px] hover:text-blue-600 transition-colors"
+              >
+                {breadcrumbInfo.label}
+              </button>
+
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
               <span className="text-gray-900 font-medium text-[11px] sm:text-[13px] md:text-[14px] truncate max-w-[150px] sm:max-w-none">
                 {`${personalCardData?.fname} ${personalCardData?.lname}`}

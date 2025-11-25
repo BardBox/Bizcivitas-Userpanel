@@ -6,7 +6,6 @@ import { Users, Building2, MapPin, Loader2, AlertCircle, Search, Filter, X, Chev
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
-import { useSidebar } from '@/contexts/SidebarContext';
 
 // Member interface matching the API response
 interface Member {
@@ -43,10 +42,8 @@ interface SelectFieldProps {
 
 const ITEMS_PER_PAGE = 12;
 
-export default function MemberDirectory() {
+export default function PaginationDemo() {
   const router = useRouter();
-  const { isCollapsed } = useSidebar();
-  const [isMounted, setIsMounted] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -69,11 +66,6 @@ export default function MemberDirectory() {
   const [countries, setCountries] = useState<{ label: string; value: string }[]>([]);
   const [states, setStates] = useState<{ label: string; value: string }[]>([]);
   const [cities, setCities] = useState<{ label: string; value: string }[]>([]);
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Fetch all users initially
   const {
@@ -239,14 +231,6 @@ export default function MemberDirectory() {
     return pages;
   };
 
-  // Scroll to top of grid on page change
-  useEffect(() => {
-    const gridElement = document.getElementById('member-grid-top');
-    if (gridElement) {
-      gridElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [currentPage]);
-
   // Handlers
   const handleApplyFilters = (): void => {
     const cleanedFilters: UserSearchParams = {};
@@ -302,8 +286,20 @@ export default function MemberDirectory() {
 
   // Navigate to member profile
   const handleCardClick = (memberId: string) => {
-    router.push(`/feeds/connections/${memberId}?from=member-directory`);
+    router.push(`/feeds/connections/${memberId}?from=pagination-demo`);
   };
+
+  // Loading State
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-lg text-gray-600">Loading members...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Error State
   if (error) {
@@ -328,14 +324,14 @@ export default function MemberDirectory() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6" id="member-grid-top">
+        <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Member Directory
+                Next.js Pagination Demo 🚀
               </h1>
               <p className="text-sm text-gray-600 mt-1">
-                {hasActiveFilters ? "Search results" : "Browse all members"}
+                {hasActiveFilters ? "Search results" : "Real member data from the API with pagination"}
               </p>
             </div>
             <button
@@ -401,10 +397,7 @@ export default function MemberDirectory() {
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm">
             <Users className="h-5 w-5 text-blue-600" />
             <span className="text-sm text-gray-600">
-              {isLoading
-                ? "Loading members..."
-                : `Showing ${filteredMembers.length > 0 ? startIndex + 1 : 0}-${Math.min(endIndex, filteredMembers.length)} of ${filteredMembers.length} members`
-              }
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredMembers.length)} of {filteredMembers.length} members
             </span>
           </div>
         </div>
@@ -493,15 +486,6 @@ export default function MemberDirectory() {
           </div>
         )}
 
-        {/* Loading State (Skeleton Grid) */}
-        {isLoading && (
-          <div className={`grid grid-cols-1 ${isCollapsed ? 'md:grid-cols-2' : 'md:grid-cols-1'} lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8`}>
-            {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-              <MemberCardSkeleton key={index} />
-            ))}
-          </div>
-        )}
-
         {/* Empty State */}
         {!isLoading && filteredMembers.length === 0 && (
           <div className="min-h-[400px] flex items-center justify-center">
@@ -527,167 +511,142 @@ export default function MemberDirectory() {
 
         {/* Members Grid */}
         {!isLoading && filteredMembers.length > 0 && (
-          <>
-            <div className={`grid grid-cols-1 ${isCollapsed ? 'md:grid-cols-2' : 'md:grid-cols-1'} lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-4`}>
-              {currentMembers.map((member) => {
-                const fullName = `${member.fname} ${member.lname}`.trim() || 'Unknown Member';
-                const title = member.classification && member.classification.length <= 50
-                  ? member.classification
-                  : 'Business Professional';
-                const company = member.companyName || 'Company';
-                const location = [member.city, member.Country].filter(Boolean).join(', ') || 'Location not specified';
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            {currentMembers.map((member) => {
+              const fullName = `${member.fname} ${member.lname}`.trim() || 'Unknown Member';
+              const title = member.classification && member.classification.length <= 50
+                ? member.classification
+                : 'Business Professional';
+              const company = member.companyName || 'Company';
+              const location = [member.city, member.Country].filter(Boolean).join(', ') || 'Location not specified';
 
-                return (
-                  <div
-                    key={member._id}
-                    onClick={() => handleCardClick(member._id)}
-                    className="group relative bg-white rounded-2xl border-2 border-gray-100 p-6 transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 hover:border-transparent overflow-hidden flex flex-col items-center cursor-pointer"
-                  >
-                    {/* Animated gradient border on hover using brand colors */}
-                    <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
-                      style={{
-                        padding: '2px',
-                        background: 'linear-gradient(135deg, var(--color-brand-orange), var(--color-brand-blue), var(--color-brand-green-dark))'
-                      }}
-                    >
-                      <div className="absolute inset-[2px] bg-white rounded-2xl"></div>
-                    </div>
-
-                    {/* Glow effect on hover using brand colors */}
-                    <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 -z-20"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(255, 157, 0, 0.2), rgba(51, 89, 255, 0.2), rgba(29, 178, 18, 0.2))'
-                      }}
-                    ></div>
-
-                    {/* Avatar */}
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-green-500 mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
-                      {member.avatar ? (
-                        <Image
-                          src={getAvatarUrl(member.avatar)}
-                          alt={fullName}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">
-                          {member.fname?.[0]?.toUpperCase() || '?'}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Name */}
-                    <h3 className="text-xl font-bold text-blue-600 mb-2 text-center transition-all duration-300 group-hover:text-blue-700 group-hover:scale-105">
-                      {fullName}
-                    </h3>
-
-                    {/* Title */}
-                    <p className="text-sm text-gray-700 text-center mb-1 font-medium transition-colors duration-300 group-hover:text-gray-700">
-                      {title}
-                    </p>
-
-                    {/* Company */}
-                    <p className="text-sm text-gray-600 text-center transition-colors duration-300 group-hover:text-gray-700">
-                      {company}
-                    </p>
-                  </div>
-                );
-              })}
-
-              {/* Placeholders to maintain grid layout */}
-              {Array.from({ length: Math.max(0, ITEMS_PER_PAGE - currentMembers.length) }).map((_, index) => (
+              return (
                 <div
-                  key={`placeholder-${index}`}
-                  className="hidden lg:flex invisible bg-white rounded-2xl border-2 border-gray-100 p-6 flex-col items-center"
-                  aria-hidden="true"
+                  key={member._id}
+                  onClick={() => handleCardClick(member._id)}
+                  className="group relative bg-white rounded-2xl border-2 border-gray-100 p-6 transition-all duration-300 ease-out hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 hover:border-transparent overflow-hidden flex flex-col items-center cursor-pointer"
                 >
-                  <div className="w-20 h-20 mb-4" />
-                  <h3 className="text-xl font-bold mb-2 text-center">Placeholder</h3>
-                  <p className="text-sm mb-1 font-medium text-center">Title</p>
-                  <p className="text-sm text-center">Company</p>
+                  {/* Animated gradient border on hover using brand colors */}
+                  <div
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
+                    style={{
+                      padding: '2px',
+                      background: 'linear-gradient(135deg, var(--color-brand-orange), var(--color-brand-blue), var(--color-brand-green-dark))'
+                    }}
+                  >
+                    <div className="absolute inset-[2px] bg-white rounded-2xl"></div>
+                  </div>
+
+                  {/* Glow effect on hover using brand colors */}
+                  <div
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 -z-20"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(255, 157, 0, 0.2), rgba(51, 89, 255, 0.2), rgba(29, 178, 18, 0.2))'
+                    }}
+                  ></div>
+
+                  {/* Avatar */}
+                  <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-green-500 mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
+                    {member.avatar ? (
+                      <Image
+                        src={getAvatarUrl(member.avatar)}
+                        alt={fullName}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">
+                        {member.fname?.[0]?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <h3 className="text-xl font-bold text-blue-600 mb-2 text-center transition-all duration-300 group-hover:text-blue-700 group-hover:scale-105">
+                    {fullName}
+                  </h3>
+
+                  {/* Title */}
+                  <p className="text-sm text-gray-700 text-center mb-1 font-medium transition-colors duration-300 group-hover:text-gray-700">
+                    {title}
+                  </p>
+
+                  {/* Company */}
+                  <p className="text-sm text-gray-600 text-center transition-colors duration-300 group-hover:text-gray-700">
+                    {company}
+                  </p>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Previous Button */}
+            <button
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
+                currentPage === 1
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}
+            >
+              ← Previous
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-2">
+              {getPageNumbers().map((page, index) => (
+                <button
+                  key={index}
+                  onClick={() => typeof page === 'number' && goToPage(page)}
+                  disabled={page === '...'}
+                  className={`min-w-[40px] h-10 rounded-lg font-medium transition-all duration-200 ${
+                    page === currentPage
+                      ? 'bg-indigo-600 text-white shadow-lg scale-110'
+                      : page === '...'
+                      ? 'bg-transparent text-gray-400 cursor-default'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
               ))}
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
-                {/* Page Numbers - Centered */}
-                <div className="flex items-center justify-center gap-1 sm:gap-2 mb-3">
-                  {getPageNumbers().map((page, index) => (
-                    <button
-                      key={index}
-                      onClick={() => typeof page === 'number' && goToPage(page)}
-                      disabled={page === '...'}
-                      className={`min-w-[32px] sm:min-w-[40px] h-8 sm:h-10 rounded-lg font-medium text-sm transition-all duration-200 ${page === currentPage
-                        ? 'bg-indigo-600 text-white shadow-lg scale-105 sm:scale-110'
-                        : page === '...'
-                          ? 'bg-transparent text-gray-400 cursor-default'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
+            {/* Next Button */}
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
+                currentPage === totalPages
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}
+            >
+              Next →
+            </button>
+          </div>
 
-                {/* Previous and Next Buttons Row */}
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  {/* Previous Button */}
-                  <button
-                    onClick={goToPreviousPage}
-                    disabled={currentPage === 1}
-                    className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${currentPage === 1
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      }`}
-                  >
-                    ← Previous
-                  </button>
-
-                  {/* Next Button */}
-                  <button
-                    onClick={goToNextPage}
-                    disabled={currentPage === totalPages}
-                    className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${currentPage === totalPages
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      }`}
-                  >
-                    Next →
-                  </button>
-                </div>
-
-                {/* Page Info */}
-                <div className="text-center text-xs sm:text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-              </div>
-            )}
-          </>
+          {/* Page Info */}
+          <div className="mt-4 text-center text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </div>
+          </div>
+          )}
+        </>
         )}
-
       </div>
     </div>
   );
 }
 
 // -------------------- Sub Components --------------------
-
-function MemberCardSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 flex flex-col items-center animate-pulse">
-      <div className="w-20 h-20 rounded-full bg-gray-200 mb-4"></div>
-      <div className="h-6 w-3/4 bg-gray-200 rounded mb-2"></div>
-      <div className="h-4 w-1/2 bg-gray-200 rounded mb-1"></div>
-      <div className="h-4 w-1/3 bg-gray-200 rounded"></div>
-    </div>
-  );
-}
-
 function InputField({ label, value, onChange, placeholder }: InputFieldProps) {
   return (
     <div>
@@ -720,8 +679,9 @@ function SelectField({ label, value, onChange, options, placeholder }: SelectFie
           value={value}
           onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
           disabled={disabled}
-          className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none pr-10 ${disabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white cursor-pointer'
-            }`}
+          className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none pr-10 ${
+            disabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white cursor-pointer'
+          }`}
         >
           <option value="">{placeholder || 'Select...'}</option>
           {options.map((option) => (
@@ -730,10 +690,10 @@ function SelectField({ label, value, onChange, options, placeholder }: SelectFie
             </option>
           ))}
         </select>
-        <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none ${disabled ? 'text-gray-400' : 'text-gray-600'
-          }`} />
+        <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none ${
+          disabled ? 'text-gray-400' : 'text-gray-600'
+        }`} />
       </div>
     </div>
   );
 }
-

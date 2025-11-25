@@ -28,12 +28,14 @@ import {
 import { useAppDispatch } from "../../../../store/hooks";
 import { addToast } from "../../../../store/toastSlice";
 import ConnectionRequestCard from "@/components/Dashboard/Connections/SendAcceptRequest/ConnectionRequestCard";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 function ConnectionsPageContent() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { isCollapsed } = useSidebar();
 
   // Default states
   const [activeTab, setActiveTab] = useState<"my-network" | "requests">("my-network");
@@ -203,6 +205,14 @@ function ConnectionsPageContent() {
     setCurrentPage(1);
   }, [searchQuery, sortBy, itemsPerPage]);
 
+  // Scroll to top of grid on page change
+  useEffect(() => {
+    const gridElement = document.getElementById('connections-grid-top');
+    if (gridElement) {
+      gridElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [currentPage]);
+
   // Handle Accept Request
   const handleAccept = async (connectionId: string) => {
     setProcessingIds((prev) => new Set(prev).add(connectionId));
@@ -318,11 +328,10 @@ function ConnectionsPageContent() {
               {/* My Network Button */}
               <button
                 onClick={() => setActiveTab("my-network")}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                  activeTab === "my-network"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeTab === "my-network"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="text-[16px]">My Network</span>
@@ -331,11 +340,10 @@ function ConnectionsPageContent() {
               {/* Requests Button */}
               <button
                 onClick={() => setActiveTab("requests")}
-                className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                  activeTab === "requests"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
-                }`}
+                className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeTab === "requests"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
+                  }`}
               >
                 <Inbox className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="text-[16px]">Requests</span>
@@ -352,83 +360,83 @@ function ConnectionsPageContent() {
 
       {/* My Network Tab Content */}
       {activeTab === "my-network" && (
-        <>
-          {/* Loading State */}
-          {connectionsLoading ? (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-              <div className="flex flex-col items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p className="text-gray-600">Loading connections...</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Search Bar and Filter - Always Visible */}
+          <div className="md:flex md:flex-row items-center gap-4 flex-1 max-w-2xl mb-6" id="connections-grid-top">
+            {/* Search Bar */}
+            <div className="md:flex-1 max-w-md relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
-            </div>
-          ) : error ? (
-            /* Error State */
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-              <div className="text-center">
-                <Users className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Failed to load connections
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  There was an error loading your connections. Please try again.
-                </p>
+              <input
+                type="text"
+                placeholder="Search connections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => window.location.reload()}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  Retry
+                  <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                 </button>
-              </div>
+              )}
             </div>
-          ) : (
-            /* Search and Filter Section */
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              {/* Search Bar and Filter */}
-              <div className="md:flex md:flex-row items-center gap-4 flex-1 max-w-2xl mb-6">
-                {/* Search Bar */}
-                <div className="md:flex-1 max-w-md relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search connections..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={clearSearch}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    </button>
-                  )}
-                </div>
 
-                {/* Filter Dropdown */}
-                {connectionsCount > 0 && (
-                  <div className="flex items-center gap-2 mt-4">
-                    <Filter className="h-5 w-5 text-gray-400" />
-                    <select
-                      value={sortBy}
-                      onChange={(e) => {
-                        setSortBy(e.target.value as "default" | "recent" | "name" | "company");
-                        setCurrentPage(1);
-                      }}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                    >
-                      <option value="default">Sort by: Default</option>
-                      <option value="recent">Sort by: Recent</option>
-                      <option value="name">Sort by: Name</option>
-                      <option value="company">Sort by: Company</option>
-                    </select>
-                  </div>
-                )}
+            {/* Filter Dropdown */}
+            {connectionsCount > 0 && (
+              <div className="flex items-center gap-2 mt-4 md:mt-0">
+                <Filter className="h-5 w-5 text-gray-400" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value as "default" | "recent" | "name" | "company");
+                    setCurrentPage(1);
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option value="default">Sort by: Default</option>
+                  <option value="recent">Sort by: Recent</option>
+                  <option value="name">Sort by: Name</option>
+                  <option value="company">Sort by: Company</option>
+                </select>
               </div>
+            )}
+          </div>
 
-              {/* My Network Content */}
+          {/* Loading State - Skeleton Grid */}
+          {connectionsLoading && (
+            <div className={`grid grid-cols-1 ${isCollapsed ? 'md:grid-cols-2' : 'md:grid-cols-1'} lg:grid-cols-3 xl:grid-cols-4 gap-4`}>
+              {Array.from({ length: itemsPerPage }).map((_, index) => (
+                <ConnectionCardSkeleton key={index} />
+              ))}
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !connectionsLoading && (
+            <div className="text-center py-16">
+              <Users className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Failed to load connections
+              </h3>
+              <p className="text-gray-600 mb-4">
+                There was an error loading your connections. Please try again.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Success Content */}
+          {!connectionsLoading && !error && (
+            <>
               {connectionsCount === 0 ? (
                 <div className="text-center py-12">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -472,11 +480,9 @@ function ConnectionsPageContent() {
                     </p>
                   </div>
 
-                  {/* Connections Grid - NO FLICKERING */}
+                  {/* Connections Grid */}
                   <div
-                    className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-200 ${
-                      isPending ? "opacity-60" : "opacity-100"
-                    }`}
+                    className={`grid grid-cols-1 ${isCollapsed ? 'md:grid-cols-2' : 'md:grid-cols-1'} lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4 lg:mb-8`}
                     style={{ minHeight: "500px" }}
                   >
                     {currentConnections.map((connection) => (
@@ -490,6 +496,19 @@ function ConnectionsPageContent() {
                         isOnline={connection.isOnline}
                         referrerTab="my-network"
                       />
+                    ))}
+
+                    {/* Placeholders to maintain grid layout */}
+                    {Array.from({ length: Math.max(0, itemsPerPage - currentConnections.length) }).map((_, index) => (
+                      <div
+                        key={`placeholder-${index}`}
+                        className="hidden lg:flex invisible bg-white rounded-2xl border-2 border-gray-100 p-6 flex-col items-center min-h-[280px]"
+                        aria-hidden="true"
+                      >
+                        <div className="w-20 h-20 mb-4" />
+                        <div className="w-full border-b border-gray-200 my-4" />
+                        <div className="h-6 w-3/4 mb-2" />
+                      </div>
                     ))}
                   </div>
 
@@ -519,11 +538,10 @@ function ConnectionsPageContent() {
                               <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                                  page === currentPage
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                                }`}
+                                className={`px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${page === currentPage
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                  }`}
                               >
                                 {page}
                               </button>
@@ -553,9 +571,9 @@ function ConnectionsPageContent() {
                   )}
                 </>
               )}
-            </div>
+            </>
           )}
-        </>
+        </div>
       )}
 
       {/* Requests Tab Content */}
@@ -566,11 +584,10 @@ function ConnectionsPageContent() {
             {/* Received Sub-Tab */}
             <button
               onClick={() => setRequestsSubTab("received")}
-              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
-                requestsSubTab === "received"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${requestsSubTab === "received"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-600 hover:text-gray-900"
+                }`}
             >
               <Inbox className="h-5 w-5" />
               Received
@@ -584,11 +601,10 @@ function ConnectionsPageContent() {
             {/* Sent Sub-Tab */}
             <button
               onClick={() => setRequestsSubTab("sent")}
-              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
-                requestsSubTab === "sent"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${requestsSubTab === "sent"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-600 hover:text-gray-900"
+                }`}
             >
               <Send className="h-5 w-5" />
               Sent
@@ -678,5 +694,18 @@ export default function ConnectionsPage() {
     <React.Suspense fallback={<div>Loading...</div>}>
       <ConnectionsPageContent />
     </React.Suspense>
+  );
+}
+
+
+function ConnectionCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 flex flex-col items-center min-h-[280px] animate-pulse">
+      <div className="w-20 h-20 rounded-full bg-gray-200 mb-4"></div>
+      <div className="w-full border-b border-gray-200 my-4"></div>
+      <div className="h-6 w-3/4 bg-gray-200 rounded mb-2"></div>
+      <div className="h-4 w-1/2 bg-gray-200 rounded mb-1"></div>
+      <div className="h-4 w-1/3 bg-gray-200 rounded"></div>
+    </div>
   );
 }

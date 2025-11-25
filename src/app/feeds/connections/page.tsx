@@ -514,20 +514,9 @@ function ConnectionsPageContent() {
 
                   {/* Pagination Controls */}
                   {totalPages > 1 && (
-                    <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-4">
-                      {/* Previous Button */}
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline">Previous</span>
-                        <span className="sm:hidden">Prev</span>
-                      </button>
-
-                      {/* Page Numbers */}
-                      <div className="flex items-center gap-0.5 sm:gap-1">
+                    <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
+                      {/* Page Numbers - Centered */}
+                      <div className="flex items-center justify-center gap-1 sm:gap-2 mb-3">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                           if (
                             page === 1 ||
@@ -538,35 +527,71 @@ function ConnectionsPageContent() {
                               <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-xs sm:text-sm font-medium transition-colors ${page === currentPage
-                                  ? "bg-blue-600 text-white border-blue-600"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                                  }`}
+                                className={`min-w-[32px] sm:min-w-[40px] h-8 sm:h-10 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                  page === currentPage
+                                    ? "bg-blue-600 text-white shadow-lg scale-105 sm:scale-110"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
                               >
                                 {page}
                               </button>
                             );
                           } else if (page === currentPage - 2 || page === currentPage + 2) {
                             return (
-                              <span key={page} className="px-1 sm:px-2 text-gray-500 text-xs sm:text-sm">
+                              <button
+                                key={page}
+                                disabled
+                                className="min-w-[32px] sm:min-w-[40px] h-8 sm:h-10 bg-transparent text-gray-400 cursor-default"
+                              >
                                 ...
-                              </span>
+                              </button>
                             );
                           }
                           return null;
                         })}
                       </div>
 
-                      {/* Next Button */}
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <span className="sm:hidden">Next</span>
-                        <span className="hidden sm:inline">Next</span>
-                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
+                      {/* Previous and Next Buttons Row */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        {/* Previous Button */}
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                            currentPage === 1
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                        >
+                          <span className="flex items-center justify-center gap-1">
+                            <ChevronLeft className="h-4 w-4" />
+                            <span className="hidden sm:inline">Previous</span>
+                            <span className="sm:hidden">Prev</span>
+                          </span>
+                        </button>
+
+                        {/* Next Button */}
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                            currentPage === totalPages
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                        >
+                          <span className="flex items-center justify-center gap-1">
+                            <span className="hidden sm:inline">Next</span>
+                            <span className="sm:hidden">Next</span>
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Page Info */}
+                      <div className="text-center text-xs sm:text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                      </div>
                     </div>
                   )}
                 </>

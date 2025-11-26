@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Keyboard } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -64,10 +65,13 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
             className="relative w-full h-full cursor-pointer hover:opacity-95 transition-opacity"
             onClick={() => setIsGalleryOpen(true)}
           >
-            <img
+            <Image
               src={images[0]}
               alt={alt}
-              className="w-full h-full object-contain"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              priority
             />
             {/* Zoom hint overlay */}
             <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
@@ -128,10 +132,13 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
                 className="relative w-full aspect-video bg-gray-100 cursor-pointer hover:opacity-95 transition-opacity"
                 onClick={() => setIsGalleryOpen(true)}
               >
-                <img
+                <Image
                   src={image}
                   alt={`${alt} ${index + 1}`}
-                  className="w-full h-full object-contain"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                  priority={index === 0}
                 />
                 {/* Zoom hint overlay */}
                 <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, memo } from "react";
-import Image from "next/image";
 import { ThumbsUp, MessageSquare, Activity, Network } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import Avatar from "@/components/ui/Avatar";
 
 interface PostCardProps {

@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
     } : false,
   },
   images: {
+    unoptimized: true, // Disable Vercel Image Optimization to avoid 402 errors
     remotePatterns: [
       {
         protocol: "https",

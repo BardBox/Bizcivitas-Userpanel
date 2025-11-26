@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface AvatarProps {
   src?: string | null;
@@ -110,10 +111,11 @@ const Avatar: React.FC<AvatarProps> = ({
         <div className={`${sizeClasses[size]} rounded-full ${borderClasses}`}>
           <div className={`relative w-full h-full rounded-full overflow-hidden ${isFavicon ? 'bg-white' : 'bg-gray-200'}`}>
             {imageUrl && !imageError ? (
-              <img
+              <Image
                 src={imageUrl}
                 alt={alt}
-                className={`w-full h-full ${isFavicon ? 'object-contain p-0.5' : 'object-cover'}`}
+                fill
+                className={isFavicon ? 'object-contain p-0.5' : 'object-cover'}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
                   setImageError(true);
@@ -133,10 +135,11 @@ const Avatar: React.FC<AvatarProps> = ({
       ) : (
         <div className={`relative w-full h-full rounded-full overflow-hidden ${isFavicon ? 'bg-white' : 'bg-gray-200'}`}>
           {imageUrl && !imageError ? (
-            <img
+            <Image
               src={imageUrl}
               alt={alt}
-              className={`w-full h-full ${isFavicon ? 'object-contain p-0.5' : 'object-cover'}`}
+              fill
+              className={isFavicon ? 'object-contain p-0.5' : 'object-cover'}
               onLoad={() => setImageLoaded(true)}
               onError={() => {
                 setImageError(true);

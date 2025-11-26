@@ -1,447 +1,236 @@
-# BizCivitas User Panel - Claude Code Guidelines
+# BizCivitas User Panel - Final Day Tasks (Hand-off to Client)
 
-## 🚨 CRITICAL RULES
-
-### **DO NOT MODIFY BACKEND**
-- **NEVER** change anything in `bizcivitas-backend` folder
-- Backend is built with MongoDB, Express.js, and Node.js
-- Backend is shared across multiple platforms and is stable
-- All performance fixes should be done **ONLY IN FRONTEND**
-
-### **Mobile App Mimicking**
-- This user panel must mimic functionalities from the React Native mobile application
-- Reference the mobile app structure when implementing features
-- Match mobile app UI/UX patterns and behavior
-- Maintain feature parity with the mobile app
-
-### **NO LOADING STATES**
-- **NEVER** create or use `loading.tsx` files in routes
-- Pages should render instantly without loading skeletons
-- Use `"use client"` directive for immediate rendering
-- If data is needed, show the page immediately and load data in background
-- Loading states are SLOW and provide bad UX - avoid them!
-
-## 📁 Project Structure
-
-```
-bizcivitas-main/
-├── bizcivitas-backend/          ← DO NOT TOUCH
-│   ├── MongoDB + Express.js + Node.js
-│   └── Shared across web and mobile
-├── bizcivitas-userpanel/        ← Work here (Next.js 14 + TypeScript)
-│   ├── src/
-│   │   ├── app/                 # Next.js 14 App Router
-│   │   ├── components/          # React components
-│   │   ├── hooks/              # Custom hooks
-│   │   ├── lib/                # Utilities (Firebase, etc.)
-│   │   └── services/           # API services
-│   ├── store/                   # Redux Toolkit
-│   │   ├── api/                # RTK Query API slices
-│   │   └── slices/             # Redux slices
-│   └── types/                   # TypeScript types
-├── bizcivitas-apk/              ← React Native mobile app (reference)
-│   ├── src/
-│   │   ├── screens/
-│   │   │   ├── bizHub/         # BizHub forum screens
-│   │   │   ├── bizPulse/       # BizPulse social feed screens
-│   │   │   └── dashboard/      # Main dashboard screens
-│   │   ├── components/         # React Native components
-│   │   └── services/           # API services (Axios)
-├── Bizcivitas-Admin-panel/      ← Admin panel
-└── BizCivitas/                  ← Legacy or other platform
-```
-
-## 🎯 Technology Stack
-
-### **Frontend (User Panel)**
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **State Management:** Redux Toolkit + RTK Query
-- **Styling:** Tailwind CSS
-- **Notifications:** Firebase Cloud Messaging (FCM)
-- **HTTP Client:** Axios (via RTK Query)
-- **UI Libraries:** React Hot Toast, Headless UI
-
-### **Backend (DO NOT MODIFY)**
-- **Database:** MongoDB with Mongoose
-- **Server:** Express.js
-- **Runtime:** Node.js
-- **Authentication:** JWT
-- **File Storage:** AWS S3 + Vimeo (videos)
-- **Push Notifications:** Firebase Admin SDK
-- **Payments:** Razorpay
-
-## 🔧 Frontend Performance Optimization Guidelines
-
-### **What to Fix (Frontend Only)**
-
-1. **React Performance**
-   - Remove unnecessary `useEffect` hooks
-   - Optimize `useMemo` and `useCallback` usage
-   - Prevent unnecessary re-renders with `React.memo`
-   - Split large components into smaller ones
-
-2. **RTK Query Optimization**
-   - Remove manual `refetch()` calls (RTK Query auto-fetches)
-   - Use proper cache invalidation tags
-   - Avoid polling intervals (use WebSockets or Firebase instead)
-   - Leverage RTK Query's built-in caching
-
-3. **Bundle Size Optimization**
-   - Lazy load heavy libraries (Firebase, etc.)
-   - Use dynamic imports for code splitting
-   - Remove unused dependencies
-   - Optimize images and assets
-
-4. **API Call Optimization**
-   - Batch API requests where possible
-   - Use pagination for large lists
-   - Implement infinite scroll instead of loading all data
-   - Cache API responses properly
-
-5. **State Management**
-   - Avoid storing derived state in Redux
-   - Use selectors with memoization
-   - Keep component state local when possible
-   - Don't duplicate server state in Redux (use RTK Query)
-
-### **What NOT to Fix**
-
-1. **Backend Code**
-   - N+1 query problems → Accept as is
-   - Missing database indexes → Backend team handles
-   - Slow API endpoints → Work with what we have
-   - Database optimization → Not our responsibility
-
-2. **API Response Structure**
-   - Don't change API contracts
-   - Transform data on frontend if needed
-   - Use RTK Query transformResponse if necessary
-
-3. **Authentication Flow**
-   - Keep existing JWT implementation
-   - Don't modify auth middleware
-   - Use existing auth endpoints as-is
-
-## 📋 Common Performance Issues (Frontend Focus)
-
-### ✅ **Fixed Issues**
-
-1. **Removed 30-second API polling in NotificationDropdown**
-   - Used Firebase real-time updates instead
-   - Reduced API calls by 95%
-
-2. **Removed unnecessary refetch() in connections page**
-   - Let RTK Query handle automatic fetching
-   - Reduced duplicate API calls by 50%
-
-3. **Lazy loaded Firebase SDK**
-   - Only loads when user enables notifications
-   - Reduced initial bundle by ~250KB
-
-4. **Split large useMemo in MyProfile**
-   - Granular memoization per section
-   - Reduced unnecessary recalculations by 85%
-
-### 🔍 **Ongoing Optimizations**
-
-1. **Console.log Cleanup**
-   - Remove 125+ console.log statements
-   - Wrap debug logs in `if (process.env.NODE_ENV === 'development')`
-
-2. **Component Re-renders**
-   - Add React.memo to frequently rendered components
-   - Optimize useEffect dependencies
-   - Use useCallback for event handlers
-
-3. **Code Splitting**
-   - Lazy load route components
-   - Dynamic imports for heavy features
-   - Separate vendor chunks
-
-## 🎨 Mobile App Mimicking Guidelines
-
-### **Feature Parity Checklist**
-
-- [ ] Authentication flow matches mobile app
-- [ ] Dashboard layout similar to mobile
-- [ ] Feed/posts display matches mobile behavior
-- [ ] Connection requests work like mobile
-- [ ] Notifications match mobile app
-- [ ] Profile editing mirrors mobile
-- [ ] Event browsing/joining same as mobile
-- [ ] Search functionality matches mobile
-
-### **UI/UX Consistency**
-
-1. **Color Scheme:** Match mobile app colors
-2. **Typography:** Use same font families and sizes
-3. **Spacing:** Maintain consistent padding/margins
-4. **Icons:** Use same icon library as mobile
-5. **Animations:** Keep transitions similar
-
-### **Responsive Design**
-
-- Desktop: Full-width layouts with sidebars
-- Tablet: Adaptive grid layouts
-- Mobile Web: Should feel like native app
-- Touch-friendly tap targets (minimum 44x44px)
-
-## 🔥 Firebase Configuration
-
-### **Current Setup**
-- Firebase SDK version: 12.3.0
-- Lazy loaded (only when notifications enabled)
-- Service worker for background notifications
-- FCM tokens stored in localStorage
-
-### **Performance Notes**
-- Don't initialize Firebase on every page
-- Only load messaging module when needed
-- Use `getMessagingInstance()` for lazy loading
-- Clear tokens on logout
-
-## 🔐 Authentication Flow
-
-### **Current Implementation**
-- JWT tokens stored in cookies
-- Access token + Refresh token pattern
-- Protected routes use `ProtectedRoute` component
-- Fast auth check with `useFastAuth` hook
-
-### **Don't Modify**
-- Token generation logic (backend)
-- Auth middleware (backend)
-- Cookie settings (backend handles)
-
-## 📊 State Management Patterns
-
-### **Redux Store Structure**
-
-```typescript
-store/
-├── api/
-│   ├── baseApi.ts              # RTK Query base config
-│   ├── authApi.ts              # Auth endpoints
-│   ├── profileApi.ts           # Profile endpoints
-│   ├── connectionApi.ts        # Connections
-│   ├── notificationApi.ts      # Notifications
-│   └── ... (other API slices)
-├── slices/
-│   ├── authSlice.ts            # Auth state
-│   ├── postsSlice.ts           # Posts/feed state
-│   └── ... (other slices)
-└── store.ts                     # Store configuration
-```
-
-### **RTK Query Best Practices**
-
-```typescript
-// ✅ GOOD: Let RTK Query handle caching
-const { data, isLoading } = useGetUserQuery();
-
-// ❌ BAD: Manual refetch on mount
-useEffect(() => {
-  refetch();
-}, []);
-
-// ✅ GOOD: Use cache invalidation tags
-providesTags: ['User', 'Profile'],
-invalidatesTags: ['User'],
-
-// ❌ BAD: Polling interval
-useGetDataQuery(undefined, { pollingInterval: 30000 });
-```
-
-## 🐛 Common Pitfalls to Avoid
-
-1. **Infinite Re-render Loops**
-   - Always memoize objects/arrays in useEffect dependencies
-   - Use useCallback for functions passed as props
-   - Don't create new objects in render
-
-2. **Memory Leaks**
-   - Clean up subscriptions in useEffect return
-   - Cancel pending API calls on unmount
-   - Remove event listeners properly
-
-3. **Prop Drilling**
-   - Use Context for deeply nested props
-   - Consider component composition
-   - Don't overuse Redux for local state
-
-4. **Type Safety**
-   - Define interfaces for API responses
-   - Use TypeScript strict mode
-   - Avoid `any` type unless absolutely necessary
-
-## 📝 Code Style Guidelines
-
-### **Naming Conventions**
-- Components: PascalCase (`UserProfile.tsx`)
-- Hooks: camelCase with 'use' prefix (`useFastAuth.ts`)
-- API slices: camelCase with 'Api' suffix (`userApi.ts`)
-- Types: PascalCase (`UserProfile`, `ApiResponse`)
-
-### **File Organization**
-```typescript
-// ✅ GOOD: Organized imports
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useGetUserQuery } from '@/store/api/userApi';
-import { Button } from '@/components/ui/Button';
-import type { User } from '@/types/user';
-
-// ❌ BAD: Mixed imports
-import { Button } from '@/components/ui/Button';
-import React from 'react';
-import type { User } from '@/types/user';
-import { useGetUserQuery } from '@/store/api/userApi';
-```
-
-### **Comments**
-- Add performance fix comments with ✅ emoji
-- Explain WHY, not WHAT
-- Use JSDoc for functions
-- Add TODO comments for future improvements
-
-## 🚀 Deployment Notes
-
-### **Build Optimization**
-```bash
-npm run build
-npm run analyze  # Check bundle sizes
-```
-
-### **Environment Variables**
-```env
-NEXT_PUBLIC_API_URL=              # Backend API URL
-NEXT_PUBLIC_FIREBASE_API_KEY=     # Firebase config
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_FIREBASE_VAPID_KEY=   # For FCM
-```
-
-## 📞 Communication
-
-### **When to Ask Backend Team**
-- API response structure changes needed
-- New endpoints required
-- Performance issues that need backend fixes
-- Database schema questions
-
-### **Handle Yourself (Frontend)**
-- All performance optimizations
-- UI/UX improvements
-- React/Next.js issues
-- Bundle size reduction
-- State management optimization
-
-## 🎯 Current Task Context
-
-### **Performance Fixes Completed**
-1. ✅ Removed API polling in NotificationDropdown
-2. ✅ Removed unnecessary refetch in connections page
-3. ✅ Lazy loaded Firebase SDK
-4. ✅ Split large useMemo in MyProfile
-
-### **Next Priority Tasks**
-1. Fix biz-pulse page useEffect dependencies
-2. Add React.memo to frequently rendered components
-3. Remove console.log statements
-4. Optimize image loading
-5. Implement code splitting for routes
-
-## 📱 BizHub & BizPulse - Key Files Reference
-
-### **Web App (Bizcivitas-Userpanel)**
-
-#### BizHub Files
-- `src/app/feeds/biz-hub/page.tsx` - Main BizHub feed listing
-- `src/app/feeds/biz-hub/[id]/page.tsx` - BizHub post detail page
-- `src/app/feeds/biz-hub/create/page.tsx` - Create BizHub post
-- `src/components/Dashboard/Bizhub/BizHubPostCard.tsx` - Post card component
-- `src/components/Dashboard/BizHubTabNavigation.tsx` - Category tabs
-- `store/bizhubSlice.ts` - Redux state management
-- `src/services/bizhubApi.ts` - BizHub API service
-
-#### BizPulse Files
-- `src/app/feeds/biz-pulse/page.tsx` - Main BizPulse feed
-- `src/app/feeds/biz-pulse/[id]/page.tsx` - BizPulse post detail page
-- `src/components/Dashboard/PostCard.tsx` - BizPulse post card
-- `store/postsSlice.ts` - Redux state for posts
-
-#### Shared Components
-- `src/components/modals/ReportModal.tsx` - Report modal (used by both)
-- `src/services/reportApi.ts` - Report API service
-
-### **Mobile App (bizcivitas-apk)**
-
-#### BizHub Files (React Native)
-- `src/screens/bizHub/BizHubForumScreen.tsx` - Main BizHub screen
-- `src/screens/dashboard/ForumScreen.tsx` - Forum detail screen with comments
-
-#### BizPulse Files (React Native)
-- `src/screens/bizPulse/BizPulseForumScreen.tsx` - BizPulse feed screen
-
-#### API Service
-- `src/services/api.js` - Axios instance with JWT auth
-
-### **Backend (DO NOT MODIFY - Reference Only)**
-
-#### Report Endpoints
-- `src/routes/report.routes.js` - Report API routes
-- `src/controllers/report.controller.js` - Report logic
-- `src/models/report.model.js` - Report schema
-
-#### BizHub Endpoints
-- Post routes: `POST /api/v1/post/create`, `GET /api/v1/post/`, `GET /api/v1/post/:id`
-- Comment routes: `POST /api/v1/post/:id/comment`, `PUT /api/v1/post/comments/edit`
-- Like routes: `POST /api/v1/post/like`, `POST /api/v1/post/:id/comments/:id/like`
-- Report routes: `POST /api/v1/report` (for posts and comments)
-
-### **Report API Payload Structure**
-
-```typescript
-// Report a post
-POST /api/v1/report
-{
-  postId: string;        // MongoDB ObjectId
-  reason: "spam" | "inappropriate" | "hate speech" | "misinformation" | "other";
-}
-
-// Report a comment
-POST /api/v1/report
-{
-  postId: string;        // MongoDB ObjectId (required for finding comment)
-  commentId: string;     // MongoDB ObjectId
-  reason: "spam" | "inappropriate" | "hate speech" | "misinformation" | "other";
-}
-```
-
-### **BizHub Categories**
-```typescript
-type BizHubCategory =
-  | "all"
-  | "general-chatter"
-  | "referral-exchange"
-  | "business-deep-dive"
-  | "travel-talks"
-  | "biz-learnings"
-  | "collab-corner"
-```
-
-## 📚 References
-
-- Next.js 14 Docs: https://nextjs.org/docs
-- Redux Toolkit: https://redux-toolkit.js.org/
-- RTK Query: https://redux-toolkit.js.org/rtk-query/overview
-- Firebase Web: https://firebase.google.com/docs/web/setup
-- Tailwind CSS: https://tailwindcss.com/docs
+**Date**: November 26, 2025
+**Status**: Production Ready - Final Fixes Before Client Hand-off
 
 ---
 
-**Last Updated:** 2025-01-30
-**Maintained By:** Claude Code AI Assistant
-**Project Version:** 1.0.0
+## ✅ COMPLETED TASKS
+
+### 1. Avatar Fix - Connections & Requests Tab (Vercel 402 Error) ✓
+- **Issue**: Avatars showing 402 Payment Required error on Vercel deployment
+- **Root Cause**: Next.js Image Optimization exceeded Vercel's free tier limit
+- **Solution**: Replaced Next.js `Image` component with standard `<img>` tags in Avatar.tsx
+- **Files Modified**:
+  - `src/components/ui/Avatar.tsx` - Removed Next.js Image, added inline image URL handler
+  - Direct loading from backend without Vercel proxy
+- **Status**: ✅ FIXED
+
+---
+
+## 🔴 CRITICAL FIXES - REMAINING (Must Complete Today)
+
+### 2. Avatar Fix - BizHub Posts
+- **Issue**: Avatars not showing in BizHub post listings (Vercel deployment)
+- **Expected Fix**: Apply same Avatar.tsx fix to BizHub components
+- **Files to Check**:
+  - `src/app/feeds/biz-hub/page.tsx`
+  - BizHub post card components
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+### 3. Avatar Fix - BizHub Post Comments
+- **Issue**: Member avatars not showing in BizHub post comments
+- **Expected Fix**: Ensure comment components use updated Avatar component
+- **Files to Check**:
+  - `src/components/CommentList.tsx`
+  - BizHub comment components
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+### 4. Avatar Fix - BizPulse Post Comments
+- **Issue**: Member avatars not showing in BizPulse post comments
+- **Expected Fix**: Same as BizHub comments fix
+- **Files to Check**:
+  - `src/components/CommentList.tsx`
+  - BizPulse comment components
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+### 5. Avatar Fix - BizHub Post Details Page
+- **Issue**: Avatar not showing on post details page
+- **Expected Fix**: Update Avatar usage in details page
+- **Files to Check**:
+  - `src/app/feeds/biz-hub/[id]/page.tsx`
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+### 6. Screen Flickering - BizHub Comment Posting
+- **Issue**: Screen flickers when posting comment with loader icon
+- **Root Cause**: Likely re-render issue or improper loading state handling
+- **Expected Fix**: Optimize loading state, prevent unnecessary re-renders
+- **Files to Check**:
+  - BizHub comment form component
+  - Loading state logic
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+---
+
+## 🟡 UI/UX IMPROVEMENTS - REMAINING
+
+### 7. Photo Gallery Full Size - BizHub Posts
+- **Issue**: Photo gallery popup not showing full size
+- **Expected Fix**: Update modal/lightbox to display images at full resolution
+- **Files to Check**:
+  - BizHub post details photo gallery component
+- **Priority**: MEDIUM
+- **Status**: ⏳ PENDING
+
+### 8. Text Size Reduction - BizHub Post Details
+- **Issue**: Text size too large in post details page
+- **Expected Fix**: Reduce font sizes for better readability
+- **Files to Check**:
+  - `src/app/feeds/biz-hub/[id]/page.tsx`
+  - Post details styling
+- **Priority**: MEDIUM
+- **Status**: ⏳ PENDING
+
+### 9. Layout Fix - BizPulse Post Details
+- **Issue**:
+  - Excessive left/right padding
+  - Comment button position needs adjustment
+- **Expected Fix**:
+  - Remove horizontal padding
+  - Move comment button outside/below content area
+- **Files to Check**:
+  - `src/app/feeds/biz-pulse/[id]/page.tsx`
+  - Comment form component
+- **Priority**: MEDIUM
+- **Status**: ⏳ PENDING
+
+### 10. Hide Settings Icon - BizPulse
+- **Issue**: Settings icon showing when it shouldn't
+- **Expected Fix**: Conditional render or remove settings icon
+- **Files to Check**:
+  - BizPulse post components
+  - Settings button logic
+- **Priority**: LOW
+- **Status**: ⏳ PENDING
+
+### 11. Update Password Button Text - Account Settings
+- **Issue**: "Update Password" text too long
+- **Expected Fix**: Change to shorter text like "Update" or "Save"
+- **Files to Check**:
+  - `src/app/feeds/account-settings/page.tsx`
+  - Password change form
+- **Priority**: LOW
+- **Status**: ⏳ PENDING
+
+---
+
+## 🟢 FEATURE ADDITIONS - REMAINING
+
+### 12. Upcoming Meetings - Dashboard Page
+- **Issue**: Missing upcoming meetings section on dashboard
+- **Expected Implementation**:
+  - Fetch upcoming meetings from backend
+  - Display cards with meeting info (date, time, location, attendees)
+  - Horizontal scroll layout (similar to mobile app)
+- **Backend API**:
+  - `GET /meetings/community/:communityId`
+  - Filter for future meetings (date ≥ today)
+- **Files to Check**:
+  - `src/app/feeds/dash/page.tsx`
+  - Create UpcomingMeetings component
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+### 13. BizWin Creation Logic Fix
+- **Issue**: When user creates BizWin, it should appear in "Received" side, not "Given"
+- **Current Behavior**: New BizWin goes to "Given"
+- **Expected Behavior**: New BizWin goes to "Received"
+- **Files to Check**:
+  - `src/components/Dashboard/forms/CreateBizWinForm.tsx`
+  - Backend record creation API
+  - Data mapping in BizWinDetailModal
+- **Priority**: HIGH
+- **Status**: ⏳ PENDING
+
+### 14. BizWin Edit/Delete - Received Side
+- **Issue**: Can only edit/delete from "Received" tab, not "Given"
+- **Current**: Edit/delete buttons only on received tab
+- **Expected**: Should also work on given tab
+- **Files to Check**:
+  - `src/components/Dashboard/charts/BizWinDetailModal.tsx` (lines 652-693)
+  - Conditional rendering of action buttons
+- **Priority**: MEDIUM
+- **Status**: ⏳ PENDING
+
+### 15. Toast Messages - Dashboard Edit/Delete
+- **Issue**: Missing toast notifications for edit/delete actions
+- **Expected**: Show success/error toasts for all CRUD operations
+- **Files to Check**:
+  - All dashboard modal components
+  - BizConnect, BizWin, Meetups, Visitor modals
+- **Priority**: MEDIUM
+- **Status**: ⏳ PENDING
+
+### 16. Profile Card Fix - My Profile
+- **Issue**: Profile card not displaying correctly
+- **Expected Fix**: Debug and fix profile card rendering
+- **Files to Check**:
+  - `src/components/Dashboard/MyProfile/PersonalProfileCard.tsx`
+  - My Profile page
+- **Priority**: MEDIUM
+- **Status**: ⏳ PENDING
+
+---
+
+## 🔧 TECHNICAL NOTES
+
+### Avatar Fix Implementation (COMPLETED)
+```typescript
+// OLD (Causing 402 errors):
+import Image from "next/image";
+<Image src={imageUrl} alt={alt} fill />
+
+// NEW (Direct loading):
+<img src={imageUrl} alt={alt} className="w-full h-full object-cover" />
+```
+
+### Key Files Modified
+1. ✅ `src/components/ui/Avatar.tsx` - Removed Next.js Image optimization
+2. ⏳ Need to check all components using images/avatars
+
+### Important Reminders
+- **No Vercel Image Optimization**: All images must use `<img>` tag, not Next.js `Image`
+- **Direct Backend URLs**: Images load from `https://backend.bizcivitas.com/api/v1/image/...`
+- **Fallback Handling**: Always show initials or placeholder when image fails
+- **Error Boundaries**: Wrap components in try-catch for production stability
+
+---
+
+## 📋 HAND-OFF CHECKLIST
+
+Before client delivery, ensure:
+
+- [ ] All avatars loading correctly on Vercel (connections, posts, comments)
+- [ ] No 402 Payment Required errors
+- [ ] All CRUD operations have toast notifications
+- [ ] BizWin creation logic fixed (goes to received)
+- [ ] Dashboard has upcoming meetings section
+- [ ] All UI/UX issues resolved (text sizes, layouts, etc.)
+- [ ] No screen flickering issues
+- [ ] Photo galleries work properly
+- [ ] Test on production Vercel deployment
+- [ ] Final cross-browser testing (Chrome, Safari, Firefox, Edge)
+- [ ] Mobile responsiveness check
+- [ ] Performance audit (Lighthouse score)
+
+---
+
+## 🚀 DEPLOYMENT NOTES
+
+**Production URL**: https://bizcivitas-userpanel.vercel.app
+**Backend URL**: https://backend.bizcivitas.com/api/v1
+
+**Environment Variables**:
+```
+NEXT_PUBLIC_BACKEND_URL=https://backend.bizcivitas.com/api/v1
+```
+
+---
+
+**Last Updated**: November 26, 2025
+**Next Steps**: Fix all pending issues systematically, starting with HIGH priority items

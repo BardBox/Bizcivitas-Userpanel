@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import { getAbsoluteImageUrl } from "@/utils/imageUtils";
-import Image from "next/image";
 
 interface AvatarProps {
   src?: string | null;
@@ -57,8 +55,30 @@ const Avatar: React.FC<AvatarProps> = ({
     "2xl": "w-8 h-8 text-base",
   };
 
-  // Get image URL, falling back to default avatar
-  const imageUrl = getAbsoluteImageUrl(src || undefined);
+  // Get absolute image URL
+  const getImageUrl = (imagePath: string | null | undefined): string | undefined => {
+    if (!imagePath) return undefined;
+
+    // If it's a local public path, return as is
+    if (imagePath.startsWith("/")) {
+      return imagePath;
+    }
+
+    // If it's already an absolute URL, return as is
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      // If it's from icon-library.com, return undefined (use fallback)
+      if (imagePath.includes("icon-library.com")) {
+        return undefined;
+      }
+      return imagePath;
+    }
+
+    // For relative paths, use the backend URL from environment
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080/api/v1";
+    return `${backendUrl}/image/${imagePath}`;
+  };
+
+  const imageUrl = getImageUrl(src);
   const isCoreMemeber = membershipType === "Core Member";
   const initials = fallbackText
     .split(" ")
@@ -90,30 +110,15 @@ const Avatar: React.FC<AvatarProps> = ({
         <div className={`${sizeClasses[size]} rounded-full ${borderClasses}`}>
           <div className={`relative w-full h-full rounded-full overflow-hidden ${isFavicon ? 'bg-white' : 'bg-gray-200'}`}>
             {imageUrl && !imageError ? (
-              isFavicon ? (
-                <img
-                  src={imageUrl}
-                  alt={alt}
-                  className="w-full h-full object-contain p-0.5"
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => {
-                    setImageError(true);
-                  }}
-                />
-              ) : (
-                <Image
-                  src={imageUrl}
-                  alt={alt}
-                  fill
-                  sizes={`${sizeClasses[size]}`}
-                  className="object-cover"
-                  style={{ objectFit: 'cover' }}
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => {
-                    setImageError(true);
-                  }}
-                />
-              )
+              <img
+                src={imageUrl}
+                alt={alt}
+                className={`w-full h-full ${isFavicon ? 'object-contain p-0.5' : 'object-cover'}`}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => {
+                  setImageError(true);
+                }}
+              />
             ) : (
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <span
@@ -128,30 +133,15 @@ const Avatar: React.FC<AvatarProps> = ({
       ) : (
         <div className={`relative w-full h-full rounded-full overflow-hidden ${isFavicon ? 'bg-white' : 'bg-gray-200'}`}>
           {imageUrl && !imageError ? (
-            isFavicon ? (
-              <img
-                src={imageUrl}
-                alt={alt}
-                className="w-full h-full object-contain p-0.5"
-                onLoad={() => setImageLoaded(true)}
-                onError={() => {
-                  setImageError(true);
-                }}
-              />
-            ) : (
-              <Image
-                src={imageUrl}
-                alt={alt}
-                fill
-                sizes={`${sizeClasses[size]}`}
-                className="object-cover"
-                style={{ objectFit: 'cover' }}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => {
-                  setImageError(true);
-                }}
-              />
-            )
+            <img
+              src={imageUrl}
+              alt={alt}
+              className={`w-full h-full ${isFavicon ? 'object-contain p-0.5' : 'object-cover'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                setImageError(true);
+              }}
+            />
           ) : (
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <span

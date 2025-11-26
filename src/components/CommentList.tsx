@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import LikeButton from "./LikeButton";
@@ -119,12 +118,11 @@ export default function CommentList({
               <p className="mt-2">{comment.content}</p>
 
               {comment.mediaUrl && (
-                <div className="mt-3 relative w-full h-48">
-                  <Image
+                <div className="mt-3 relative w-full h-48 overflow-hidden rounded-lg">
+                  <img
                     src={comment.mediaUrl}
                     alt="Comment attachment"
-                    fill
-                    className="object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
               )}

@@ -150,6 +150,9 @@ export default function MemberDirectory() {
   // Transform API data to our format
   const members: Member[] = useMemo(() => {
     if (!displayedUsers) return [];
+    if (displayedUsers.length > 0) {
+      console.log('Member Directory User Data:', displayedUsers[0]);
+    }
     return displayedUsers.map((user: any) => ({
       _id: user._id || user.id || '',
       fname: user.fname || '',

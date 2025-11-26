@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback, memo } from "react";
 import {
   ChevronDown,
@@ -162,6 +162,7 @@ export default function DashboardSidebar({
   isMobile?: boolean;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [logoutUser] = useLogoutMutation();
@@ -267,12 +268,32 @@ export default function DashboardSidebar({
               {(open || isCollapsed) && (
                 <ul className={`${!isCollapsed ? "ml-4" : ""} space-y-2`}>
                   {items.map((item) => {
+                    // Get the 'from' query parameter
+                    const fromParam = searchParams?.get('from');
+
                     // Check if current path matches or is a child route
                     // For exact match on home page, only match /feeds exactly
-                    const isActive =
+                    let isActive =
                       item.href === "/feeds"
                         ? pathname === "/feeds"
                         : pathname.startsWith(item.href);
+
+                    // Special handling for connection profile pages
+                    // If we're on /feeds/connections/[id] with a 'from' parameter,
+                    // highlight the page we came from instead
+                    if (pathname.startsWith("/feeds/connections/") && fromParam) {
+                      if (fromParam === "member-directory" && item.href === "/feeds/member-directory") {
+                        isActive = true;
+                      } else if (fromParam === "member-directory" && item.href === "/feeds/connections") {
+                        isActive = false;
+                      } else if (fromParam.startsWith("my-network") && item.href === "/feeds/connections") {
+                        isActive = true;
+                      } else if (fromParam === "requests" && item.href === "/feeds/connections") {
+                        isActive = true;
+                      } else if (fromParam === "messages" && item.href === "/feeds/messages") {
+                        isActive = true;
+                      }
+                    }
 
                     return (
                       <SidebarLink

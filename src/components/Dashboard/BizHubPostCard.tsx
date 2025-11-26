@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 
@@ -73,11 +72,9 @@ const BizHubPostCard: React.FC<BizHubPostCardProps> = ({
           avatarUrl &&
           getAbsoluteImageUrl(avatarUrl) &&
           avatarUrl !== "/avatars/default.jpg" ? (
-            <Image
+            <img
               src={getAbsoluteImageUrl(avatarUrl)!}
               alt={name}
-              width={48}
-              height={48}
               className="w-12 h-12 rounded-full object-cover border"
               onError={() => setImageError(true)}
             />

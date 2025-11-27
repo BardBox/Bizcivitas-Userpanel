@@ -25,8 +25,13 @@ import { useGetCurrentUserQuery, useGetFullProfileQuery } from "@/store/api";
 import { useAccordion } from "@/hooks/useAccordion";
 
 const MyProfileClient: React.FC = () => {
-  // Check if mobile on mount
-  const [isMobile, setIsMobile] = useState(false);
+  // Check if mobile - initialize based on window size or default to false for SSR
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
 
   useEffect(() => {
     // Check window width on mount
@@ -52,6 +57,7 @@ const MyProfileClient: React.FC = () => {
     error: profileError,
   } = useGetFullProfileQuery();
 
+  // Close all accordions on mobile, keep personal open on desktop
   const { expandedSections, toggleSection } = useAccordion({
     defaultExpanded: isMobile ? [] : ["personal"],
   });

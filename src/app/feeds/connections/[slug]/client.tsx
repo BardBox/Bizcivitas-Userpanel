@@ -40,6 +40,26 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Check if mobile - initialize based on window size or default to false for SSR
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    // Check window width on mount
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Get referrer tab from URL params
   const referrerTab = searchParams?.get("from");
 
@@ -543,7 +563,7 @@ const ConnectionDetailsClient: React.FC<ConnectionDetailsClientProps> = ({
             <AccordionItem
               key="personal"
               title="Personal Details"
-              defaultOpen={true}
+              defaultOpen={!isMobile}
               editable={false} // No edit functionality for connections
             >
               <PersonalDetails

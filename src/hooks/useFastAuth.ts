@@ -9,8 +9,23 @@ import { isAuthenticated as checkAuthStatus, setAccessToken } from "@/lib/auth";
  * Uses immediate redirects and optimized state management
  */
 export function useFastAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize state synchronously to avoid flash of loading state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
+    // Only run on client
+    if (typeof window !== "undefined") {
+      return checkAuthStatus();
+    }
+    return null;
+  });
+
+  // If we have a value (even false), we're not loading. If null (SSR), we are.
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      return false; // We already checked auth status above
+    }
+    return true; // SSR needs to wait
+  });
+
   const router = useRouter();
 
   const checkAuth = useCallback(() => {
@@ -26,7 +41,7 @@ export function useFastAuth() {
   }, []);
 
   useEffect(() => {
-    // Check authentication immediately
+    // Double check on mount, but we likely already have the correct state
     const authenticated = checkAuth();
     setIsLoading(false);
 
@@ -34,7 +49,7 @@ export function useFastAuth() {
     if (!authenticated) {
       router.replace("/");
     }
-  }, []); // Remove dependencies to prevent infinite loop
+  }, [checkAuth, router]);
 
   const redirectToLogin = useCallback(() => {
     router.replace("/");

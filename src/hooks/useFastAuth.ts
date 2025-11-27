@@ -65,7 +65,7 @@ export function usePublicAuth() {
   useEffect(() => {
     try {
       const authenticated = checkAuthStatus();
-      
+
       if (authenticated) {
         // User is already logged in - redirect immediately
         setIsRedirecting(true);

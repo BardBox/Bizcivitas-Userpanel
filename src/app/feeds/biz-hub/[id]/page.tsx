@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ThumbsUp, MessageSquare } from "lucide-react";
+import { ArrowLeft, ThumbsUp, MessageSquare, Home, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -101,21 +101,44 @@ export default function BizHubPostDetail() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
-  const [backButtonText, setBackButtonText] = useState<string>("Back to Feeds");
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ label: string; path: string }>>([
+    { label: "Home", path: "/feeds" },
+    { label: "BizHub", path: "/feeds/biz-hub" },
+  ]);
 
-  // Determine back button text based on referrer
+  // Determine breadcrumbs based on referrer and post type
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && post) {
       const referrer = document.referrer;
-      if (referrer.includes("/feeds/biz-pulse")) {
-        setBackButtonText("Back to Biz Pulse");
-      } else if (referrer.includes("/feeds/biz-hub")) {
-        setBackButtonText("Back to Biz Hub");
+      const postType = post.type;
+
+      // Create breadcrumb trail based on referrer
+      if (referrer.includes("/feeds/biz-hub")) {
+        // Came from BizHub - add type filter if available
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizHub", path: "/feeds/biz-hub" },
+          ...(postType ? [{ label: formatCategory(postType), path: `/feeds/biz-hub?type=${postType}` }] : []),
+        ]);
+      } else if (referrer.includes("/feeds/biz-pulse")) {
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizPulse", path: "/feeds/biz-pulse" },
+        ]);
+      } else if (referrer.includes("/feeds/dash") || referrer.includes("/feeds")) {
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizHub", path: "/feeds/biz-hub" },
+        ]);
       } else {
-        setBackButtonText("Back to Feeds");
+        // Default breadcrumb
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizHub", path: "/feeds/biz-hub" },
+        ]);
       }
     }
-  }, []);
+  }, [post]);
 
   // Scroll to comments section if navigation came from a notification about a comment
   useEffect(() => {
@@ -154,14 +177,20 @@ export default function BizHubPostDetail() {
   const handleAddComment = async () => {
     if (!commentText.trim() || !postId) return;
 
+    // Save comment text and clear input immediately for better UX
+    const newCommentText = commentText.trim();
+    setCommentText("");
+
     try {
       setSubmittingComment(true);
       await dispatch(
-        addBizHubComment({ postId, content: commentText })
+        addBizHubComment({ postId, content: newCommentText })
       ).unwrap();
-      setCommentText("");
     } catch (err) {
       console.error("Failed to add comment:", err);
+      // Restore comment text on error
+      setCommentText(newCommentText);
+      toast.error("Failed to add comment. Please try again.");
     } finally {
       setSubmittingComment(false);
     }
@@ -275,6 +304,11 @@ export default function BizHubPostDetail() {
   const isPostOwner =
     post?.user?._id === userId || post?.userId?._id === userId;
 
+  // Memoize comments to prevent flickering during updates (must be before early returns)
+  const memoizedComments = useMemo(() => {
+    return post?.comments || [];
+  }, [post?.comments]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -338,23 +372,40 @@ export default function BizHubPostDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with back button */}
+      {/* Header with breadcrumb navigation */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center hover:text-blue-600 transition-colors"
+          <nav className="flex items-center gap-1.5 text-sm text-gray-600 overflow-x-auto scrollbar-hide">
+            {/* Home Icon */}
+            <Link
+              href="/feeds"
+              className="hover:text-blue-600 transition-colors p-0.5 flex-shrink-0"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              {backButtonText}
-            </button>
-          </div>
+              <Home className="w-4 h-4" />
+            </Link>
+            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+
+            {breadcrumbs.slice(1).map((crumb, index) => (
+              <React.Fragment key={crumb.path}>
+                <Link
+                  href={crumb.path}
+                  className="text-[13px] md:text-[14px] hover:text-blue-600 transition-colors font-medium whitespace-nowrap flex-shrink-0"
+                >
+                  {crumb.label}
+                </Link>
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </React.Fragment>
+            ))}
+
+            <span className="text-gray-900 font-semibold text-[13px] md:text-[14px] truncate">
+              {post?.title || "Post"}
+            </span>
+          </nav>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-2 md:px-4 py-8 space-y-6">
         {/* Post Card */}
         <div className="bg-white rounded-lg shadow p-2 space-y-4">
           {/* Author Info */}
@@ -489,7 +540,7 @@ export default function BizHubPostDetail() {
           <div className="flex justify-between">
             {" "}
             {/* Category Badge */}
-            <span className="inline-block bg-gray-900 text-white px-3 py-2 rounded-full text-xs font-medium">
+            <span className="inline-block bg-gray-900 text-white px-2 py-1 md:px-3 md:py-2 rounded-full text-[11px] font-medium">
               {formatCategory(post.type)}
             </span>
             <span className="text-sm md:hidden text-gray-400">
@@ -601,8 +652,8 @@ export default function BizHubPostDetail() {
 
           {/* Comments List */}
           <div className="space-y-4">
-            {post.comments && post.comments.length > 0 ? (
-              post.comments.map((comment: any) => {
+            {memoizedComments.length > 0 ? (
+              memoizedComments.map((comment: any) => {
                 // Construct name from fname and lname (backend returns these separately)
                 const commentAuthorName =
                   comment.userId?.fname && comment.userId?.lname

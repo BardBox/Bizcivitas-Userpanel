@@ -2,15 +2,16 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   ThumbsUp,
   MessageSquare,
   ArrowLeft,
-  MoreVertical,
   Flag,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import type { RootState } from "../../../../../store/store";
 import { bizpulseApi } from "../../../../../src/services/bizpulseApi";
 import { updatePost } from "../../../../../store/postsSlice";
@@ -50,21 +51,188 @@ export default function BizPulseDetailPage() {
     null
   );
   const [editingContent, setEditingContent] = useState<string>("");
-  const [backButtonText, setBackButtonText] = useState<string>("Back to Feeds");
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ label: string; path: string }>>([
+    { label: "Home", path: "/feeds" },
+    { label: "BizPulse", path: "/feeds/biz-pulse" },
+  ]);
 
-  // Determine back button text based on referrer
+  // Helper function to format category
+  const formatCategory = (category?: string): string => {
+    if (!category) return "";
+    return category
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  // Helper function to get full avatar URL
+  const getAvatarUrl = useCallback((avatarPath?: string | null) => {
+    if (!avatarPath) return "/favicon.ico";
+    if (avatarPath.startsWith("http")) return avatarPath;
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    return `${baseUrl}/image/${avatarPath}`;
+  }, []);
+
+  // Memoize comments to prevent flickering (MUST be before early returns)
+  const memoizedComments = useMemo(() => {
+    return post?.comments || [];
+  }, [post?.comments]);
+
+  // Memoize post stats to prevent flickering
+  const memoizedStats = useMemo(() => {
+    return post?.stats || { likes: 0, comments: 0, shares: 0 };
+  }, [post?.stats]);
+
+  // Handle like action with useCallback
+  const handleLike = useCallback(async () => {
+    if (isLiking || !post) return;
+
+    const currentLikeStatus = isLiked;
+    setIsLiked(!isLiked);
+
+    const optimisticPost = {
+      ...post,
+      isLiked: !currentLikeStatus,
+      stats: {
+        ...post.stats,
+        likes: currentLikeStatus ? post.stats.likes - 1 : post.stats.likes + 1,
+      },
+    };
+    dispatch(updatePost(optimisticPost));
+
+    setIsLiking(true);
+    try {
+      const updatedPost = await bizpulseApi.likeWallFeed(postId);
+      if (updatedPost.success && updatedPost.data) {
+        const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
+        const transformedPost = transformBizPulsePostToMock(postData);
+
+        if (!transformedPost.image && post.image) {
+          transformedPost.image = post.image;
+        }
+
+        dispatch(updatePost(transformedPost));
+      }
+    } catch (error) {
+      console.error("Failed to like post:", error);
+      toast.error("Failed to update like status");
+
+      setIsLiked(currentLikeStatus);
+      dispatch(updatePost(post));
+    } finally {
+      setIsLiking(false);
+    }
+  }, [isLiking, post, isLiked, postId, dispatch]);
+
+  // Handle comment submit with useCallback
+  const handleCommentSubmit = useCallback(async () => {
+    if (!newComment.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    const commentText = newComment.trim();
+
+    const currentUserName = currentUser
+      ? `${currentUser.fname || ""} ${currentUser.lname || ""}`.trim()
+      : "You";
+    const currentUserId = currentUser?._id || currentUser?.id || "temp-user";
+    const currentUserAvatar = currentUser?.avatar || null;
+
+    const optimisticComment = {
+      id: `temp-${Date.now()}`,
+      content: commentText,
+      author: {
+        id: currentUserId,
+        name: currentUserName,
+        avatar: currentUserAvatar,
+      },
+      timeAgo: "Just now",
+      likes: 0,
+    };
+
+    setNewComment("");
+
+    try {
+      if (post) {
+        const updatedPost = {
+          ...post,
+          comments: [optimisticComment, ...(post.comments || [])],
+          stats: {
+            ...post.stats,
+            comments: post.stats.comments + 1,
+          },
+        };
+        dispatch(updatePost(updatedPost));
+      }
+
+      await bizpulseApi.addComment(postId, commentText);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const updatedPost = await bizpulseApi.fetchWallFeedById(postId);
+      if (updatedPost.success && updatedPost.data) {
+        const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
+        const transformedPost = transformBizPulsePostToMock(postData);
+
+        if (!transformedPost.image && post?.image) {
+          transformedPost.image = post.image;
+        }
+
+        dispatch(updatePost(transformedPost));
+        toast.success("Comment posted!");
+      }
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to add comment"
+      );
+      toast.error("Failed to add comment. Please try again.");
+
+      const revertedPost = await bizpulseApi.fetchWallFeedById(postId);
+      if (revertedPost.success && revertedPost.data) {
+        const postData =
+          (revertedPost.data as any).wallFeed || revertedPost.data;
+        const transformedPost = transformBizPulsePostToMock(postData);
+        dispatch(updatePost(transformedPost));
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [newComment, isSubmitting, currentUser, post, postId, dispatch]);
+
+  // Determine breadcrumbs based on referrer and post category
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && post) {
       const referrer = document.referrer;
+      const postCategory = post.category;
+
+      // Create breadcrumb trail based on referrer
       if (referrer.includes("/feeds/biz-pulse")) {
-        setBackButtonText("Back to Biz Pulse");
+        // Came from BizPulse - add category filter if available
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizPulse", path: "/feeds/biz-pulse" },
+          ...(postCategory ? [{ label: formatCategory(postCategory), path: `/feeds/biz-pulse?category=${postCategory}` }] : []),
+        ]);
       } else if (referrer.includes("/feeds/biz-hub")) {
-        setBackButtonText("Back to Biz Pulse");
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizHub", path: "/feeds/biz-hub" },
+        ]);
+      } else if (referrer.includes("/feeds/dash") || referrer.includes("/feeds")) {
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizPulse", path: "/feeds/biz-pulse" },
+        ]);
       } else {
-        setBackButtonText("Back to Feeds");
+        // Default breadcrumb
+        setBreadcrumbs([
+          { label: "Home", path: "/feeds" },
+          { label: "BizPulse", path: "/feeds/biz-pulse" },
+        ]);
       }
     }
-  }, []);
+  }, [post]);
 
   // Scroll to comments section if navigation came from a notification about a comment
   useEffect(() => {
@@ -164,148 +332,11 @@ export default function BizPulseDetailPage() {
       .slice(0, 2);
   };
 
-  // Helper function to get full avatar URL
-  const getAvatarUrl = (avatarPath?: string | null) => {
-    if (!avatarPath) return "/favicon.ico"; // Fallback to favicon
 
-    // If it's already a full URL (starts with http), return as is
-    if (avatarPath.startsWith("http")) {
-      return avatarPath;
-    }
 
-    // Otherwise, construct full URL with backend base URL
-    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    return `${baseUrl}/image/${avatarPath}`;
-  };
 
-  const handleLike = async () => {
-    if (isLiking || !post) return;
 
-    // Optimistic update - immediately update UI
-    const currentLikeStatus = isLiked;
-    setIsLiked(!isLiked);
 
-    // Update the post in Redux with optimistic like count
-    const optimisticPost = {
-      ...post,
-      isLiked: !currentLikeStatus,
-      stats: {
-        ...post.stats,
-        likes: currentLikeStatus ? post.stats.likes - 1 : post.stats.likes + 1,
-      },
-    };
-    dispatch(updatePost(optimisticPost));
-
-    setIsLiking(true);
-    try {
-      const updatedPost = await bizpulseApi.likeWallFeed(postId);
-      if (updatedPost.success && updatedPost.data) {
-        const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
-        const transformedPost = transformBizPulsePostToMock(postData);
-
-        // Preserve the image from the current post if the API doesn't return it
-        if (!transformedPost.image && post.image) {
-          transformedPost.image = post.image;
-        }
-
-        dispatch(updatePost(transformedPost));
-      }
-    } catch (error) {
-      console.error("Failed to like post:", error);
-      toast.error("Failed to update like status");
-
-      // Revert optimistic update on error
-      setIsLiked(currentLikeStatus);
-      dispatch(updatePost(post));
-    } finally {
-      setIsLiking(false);
-    }
-  };
-
-  const handleCommentSubmit = async () => {
-    if (!newComment.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    const commentText = newComment.trim();
-
-    // Get current user's info for optimistic update
-    const currentUserName = currentUser
-      ? `${currentUser.fname || ""} ${currentUser.lname || ""}`.trim()
-      : "You";
-    const currentUserId = currentUser?._id || currentUser?.id || "temp-user";
-    const currentUserAvatar = currentUser?.avatar || null;
-
-    // Create optimistic comment with real user data
-    const optimisticComment = {
-      id: `temp-${Date.now()}`,
-      content: commentText,
-      author: {
-        id: currentUserId,
-        name: currentUserName,
-        avatar: currentUserAvatar,
-      },
-      timeAgo: "Just now",
-      likes: 0,
-    };
-
-    // Clear input immediately
-    setNewComment("");
-
-    try {
-      // Add optimistic comment to UI immediately with real user avatar
-      if (post) {
-        const updatedPost = {
-          ...post,
-          comments: [optimisticComment, ...(post.comments || [])],
-          stats: {
-            ...post.stats,
-            comments: post.stats.comments + 1,
-          },
-        };
-        dispatch(updatePost(updatedPost));
-      }
-
-      // Submit to backend
-      await bizpulseApi.addComment(postId, commentText);
-
-      // Small delay to ensure backend has processed the comment
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Fetch only this post's updated data (not the whole app)
-      const updatedPost = await bizpulseApi.fetchWallFeedById(postId);
-      if (updatedPost.success && updatedPost.data) {
-        const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
-        const transformedPost = transformBizPulsePostToMock(postData);
-
-        // Preserve the image from the current post if the API doesn't return it
-        if (!transformedPost.image && post.image) {
-          transformedPost.image = post.image;
-        }
-
-        dispatch(updatePost(transformedPost));
-        toast.success("Comment posted!");
-      }
-    } catch (error) {
-      console.error("Failed to add comment:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to add comment"
-      );
-      toast.error("Failed to add comment. Please try again.");
-
-      // Revert optimistic update on error
-      const revertedPost = await bizpulseApi.fetchWallFeedById(postId);
-      if (revertedPost.success && revertedPost.data) {
-        const postData =
-          (revertedPost.data as any).wallFeed || revertedPost.data;
-        const transformedPost = transformBizPulsePostToMock(postData);
-        dispatch(updatePost(transformedPost));
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleReportComment = async (reason: string) => {
     if (!reportingCommentId) return;
@@ -364,18 +395,35 @@ export default function BizPulseDetailPage() {
 
   return (
     <div className="min-h-screen mt-12 bg-gray-50">
-      {/* Header with breadcrumb */}
+      {/* Header with breadcrumb navigation */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center hover:text-blue-600 transition-colors"
+          <nav className="flex items-center gap-1.5 text-sm text-gray-600 overflow-x-auto scrollbar-hide">
+            {/* Home Icon */}
+            <Link
+              href="/feeds"
+              className="hover:text-blue-600 transition-colors p-0.5 flex-shrink-0"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              {backButtonText}
-            </button>
-          </div>
+              <Home className="w-4 h-4" />
+            </Link>
+            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+
+            {breadcrumbs.slice(1).map((crumb, index) => (
+              <React.Fragment key={crumb.path}>
+                <Link
+                  href={crumb.path}
+                  className="text-[13px] md:text-[14px] hover:text-blue-600 transition-colors font-medium whitespace-nowrap flex-shrink-0"
+                >
+                  {crumb.label}
+                </Link>
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </React.Fragment>
+            ))}
+
+            <span className="text-gray-900 font-semibold text-[13px] md:text-[14px] truncate">
+              {post?.title || "Post"}
+            </span>
+          </nav>
         </div>
       </div>
 
@@ -405,7 +453,7 @@ export default function BizPulseDetailPage() {
 
           {/* Hero Image(s) - Use carousel if multiple images exist */}
           {Array.isArray((post as any).images) &&
-          (post as any).images.length > 0 ? (
+            (post as any).images.length > 0 ? (
             <ImageCarousel images={(post as any).images} alt={post.title} />
           ) : post.image ? (
             <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
@@ -439,40 +487,36 @@ export default function BizPulseDetailPage() {
             </div>
 
             {/* Interactive Stats Display */}
-            <div className="py-6 border-y border-gray-200">
+            <div className="py-4 border-y border-gray-200">
               <div className="flex items-center gap-6 text-gray-700">
                 {/* Like Button */}
                 <button
                   onClick={handleLike}
                   disabled={isLiking}
-                  className={`flex items-center space-x-2 transition-all hover:scale-105 ${
-                    isLiked
+                  className={`flex items-center space-x-2 transition-all hover:scale-105 ${isLiked
                       ? "text-blue-600"
                       : "text-gray-700 hover:text-blue-600"
-                  } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+                    } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <ThumbsUp
                     className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`}
                   />
-                  <span className="font-medium">
-                    {post.stats.likes || 0} Likes
+                  <span className="font-medium text-sm">
+                    {memoizedStats.likes} Likes
                   </span>
                 </button>
                 {/* Comments Count */}
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium">
-                    {post.stats.comments || 0} Comments
+                  <span className="font-medium text-sm">
+                    {memoizedStats.comments} Comments
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Comment Form */}
-            <div className="py-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Add a Comment
-              </h3>
+            <div className="pt-4 pb-2">
               <div className="flex space-x-3">
                 <Avatar
                   src={getAvatarUrl(currentUser?.avatar)}
@@ -489,26 +533,24 @@ export default function BizPulseDetailPage() {
                   }
                   showMembershipBorder={false}
                 />
-                <div className="flex-1">
-                  <div className="relative">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Share your thoughts..."
-                      disabled={isSubmitting}
-                      className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        error ? "border-red-300" : "border-gray-300"
+                <div className="flex-1 space-y-3">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Share your thoughts..."
+                    disabled={isSubmitting}
+                    className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${error ? "border-red-300" : "border-gray-300"
                       } ${isSubmitting ? "bg-gray-50" : ""}`}
-                      rows={3}
-                    />
+                    rows={3}
+                  />
+                  <div className="flex justify-end">
                     <button
                       onClick={handleCommentSubmit}
                       disabled={!newComment.trim() || isSubmitting}
-                      className={`absolute bottom-4 right-4 px-4 py-2 rounded-lg font-medium transition-all ${
-                        isSubmitting || !newComment.trim()
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${isSubmitting || !newComment.trim()
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                           : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
-                      }`}
+                        }`}
                     >
                       {isSubmitting ? (
                         <div className="flex items-center space-x-2">
@@ -521,24 +563,24 @@ export default function BizPulseDetailPage() {
                     </button>
                   </div>
                   {error && (
-                    <p className="mt-2 text-sm text-red-600">{error}</p>
+                    <p className="text-sm text-red-600">{error}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 pt-8">
+            <div className="border-t border-gray-200 pt-4 mt-2">
               <h3
                 id="comments-section"
-                className="text-xl font-bold text-gray-900 mb-6"
+                className="text-base font-bold text-gray-900 mb-4"
               >
-                Comments ({post.stats.comments})
+                Comments ({memoizedStats.comments})
               </h3>
 
-              <div className="space-y-6">
-                {post.comments && post.comments.length > 0 ? (
-                  post.comments.map((comment) => {
+              <div className="space-y-4">
+                {memoizedComments.length > 0 ? (
+                  memoizedComments.map((comment) => {
                     const isCurrentUserComment =
                       comment.author.id ===
                       (currentUser?._id || currentUser?.id);
@@ -549,7 +591,7 @@ export default function BizPulseDetailPage() {
                     return (
                       <div
                         key={comment.id}
-                        className="flex space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
+                        className="flex space-x-3 pb-4 border-b border-gray-100 last:border-0"
                       >
                         <Link href={commentProfileUrl}>
                           <Avatar
@@ -562,20 +604,82 @@ export default function BizPulseDetailPage() {
                           />
                         </Link>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center space-x-2">
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex flex-col">
                               <Link
                                 href={commentProfileUrl}
-                                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                                className="font-semibold text-sm text-gray-900 hover:text-blue-600 transition-colors"
                               >
                                 {comment.author.name}
                               </Link>
                               <span className="text-xs text-gray-500">
-                                • {comment.timeAgo}
+                                {comment.timeAgo}
                               </span>
                             </div>
-                            {/* Comment menu (edit/delete/report) stays same */}
-                            {/* ... */}
+                            {/* Edit/Delete buttons for own comments */}
+                            {isCurrentUserComment && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setIsEditingCommentId(comment.id);
+                                    setEditingContent(comment.content);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 p-1"
+                                  title="Edit comment"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm("Are you sure you want to delete this comment?")) return;
+                                    try {
+                                      await bizpulseApi.deleteComment(postId, comment.id);
+                                      const refreshed = await bizpulseApi.fetchWallFeedById(postId);
+                                      if (refreshed.success && refreshed.data) {
+                                        const postData = (refreshed.data as any).wallFeed || refreshed.data;
+                                        const transformedPost = transformBizPulsePostToMock(postData);
+                                        if (!transformedPost.image && post.image) {
+                                          transformedPost.image = post.image;
+                                        }
+                                        dispatch(updatePost(transformedPost));
+                                        toast.success("Comment deleted");
+                                      }
+                                    } catch (err) {
+                                      console.error("Failed to delete comment", err);
+                                      toast.error("Failed to delete comment");
+                                    }
+                                  }}
+                                  className="text-red-600 hover:text-red-700 p-1"
+                                  title="Delete comment"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
                           </div>
                           {isEditingCommentId === comment.id ? (
                             <div className="mt-2 space-y-2">

@@ -373,11 +373,11 @@ export default function BizHubPostDetail() {
               <div>
                 <Link
                   href={authorProfileUrl}
-                  className="text-[14px] font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                  className="text-[13px] font-semibold text-gray-900 hover:text-blue-600 transition-colors"
                 >
                   {userName}
                 </Link>
-                <div className="text-[12px] text-gray-500">
+                <div className="text-[11px] text-gray-500">
                   {userClassification}
                 </div>
               </div>
@@ -498,7 +498,7 @@ export default function BizHubPostDetail() {
           </div>
 
           {/* Title */}
-          <h1 className="">{post.title}</h1>
+          <h1 className="text-lg font-semibold text-gray-900">{post.title}</h1>
 
           {/* Images Carousel */}
           {post.mediaUrls && post.mediaUrls.length > 0 && (
@@ -513,7 +513,7 @@ export default function BizHubPostDetail() {
           {/* Description */}
           <HtmlContent
             content={post.description}
-            className="text-gray-700 leading-relaxed"
+            className="text-sm text-gray-700 leading-relaxed"
           />
 
           {/* Interactive Stats Display */}
@@ -544,7 +544,7 @@ export default function BizHubPostDetail() {
 
         {/* Comments Section */}
         <div className="bg-white rounded-lg shadow p-2 md:p-6 space-y-6 mb-8">
-          <h2 id="comments-section" className="text-xl font-bold text-gray-900">
+          <h2 id="comments-section" className="text-lg font-bold text-gray-900">
             Comments
           </h2>
 
@@ -643,11 +643,11 @@ export default function BizHubPostDetail() {
                         <div>
                           <Link
                             href={commentProfileUrl}
-                            className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
                           >
                             {commentAuthorName}
                           </Link>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-[11px] text-gray-400">
                             {new Date(comment.createdAt).toLocaleDateString()}
                           </div>
                         </div>
@@ -728,7 +728,7 @@ export default function BizHubPostDetail() {
                         </div>
                       ) : (
                         <>
-                          <p className="text-gray-700">{comment.content}</p>
+                          <p className="text-sm text-gray-700">{comment.content}</p>
                           <div className="flex items-center gap-4">
                             <button
                               onClick={() => handleLikeComment(comment._id)}

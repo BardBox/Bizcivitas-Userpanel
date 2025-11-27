@@ -1,60 +1,64 @@
 "use client";
 
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   ThumbsUp,
   MessageSquare,
   ArrowLeft,
-  Flag,
   Home,
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import type { RootState } from "../../../../../store/store";
-import { bizpulseApi } from "../../../../../src/services/bizpulseApi";
-import { updatePost } from "../../../../../store/postsSlice";
+import {
+  useGetPostByIdQuery,
+  useLikePostMutation,
+  useAddCommentMutation,
+  useDeleteCommentMutation,
+  useEditCommentMutation
+} from "../../../../../store/api/bizpulseApi";
 import { transformBizPulsePostToMock } from "../../../../../src/utils/bizpulseTransformers";
 import toast from "react-hot-toast";
 import Avatar from "@/components/ui/Avatar";
 import ReportModal from "@/components/modals/ReportModal";
 import { reportApi } from "../../../../../src/services/reportApi";
 import ImageCarousel from "@/components/ImageCarousel";
+import PostSkeleton from "@/components/ui/skeletons/PostSkeleton";
 
 export default function BizPulseDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const dispatch = useDispatch();
   const postId = params?.id as string;
-  const enableCommentReporting = false;
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
 
-  const post = useSelector((state: RootState) =>
-    state.posts.posts.find((p) => p.id === postId)
-  );
+  const { data: rawPost, isLoading, error: queryError } = useGetPostByIdQuery(postId);
+  const [likePost, { isLoading: isLiking }] = useLikePostMutation();
+  const [addComment, { isLoading: isSubmitting }] = useAddCommentMutation();
+  const [deleteComment] = useDeleteCommentMutation();
+  const [editComment] = useEditCommentMutation();
 
-  // Get current user from auth state
-  const currentUser = useSelector((state: RootState) => state.auth.user);
-
-  const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [newComment, setNewComment] = useState("");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportingCommentId, setReportingCommentId] = useState<string | null>(
-    null
-  );
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(
-    null
-  );
+  const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{ label: string; path: string }>>([
     { label: "Home", path: "/feeds" },
     { label: "BizPulse", path: "/feeds/biz-pulse" },
   ]);
+
+  // Transform the raw post data
+  const post = useMemo(() => {
+    if (!rawPost) return null;
+    // The API might return the post wrapped in 'wallFeed' or directly
+    const postData = (rawPost as any).wallFeed || rawPost;
+    return transformBizPulsePostToMock(postData);
+  }, [rawPost]);
+
+  // Get current user from auth state
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   // Helper function to format category
   const formatCategory = (category?: string): string => {
@@ -73,132 +77,30 @@ export default function BizPulseDetailPage() {
     return `${baseUrl}/image/${avatarPath}`;
   }, []);
 
-  // Memoize comments to prevent flickering (MUST be before early returns)
-  const memoizedComments = useMemo(() => {
-    return post?.comments || [];
-  }, [post?.comments]);
-
-  // Memoize post stats to prevent flickering
-  const memoizedStats = useMemo(() => {
-    return post?.stats || { likes: 0, comments: 0, shares: 0 };
-  }, [post?.stats]);
-
-  // Handle like action with useCallback
+  // Handle like action
   const handleLike = useCallback(async () => {
     if (isLiking || !post) return;
-
-    const currentLikeStatus = isLiked;
-    setIsLiked(!isLiked);
-
-    const optimisticPost = {
-      ...post,
-      isLiked: !currentLikeStatus,
-      stats: {
-        ...post.stats,
-        likes: currentLikeStatus ? post.stats.likes - 1 : post.stats.likes + 1,
-      },
-    };
-    dispatch(updatePost(optimisticPost));
-
-    setIsLiking(true);
     try {
-      const updatedPost = await bizpulseApi.likeWallFeed(postId);
-      if (updatedPost.success && updatedPost.data) {
-        const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
-        const transformedPost = transformBizPulsePostToMock(postData);
-
-        if (!transformedPost.image && post.image) {
-          transformedPost.image = post.image;
-        }
-
-        dispatch(updatePost(transformedPost));
-      }
+      await likePost(postId).unwrap();
     } catch (error) {
       console.error("Failed to like post:", error);
       toast.error("Failed to update like status");
-
-      setIsLiked(currentLikeStatus);
-      dispatch(updatePost(post));
-    } finally {
-      setIsLiking(false);
     }
-  }, [isLiking, post, isLiked, postId, dispatch]);
+  }, [isLiking, post, postId, likePost]);
 
-  // Handle comment submit with useCallback
+  // Handle comment submit
   const handleCommentSubmit = useCallback(async () => {
     if (!newComment.trim() || isSubmitting) return;
 
-    setIsSubmitting(true);
-    setError(null);
-
-    const commentText = newComment.trim();
-
-    const currentUserName = currentUser
-      ? `${currentUser.fname || ""} ${currentUser.lname || ""}`.trim()
-      : "You";
-    const currentUserId = currentUser?._id || currentUser?.id || "temp-user";
-    const currentUserAvatar = currentUser?.avatar || null;
-
-    const optimisticComment = {
-      id: `temp-${Date.now()}`,
-      content: commentText,
-      author: {
-        id: currentUserId,
-        name: currentUserName,
-        avatar: currentUserAvatar,
-      },
-      timeAgo: "Just now",
-      likes: 0,
-    };
-
-    setNewComment("");
-
     try {
-      if (post) {
-        const updatedPost = {
-          ...post,
-          comments: [optimisticComment, ...(post.comments || [])],
-          stats: {
-            ...post.stats,
-            comments: post.stats.comments + 1,
-          },
-        };
-        dispatch(updatePost(updatedPost));
-      }
-
-      await bizpulseApi.addComment(postId, commentText);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const updatedPost = await bizpulseApi.fetchWallFeedById(postId);
-      if (updatedPost.success && updatedPost.data) {
-        const postData = (updatedPost.data as any).wallFeed || updatedPost.data;
-        const transformedPost = transformBizPulsePostToMock(postData);
-
-        if (!transformedPost.image && post?.image) {
-          transformedPost.image = post.image;
-        }
-
-        dispatch(updatePost(transformedPost));
-        toast.success("Comment posted!");
-      }
+      await addComment({ postId, content: newComment.trim() }).unwrap();
+      setNewComment("");
+      toast.success("Comment posted!");
     } catch (error) {
       console.error("Failed to add comment:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to add comment"
-      );
       toast.error("Failed to add comment. Please try again.");
-
-      const revertedPost = await bizpulseApi.fetchWallFeedById(postId);
-      if (revertedPost.success && revertedPost.data) {
-        const postData =
-          (revertedPost.data as any).wallFeed || revertedPost.data;
-        const transformedPost = transformBizPulsePostToMock(postData);
-        dispatch(updatePost(transformedPost));
-      }
-    } finally {
-      setIsSubmitting(false);
     }
-  }, [newComment, isSubmitting, currentUser, post, postId, dispatch]);
+  }, [newComment, isSubmitting, postId, addComment]);
 
   // Determine breadcrumbs based on referrer and post category
   useEffect(() => {
@@ -208,7 +110,6 @@ export default function BizPulseDetailPage() {
 
       // Create breadcrumb trail based on referrer
       if (referrer.includes("/feeds/biz-pulse")) {
-        // Came from BizPulse - add category filter if available
         setBreadcrumbs([
           { label: "Home", path: "/feeds" },
           { label: "BizPulse", path: "/feeds/biz-pulse" },
@@ -219,13 +120,7 @@ export default function BizPulseDetailPage() {
           { label: "Home", path: "/feeds" },
           { label: "BizHub", path: "/feeds/biz-hub" },
         ]);
-      } else if (referrer.includes("/feeds/dash") || referrer.includes("/feeds")) {
-        setBreadcrumbs([
-          { label: "Home", path: "/feeds" },
-          { label: "BizPulse", path: "/feeds/biz-pulse" },
-        ]);
       } else {
-        // Default breadcrumb
         setBreadcrumbs([
           { label: "Home", path: "/feeds" },
           { label: "BizPulse", path: "/feeds/biz-pulse" },
@@ -234,22 +129,16 @@ export default function BizPulseDetailPage() {
     }
   }, [post]);
 
-  // Scroll to comments section if navigation came from a notification about a comment
+  // Scroll to comments section if navigation came from a notification
   useEffect(() => {
     if (typeof window !== "undefined" && post) {
       const shouldScrollToComments = sessionStorage.getItem("scrollToComments");
       if (shouldScrollToComments === "true") {
-        // Remove the flag immediately to prevent re-scrolling on refresh
         sessionStorage.removeItem("scrollToComments");
-
-        // Use a timeout to ensure the page has fully rendered
         setTimeout(() => {
           const commentsSection = document.getElementById("comments-section");
           if (commentsSection) {
-            commentsSection.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
+            commentsSection.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }, 500);
       }
@@ -261,50 +150,42 @@ export default function BizPulseDetailPage() {
     const handleClickOutside = () => {
       if (openMenuId) setOpenMenuId(null);
     };
-
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [openMenuId]);
 
-  useEffect(() => {
-    const fetchPostIfNeeded = async () => {
-      if (!post && postId) {
-        setIsLoading(true);
-        try {
-          const response = await bizpulseApi.fetchWallFeedById(postId);
-          if (response.success && response.data) {
-            // Extract wallFeed from response.data (API wraps it in wallFeed property)
-            const postData = (response.data as any).wallFeed || response.data;
-            const transformedPost = transformBizPulsePostToMock(postData);
-            dispatch(updatePost(transformedPost));
-          } else {
-            console.error("API returned success=false");
-            toast.error("Failed to load post");
-          }
-        } catch (error) {
-          console.error("Failed to fetch post:", error);
-          toast.error("Failed to load post");
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-      }
-    };
+  const handleReportComment = async (reason: string) => {
+    if (!reportingCommentId) return;
+    try {
+      const result = await reportApi.reportComment({
+        commentId: reportingCommentId,
+        postId: postId,
+        reason: reason as any,
+      });
 
-    fetchPostIfNeeded();
-  }, [postId, post, dispatch]);
+      if (result.success) {
+        toast.success("Comment reported successfully.");
+      } else {
+        toast.error(result.error || "Failed to report comment");
+      }
+    } catch (error) {
+      console.error("Error reporting comment:", error);
+      toast.error("Failed to report comment");
+    } finally {
+      setReportingCommentId(null);
+      setIsReportModalOpen(false);
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
-        <div className="text-gray-500 text-lg">Loading post...</div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12">
+        <PostSkeleton />
       </div>
     );
   }
 
-  // Show not found only if not loading and no post
-  if (!post && !isLoading) {
+  if ((!post && !isLoading) || queryError) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-gray-500 text-lg mb-2">Post not found</div>
@@ -319,79 +200,7 @@ export default function BizPulseDetailPage() {
     );
   }
 
-  if (!post) {
-    return null;
-  }
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-
-
-
-
-
-
-  const handleReportComment = async (reason: string) => {
-    if (!reportingCommentId) return;
-    const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(reportingCommentId);
-    if (!isValidObjectId) {
-      toast.error(
-        "Cannot report this comment until it’s synced. Please refresh."
-      );
-      setReportingCommentId(null);
-      setIsReportModalOpen(false);
-      return;
-    }
-
-    try {
-      console.debug("[BizPulseDetailPage] Reporting comment:", {
-        commentId: reportingCommentId,
-        postId,
-        reason,
-      });
-      const result = await reportApi.reportComment({
-        commentId: reportingCommentId,
-        postId: postId,
-        reason: reason as any,
-      });
-
-      if (result.success) {
-        console.debug("[BizPulseDetailPage] Report success:", result);
-        toast.success(
-          "Comment reported successfully. It has been hidden from your view."
-        );
-      } else {
-        console.error("[BizPulseDetailPage] Report failed:", result.error);
-        toast.error(result.error || "Failed to report comment");
-      }
-    } catch (error) {
-      console.error("[BizPulseDetailPage] Error reporting comment:", error);
-      toast.error("Failed to report comment");
-    } finally {
-      setReportingCommentId(null);
-      setIsReportModalOpen(false);
-    }
-  };
-
-  const handleOpenReportModal = (commentId: string) => {
-    const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(commentId);
-    if (!isValidObjectId) {
-      toast.error(
-        "Cannot report this comment until it’s synced. Please refresh."
-      );
-      return;
-    }
-    setReportingCommentId(commentId);
-    setIsReportModalOpen(true);
-    setOpenMenuId(null);
-  };
+  if (!post) return null;
 
   return (
     <div className="min-h-screen mt-12 bg-gray-50">
@@ -399,16 +208,11 @@ export default function BizPulseDetailPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center gap-1.5 text-sm text-gray-600 overflow-x-auto scrollbar-hide">
-            {/* Home Icon */}
-            <Link
-              href="/feeds"
-              className="hover:text-blue-600 transition-colors p-0.5 flex-shrink-0"
-            >
+            <Link href="/feeds" className="hover:text-blue-600 transition-colors p-0.5 flex-shrink-0">
               <Home className="w-4 h-4" />
             </Link>
             <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-
-            {breadcrumbs.slice(1).map((crumb, index) => (
+            {breadcrumbs.slice(1).map((crumb) => (
               <React.Fragment key={crumb.path}>
                 <Link
                   href={crumb.path}
@@ -419,9 +223,8 @@ export default function BizPulseDetailPage() {
                 <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
               </React.Fragment>
             ))}
-
             <span className="text-gray-900 font-semibold text-[13px] md:text-[14px] truncate">
-              {post?.title || "Post"}
+              {post.title || "Post"}
             </span>
           </nav>
         </div>
@@ -451,9 +254,8 @@ export default function BizPulseDetailPage() {
             </div>
           </div>
 
-          {/* Hero Image(s) - Use carousel if multiple images exist */}
-          {Array.isArray((post as any).images) &&
-            (post as any).images.length > 0 ? (
+          {/* Hero Image(s) */}
+          {Array.isArray((post as any).images) && (post as any).images.length > 0 ? (
             <ImageCarousel images={(post as any).images} alt={post.title} />
           ) : post.image ? (
             <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
@@ -481,36 +283,26 @@ export default function BizPulseDetailPage() {
               {post.title}
             </h1>
 
-            {/* Article Content */}
+            {/* Content */}
             <div className="prose mt-2 prose-lg max-w-none text-gray-700 mb-8">
               <div dangerouslySetInnerHTML={{ __html: post.content }} />
             </div>
 
-            {/* Interactive Stats Display */}
+            {/* Stats */}
             <div className="py-4 border-y border-gray-200">
               <div className="flex items-center gap-6 text-gray-700">
-                {/* Like Button */}
                 <button
                   onClick={handleLike}
                   disabled={isLiking}
-                  className={`flex items-center space-x-2 transition-all hover:scale-105 ${isLiked
-                      ? "text-blue-600"
-                      : "text-gray-700 hover:text-blue-600"
+                  className={`flex items-center space-x-2 transition-all hover:scale-105 ${post.isLiked ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
                     } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <ThumbsUp
-                    className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`}
-                  />
-                  <span className="font-medium text-sm">
-                    {memoizedStats.likes} Likes
-                  </span>
+                  <ThumbsUp className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`} />
+                  <span className="font-medium text-sm">{post.stats?.likes || 0} Likes</span>
                 </button>
-                {/* Comments Count */}
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-sm">
-                    {memoizedStats.comments} Comments
-                  </span>
+                  <span className="font-medium text-sm">{post.stats?.comments || 0} Comments</span>
                 </div>
               </div>
             </div>
@@ -520,17 +312,9 @@ export default function BizPulseDetailPage() {
               <div className="flex space-x-3">
                 <Avatar
                   src={getAvatarUrl(currentUser?.avatar)}
-                  alt={
-                    currentUser
-                      ? `${currentUser.fname} ${currentUser.lname}`
-                      : "User"
-                  }
+                  alt={currentUser ? `${currentUser.fname} ${currentUser.lname}` : "User"}
                   size="sm"
-                  fallbackText={
-                    currentUser
-                      ? `${currentUser.fname} ${currentUser.lname}`
-                      : "You"
-                  }
+                  fallbackText={currentUser ? `${currentUser.fname} ${currentUser.lname}` : "You"}
                   showMembershipBorder={false}
                 />
                 <div className="flex-1 space-y-3">
@@ -539,8 +323,7 @@ export default function BizPulseDetailPage() {
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Share your thoughts..."
                     disabled={isSubmitting}
-                    className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${error ? "border-red-300" : "border-gray-300"
-                      } ${isSubmitting ? "bg-gray-50" : ""}`}
+                    className="w-full p-4 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                   />
                   <div className="flex justify-end">
@@ -552,47 +335,29 @@ export default function BizPulseDetailPage() {
                           : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
                         }`}
                     >
-                      {isSubmitting ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Posting...</span>
-                        </div>
-                      ) : (
-                        "Post Comment"
-                      )}
+                      {isSubmitting ? "Posting..." : "Post Comment"}
                     </button>
                   </div>
-                  {error && (
-                    <p className="text-sm text-red-600">{error}</p>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Comments Section */}
+            {/* Comments List */}
             <div className="border-t border-gray-200 pt-4 mt-2">
-              <h3
-                id="comments-section"
-                className="text-base font-bold text-gray-900 mb-4"
-              >
-                Comments ({memoizedStats.comments})
+              <h3 id="comments-section" className="text-base font-bold text-gray-900 mb-4">
+                Comments ({post.stats?.comments || 0})
               </h3>
 
               <div className="space-y-4">
-                {memoizedComments.length > 0 ? (
-                  memoizedComments.map((comment) => {
-                    const isCurrentUserComment =
-                      comment.author.id ===
-                      (currentUser?._id || currentUser?.id);
+                {post.comments && post.comments.length > 0 ? (
+                  post.comments.map((comment: any) => {
+                    const isCurrentUserComment = comment.author.id === (currentUser?._id || currentUser?.id);
                     const commentProfileUrl = isCurrentUserComment
                       ? "/feeds/myprofile"
                       : `/feeds/connections/${comment.author.id}?from=connect-members`;
 
                     return (
-                      <div
-                        key={comment.id}
-                        className="flex space-x-3 pb-4 border-b border-gray-100 last:border-0"
-                      >
+                      <div key={comment.id} className="flex space-x-3 pb-4 border-b border-gray-100 last:border-0">
                         <Link href={commentProfileUrl}>
                           <Avatar
                             src={getAvatarUrl(comment.author.avatar)}
@@ -612,11 +377,8 @@ export default function BizPulseDetailPage() {
                               >
                                 {comment.author.name}
                               </Link>
-                              <span className="text-xs text-gray-500">
-                                {comment.timeAgo}
-                              </span>
+                              <span className="text-xs text-gray-500">{comment.timeAgo}</span>
                             </div>
-                            {/* Edit/Delete buttons for own comments */}
                             {isCurrentUserComment && (
                               <div className="flex gap-2">
                                 <button
@@ -627,35 +389,16 @@ export default function BizPulseDetailPage() {
                                   className="text-blue-600 hover:text-blue-700 p-1"
                                   title="Edit comment"
                                 >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                    />
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
                                 </button>
                                 <button
                                   onClick={async () => {
                                     if (!confirm("Are you sure you want to delete this comment?")) return;
                                     try {
-                                      await bizpulseApi.deleteComment(postId, comment.id);
-                                      const refreshed = await bizpulseApi.fetchWallFeedById(postId);
-                                      if (refreshed.success && refreshed.data) {
-                                        const postData = (refreshed.data as any).wallFeed || refreshed.data;
-                                        const transformedPost = transformBizPulsePostToMock(postData);
-                                        if (!transformedPost.image && post.image) {
-                                          transformedPost.image = post.image;
-                                        }
-                                        dispatch(updatePost(transformedPost));
-                                        toast.success("Comment deleted");
-                                      }
+                                      await deleteComment({ postId, commentId: comment.id }).unwrap();
+                                      toast.success("Comment deleted");
                                     } catch (err) {
                                       console.error("Failed to delete comment", err);
                                       toast.error("Failed to delete comment");
@@ -664,18 +407,8 @@ export default function BizPulseDetailPage() {
                                   className="text-red-600 hover:text-red-700 p-1"
                                   title="Delete comment"
                                 >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
                                 </button>
                               </div>
@@ -685,9 +418,7 @@ export default function BizPulseDetailPage() {
                             <div className="mt-2 space-y-2">
                               <textarea
                                 value={editingContent}
-                                onChange={(e) =>
-                                  setEditingContent(e.target.value)
-                                }
+                                onChange={(e) => setEditingContent(e.target.value)}
                                 className="w-full border rounded-lg p-2 text-sm"
                                 rows={3}
                               />
@@ -695,39 +426,13 @@ export default function BizPulseDetailPage() {
                                 <button
                                   onClick={async () => {
                                     try {
-                                      await bizpulseApi.editComment(
-                                        postId,
-                                        comment.id,
-                                        editingContent.trim()
-                                      );
-                                      const refreshed =
-                                        await bizpulseApi.fetchWallFeedById(
-                                          postId
-                                        );
-                                      if (refreshed.success && refreshed.data) {
-                                        const postData =
-                                          (refreshed.data as any).wallFeed ||
-                                          refreshed.data;
-                                        const transformedPost =
-                                          transformBizPulsePostToMock(postData);
-                                        if (
-                                          !transformedPost.image &&
-                                          post.image
-                                        ) {
-                                          transformedPost.image = post.image;
-                                        }
-                                        dispatch(updatePost(transformedPost));
-                                        toast.success("Comment updated");
-                                      }
-                                    } catch (err) {
-                                      console.error(
-                                        "Failed to update comment",
-                                        err
-                                      );
-                                      toast.error("Failed to update comment");
-                                    } finally {
+                                      await editComment({ postId, commentId: comment.id, content: editingContent.trim() }).unwrap();
+                                      toast.success("Comment updated");
                                       setIsEditingCommentId(null);
                                       setEditingContent("");
+                                    } catch (err) {
+                                      console.error("Failed to update comment", err);
+                                      toast.error("Failed to update comment");
                                     }
                                   }}
                                   className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
@@ -746,9 +451,7 @@ export default function BizPulseDetailPage() {
                               </div>
                             </div>
                           ) : (
-                            <p className="text-gray-700 text-sm leading-relaxed">
-                              {comment.content}
-                            </p>
+                            <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
                           )}
                         </div>
                       </div>
@@ -757,9 +460,7 @@ export default function BizPulseDetailPage() {
                 ) : (
                   <div className="text-center py-12">
                     <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">
-                      No comments yet. Be the first to comment!
-                    </p>
+                    <p className="text-gray-500">No comments yet. Be the first to comment!</p>
                   </div>
                 )}
               </div>

@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Activity, Network, Clock } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 
-interface RecentPost {
+export interface RecentPost {
   id: string;
   title: string;
   description?: string;
   author: {
     name: string;
-    avatar?: string;
+    avatar?: string | null | undefined;
   };
   timeAgo: string;
   postSource: "bizpulse" | "bizhub";
@@ -241,8 +241,8 @@ export default function FloatingDrawer({
                           {/* Source Icon */}
                           <div
                             className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${post.postSource === "bizpulse"
-                                ? "bg-blue-500"
-                                : "bg-purple-500"
+                              ? "bg-blue-500"
+                              : "bg-purple-500"
                               }`}
                           >
                             {post.postSource === "bizpulse" ? (

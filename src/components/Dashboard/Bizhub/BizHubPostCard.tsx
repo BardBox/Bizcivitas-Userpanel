@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { ThumbsUp, MessageSquare } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
-import type { BizHubPost } from "../../../../store/bizhubSlice";
+import type { BizHubPost } from "../../../types/bizhub.types";
 
 interface BizHubPostCardProps {
   post: BizHubPost;
@@ -94,9 +94,8 @@ const BizHubPostCard: React.FC<BizHubPostCardProps> = ({
               {/* Likes */}
               <button
                 onClick={handleLikeClick}
-                className={`flex items-center gap-1 text-xs transition-colors ${
-                  post.isLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
-                }`}
+                className={`flex items-center gap-1 text-xs transition-colors ${post.isLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
+                  }`}
               >
                 <ThumbsUp
                   className="w-4 h-4"

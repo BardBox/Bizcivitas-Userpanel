@@ -1,83 +1,25 @@
 "use client";
 
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState } from "../../../store/store";
+import { memo } from "react";
 import BizPulseCard from "@/components/Dashboard/BizPulseCard";
 import PollCard from "@/components/Dashboard/PollCard";
 import { WallFeedPost } from "@/types/bizpulse.types";
 import { BizPulseMockPost } from "../../../types/bizpulse.types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { memo, useEffect } from "react";
-import { updatePost } from "../../../store/postsSlice";
-import { transformBizPulsePostsToMock } from "@/utils/bizpulseTransformers";
-import { bizpulseApi } from "@/services/bizpulseApi";
-import toast from "react-hot-toast";
 
-const PostsGrid = memo(function PostsGrid() {
-  const dispatch = useDispatch();
-  const { filteredPosts, loading } = useSelector(
-    (state: RootState) => state.posts
-  );
-  const user = useSelector((state: RootState) => state.auth.user);
-  const currentUserId = user?._id || user?.id || "";
+interface PostsGridProps {
+  posts: BizPulseMockPost[];
+  loading: boolean;
+  currentUserId: string;
+  onLike: (postId: string) => void;
+}
 
-  // Handle like functionality
-  const handleLike = async (postId: string) => {
-    console.log("[PostsGrid] ========== HANDLELIKE FUNCTION CALLED ==========");
-    console.log("[PostsGrid] Liking post:", postId);
-    console.log("[PostsGrid] Current user ID:", currentUserId);
-
-    try {
-      console.log("[PostsGrid] Calling bizpulseApi.likeWallFeed...");
-      const response = await bizpulseApi.likeWallFeed(postId);
-      console.log("[PostsGrid] Like response:", response);
-
-      if (response.success && response.data) {
-        // Find existing post to preserve any missing data
-        const existingPost = filteredPosts.find((p) => p.id === postId);
-        // Transform the updated WallFeedPost to BizPulseMockPost
-        const transformedPost = transformBizPulsePostsToMock([
-          response.data,
-        ])[0];
-
-        console.log("[PostsGrid] Transformed post:", transformedPost);
-        console.log("[PostsGrid] Existing post:", existingPost);
-
-        if (!existingPost) {
-          console.warn(
-            `Post with ID ${postId} not found in filteredPosts. This could indicate a stale UI state.`
-          );
-        }
-
-        // Use transformedPost as base and merge with existing post data if available
-        // IMPORTANT: Don't override category and tags from transformed post
-        const updatedPost = {
-          ...existingPost, // Start with existing post to preserve all fields
-          ...transformedPost, // Override with updated data from API
-          // Ensure poll data is preserved
-          poll: transformedPost.poll || existingPost?.poll,
-          // Ensure image is preserved if not in response
-          image: transformedPost.image || existingPost?.image || undefined,
-        };
-
-        console.log("[PostsGrid] Final updated post:", updatedPost);
-        dispatch(updatePost(updatedPost));
-
-        // Show success message
-        const isLiked = response.data.isLiked;
-        console.log("[PostsGrid] Is liked:", isLiked);
-        toast.success(isLiked ? "Post liked!" : "Post unliked!");
-
-      } else {
-        console.error("[PostsGrid] Like failed - response not successful:", response);
-        toast.error(response.message || "Failed to like post");
-      }
-    } catch (error: any) {
-      console.error("[PostsGrid] Failed to like post:", error);
-      toast.error(error.message || "Failed to like post");
-    }
-  };
-
+const PostsGrid = memo(function PostsGrid({
+  posts,
+  loading,
+  currentUserId,
+  onLike,
+}: PostsGridProps) {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -86,7 +28,7 @@ const PostsGrid = memo(function PostsGrid() {
     );
   }
 
-  if (filteredPosts.length === 0) {
+  if (posts.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-500 text-lg mb-2">No posts found</div>
@@ -99,7 +41,7 @@ const PostsGrid = memo(function PostsGrid() {
 
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-      {filteredPosts.map((post: BizPulseMockPost, index: number) => {
+      {posts.map((post: BizPulseMockPost, index: number) => {
         // Check if this is a poll post
         const isPoll =
           post.category === "pulse-polls" ||
@@ -152,14 +94,10 @@ const PostsGrid = memo(function PostsGrid() {
               key={post.id}
               post={wallFeedPost}
               currentUserId={currentUserId}
-              onVoteSuccess={(updatedPost) => {
-                // Transform the updated WallFeedPost back to BizPulseMockPost and update Redux
-                const transformedPost = transformBizPulsePostsToMock([
-                  updatedPost,
-                ])[0];
-                dispatch(updatePost(transformedPost));
+              onVoteSuccess={() => {
+                // RTK Query invalidation will handle the update
               }}
-              onLike={handleLike}
+              onLike={onLike}
             />
           );
         }
@@ -178,7 +116,7 @@ const PostsGrid = memo(function PostsGrid() {
             category={post.category}
             tags={post.tags}
             featured={index === 0} // Make first post featured
-            onLike={handleLike}
+            onLike={onLike}
             isLiked={post.isLiked || false}
           />
         );

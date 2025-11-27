@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import BizHubTabNavigation from "@/components/Dashboard/BizHubTabNavigation";
+import BizHubTabNavigation, { BizHubCategory } from "@/components/Dashboard/BizHubTabNavigation";
 import BizHubPostCard from "@/components/Dashboard/Bizhub/BizHubPostCard";
 import Link from "next/link";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "../../../../store/store";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../../store/store";
 import {
-  fetchBizHubPosts,
-  setSearchQuery,
-  likeBizHubPost,
-  setActiveCategory,
-  type BizHubCategory,
-} from "../../../../store/bizhubSlice";
+  useGetBizHubPostsQuery,
+  useLikeBizHubPostMutation,
+} from "../../../../store/api/bizpulseApi";
+import { calculateTimeAgo } from "../../../../src/utils/bizhubTransformers";
+import type { BizHubPost } from "@/types/bizhub.types";
 
 const categoryDescriptions: Record<BizHubCategory, string> = {
   all: "Create, connect, and grow — your forum for business conversations.",
@@ -29,32 +28,66 @@ const categoryDescriptions: Record<BizHubCategory, string> = {
 };
 
 export default function BizHubPage() {
-  const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
-  const { filteredPosts, activeCategory, searchQuery, loading, error } =
-    useSelector((state: RootState) => state.bizhub);
   const userId = useSelector((state: RootState) => state.auth.user?._id);
+
+  const [activeCategory, setActiveCategory] = useState<BizHubCategory>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: rawPosts, isLoading, error } = useGetBizHubPostsQuery();
+  const [likeBizHubPost] = useLikeBizHubPostMutation();
 
   // Handle URL type parameter - only on initial load
   useEffect(() => {
     const typeFromUrl = searchParams.get('type');
     if (typeFromUrl) {
-      dispatch(setActiveCategory(typeFromUrl as BizHubCategory));
+      setActiveCategory(typeFromUrl as BizHubCategory);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, dispatch]);
-
-  useEffect(() => {
-    dispatch(fetchBizHubPosts());
-  }, [dispatch]);
+  }, [searchParams]);
 
   const handleSearchChange = (query: string) => {
-    dispatch(setSearchQuery(query));
+    setSearchQuery(query);
   };
 
   const handleLike = async (postId: string) => {
-    dispatch(likeBizHubPost(postId));
+    try {
+      await likeBizHubPost(postId).unwrap();
+    } catch (error) {
+      console.error("Failed to like post:", error);
+    }
   };
+
+  const filteredPosts = useMemo(() => {
+    if (!rawPosts) return [];
+
+    let posts: BizHubPost[] = rawPosts.map((post: any) => ({
+      ...post,
+      timeAgo: post.timeAgo || (post.createdAt ? calculateTimeAgo(post.createdAt) : "Recently"),
+    }));
+
+    // Filter by category
+    if (activeCategory !== "all") {
+      posts = posts.filter((post) => post.type === activeCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      posts = posts.filter((post) => {
+        const userName = post.userId?.name || post.user?.name || "";
+        const title = post.title || "";
+        const description = post.description || "";
+
+        return (
+          title.toLowerCase().includes(query) ||
+          description.toLowerCase().includes(query) ||
+          userName.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    return posts;
+  }, [rawPosts, activeCategory, searchQuery]);
 
   return (
     <div className="min-h-screen bg-gray-50 md:rounded-3xl space-y-6 md:mt-12 p-4">
@@ -96,7 +129,11 @@ export default function BizHubPage() {
 
       {/* Tab Navigation and Content */}
       <div className="bg-white rounded-lg shadow overflow-visible">
-        <BizHubTabNavigation />
+        <BizHubTabNavigation
+          activeCategory={activeCategory}
+          onTabChange={setActiveCategory}
+          loading={isLoading}
+        />
         <div className="p-2 md:p-6 overflow-hidden">
           {/* Category Description */}
           <p className="text-sm text-gray-500 mb-4">
@@ -104,7 +141,7 @@ export default function BizHubPage() {
           </p>
 
           {/* Posts Grid - Two Column Layout */}
-          {loading && (
+          {isLoading && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-2 text-gray-500">Loading posts...</p>
@@ -112,10 +149,10 @@ export default function BizHubPage() {
           )}
           {error && (
             <div className="text-center py-8">
-              <p className="text-red-500">{error}</p>
+              <p className="text-red-500">Failed to load posts</p>
             </div>
           )}
-          {!loading && !error && filteredPosts.length === 0 && (
+          {!isLoading && !error && filteredPosts.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">No posts found.</p>
               <p className="text-sm text-gray-400 mt-2">
@@ -123,7 +160,7 @@ export default function BizHubPage() {
               </p>
             </div>
           )}
-          {!loading && !error && filteredPosts.length > 0 && (
+          {!isLoading && !error && filteredPosts.length > 0 && (
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
               {filteredPosts.map((post) => (
                 <BizHubPostCard

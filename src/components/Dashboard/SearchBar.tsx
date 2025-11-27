@@ -1,19 +1,17 @@
 "use client";
 
-import { useSelector, useDispatch } from "react-redux";
-import { setSearchQuery } from "../../../store/postsSlice";
-import type { RootState } from "../../../store/store";
+interface SearchBarProps {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+}
 
-export default function SearchBar() {
-  const dispatch = useDispatch();
-  const { searchQuery } = useSelector((state: RootState) => state.posts);
-
+export default function SearchBar({ searchQuery, onSearchChange }: SearchBarProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSearchQuery(e.target.value));
+    onSearchChange(e.target.value);
   };
 
   const clearSearch = () => {
-    dispatch(setSearchQuery(""));
+    onSearchChange("");
   };
 
   return (

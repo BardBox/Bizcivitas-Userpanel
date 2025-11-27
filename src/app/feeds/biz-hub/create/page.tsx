@@ -2,12 +2,13 @@
 
 import { useState, useRef, FormEvent, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../../../../../store/store";
-import { createBizHubPost, editBizHubPost, fetchBizHubPostById } from "../../../../../store/bizhubSlice";
 import Image from "next/image";
 import TipTapEditor from "@/components/TipTapEditor";
-import { getAbsoluteImageUrl } from "@/utils/imageUtils";
+import {
+  useCreateBizHubPostMutation,
+  useEditBizHubPostMutation,
+  useGetBizHubPostByIdQuery,
+} from "../../../../../store/api/bizpulseApi";
 
 const categories = [
   { value: "general-chatter", label: "General Chatter" },
@@ -20,12 +21,18 @@ const categories = [
 
 export default function CreateBizHubPostPage() {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
   const editId = searchParams?.get("edit");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentPost } = useSelector((state: RootState) => state.bizhub);
+  const [createBizHubPost, { isLoading: isCreating }] = useCreateBizHubPostMutation();
+  const [editBizHubPost, { isLoading: isEditing }] = useEditBizHubPostMutation();
+
+  // Fetch post data if in edit mode
+  // skip: !editId ensures query only runs if editId exists
+  const { data: postToEdit, isLoading: isLoadingPost } = useGetBizHubPostByIdQuery(editId || "", {
+    skip: !editId,
+  });
 
   const [formData, setFormData] = useState({
     title: "",
@@ -35,33 +42,21 @@ export default function CreateBizHubPostPage() {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingPost, setLoadingPost] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load post data if in edit mode
   useEffect(() => {
-    if (editId) {
-      setLoadingPost(true);
-      dispatch(fetchBizHubPostById(editId))
-        .unwrap()
-        .then((post) => {
-          setFormData({
-            title: post.title || "",
-            description: post.description || "",
-            type: post.type || "",
-          });
-          if (post.mediaUrls && post.mediaUrls.length > 0) {
-            setExistingImageUrls(post.mediaUrls);
-          }
-          setLoadingPost(false);
-        })
-        .catch((err) => {
-          setError("Failed to load post data");
-          setLoadingPost(false);
-        });
+    if (postToEdit) {
+      setFormData({
+        title: postToEdit.title || "",
+        description: postToEdit.description || "",
+        type: postToEdit.type || "",
+      });
+      if (postToEdit.mediaUrls && postToEdit.mediaUrls.length > 0) {
+        setExistingImageUrls(postToEdit.mediaUrls);
+      }
     }
-  }, [editId, dispatch]);
+  }, [postToEdit]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -116,20 +111,16 @@ export default function CreateBizHubPostPage() {
     }
 
     try {
-      setLoading(true);
-
       if (editId) {
         // Edit mode - use JSON, not FormData
-        await dispatch(
-          editBizHubPost({
-            postId: editId,
-            data: {
-              title: formData.title,
-              description: formData.description,
-              type: formData.type,
-            },
-          })
-        ).unwrap();
+        await editBizHubPost({
+          postId: editId,
+          data: {
+            title: formData.title,
+            description: formData.description,
+            type: formData.type,
+          },
+        }).unwrap();
         // Navigate back to detail page
         router.push(`/feeds/biz-hub/${editId}`);
       } else {
@@ -146,17 +137,17 @@ export default function CreateBizHubPostPage() {
         });
 
         // Dispatch action
-        await dispatch(createBizHubPost(data)).unwrap();
+        await createBizHubPost(data).unwrap();
 
         // Navigate back to BizHub
         router.push("/feeds/biz-hub");
       }
     } catch (err: any) {
       setError(err.message || `Failed to ${editId ? "update" : "create"} post`);
-    } finally {
-      setLoading(false);
     }
   };
+
+  const loading = isCreating || isEditing;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -176,7 +167,7 @@ export default function CreateBizHubPostPage() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
         {/* Loading State */}
-        {loadingPost && (
+        {isLoadingPost && (
           <div className="flex items-center justify-center py-8">
             <svg
               className="animate-spin h-8 w-8 text-blue-600"

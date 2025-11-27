@@ -1,9 +1,7 @@
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 import membersReducer from "./membersSlice";
 import toastReducer from "./toastSlice";
-import postsReducer from "./postsSlice";
 import authReducer from "./authSlice";
-import bizhubReducer from "./bizhubSlice";
 import dashboardReducer from "./dashboardSlice";
 import messageReducer from "./messageSlice";
 import { baseApi } from "./api/baseApi";
@@ -13,6 +11,8 @@ import "./api/eventsApi.latest";
 import "./api/dashboardApi";
 // Import message API
 import "./api/messageApi";
+// Import bizpulse API
+import "./api/bizpulseApi";
 
 // Placeholder slice to prevent empty reducer error
 const placeholderSlice = createSlice({
@@ -27,9 +27,7 @@ export const store = configureStore({
     placeholder: placeholderSlice.reducer,
     members: membersReducer,
     toast: toastReducer,
-    posts: postsReducer,
     auth: authReducer,
-    bizhub: bizhubReducer,
     dashboard: dashboardReducer,
     messages: messageReducer,
     // Add API reducer

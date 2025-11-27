@@ -1,6 +1,6 @@
 import { BizPulseMockPost, BizPulseCategory } from "../../types/bizpulse.types";
 
-function calculateTimeAgo(dateString: string): string {
+export function calculateTimeAgo(dateString: string): string {
   try {
     const now = new Date();
     const postDate = new Date(dateString);
@@ -88,8 +88,8 @@ export function transformBizHubPostToMock(post: any): BizPulseMockPost {
       typeof post.description === "string"
         ? post.description
         : Array.isArray(post.description)
-        ? post.description.join("\n\n")
-        : "",
+          ? post.description.join("\n\n")
+          : "",
     author: {
       name: authorName,
       title: post.user?.role || post.user?.classification || "Member",

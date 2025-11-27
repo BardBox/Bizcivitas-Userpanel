@@ -1,20 +1,24 @@
 "use client";
 
-import { useState, useCallback, useEffect, memo, useRef } from "react";
+import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RootState } from "../../../store/store";
 import PollCard from "@/components/Dashboard/PollCard";
 import InfiniteScroll from "react-infinite-scroll-component";
 import PostCard from "@/components/Dashboard/PostCard";
-import FloatingDrawer from "@/components/Dashboard/FloatingDrawer";
-import { bizpulseApi } from "../../services/bizpulseApi";
-import { bizhubApi } from "../../services/bizhubApi";
+import FloatingDrawer, { RecentPost } from "@/components/Dashboard/FloatingDrawer";
 import { transformWallFeedPostToMock } from "../../utils/bizpulseTransformers";
 import { transformBizHubPostToMock } from "../../utils/bizhubTransformers";
+import {
+  useGetDailyFeedsQuery,
+  useGetWallFeedsQuery,
+  useGetBizHubPostsQuery,
+  useLikePostMutation,
+  useLikeBizHubPostMutation
+} from "../../../store/api/bizpulseApi";
+import PostSkeleton from "@/components/ui/skeletons/PostSkeleton";
 import { Activity, Network, Sparkles, Filter, ChevronDown } from "lucide-react";
-
-// removed unused dummy utilities
 
 // --- Component ---
 export default function DashboardPage() {
@@ -34,20 +38,99 @@ export default function DashboardPage() {
   const initialTab =
     tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "all";
 
-  const [posts, setPosts] = useState<any[]>([]);
-  const [allPosts, setAllPosts] = useState<any[]>([]);
-  const [recentPosts, setRecentPosts] = useState<any[]>([]);
+  const { data: dailyFeeds, isLoading: isLoadingDaily } = useGetDailyFeedsQuery();
+  const { data: bizhubPosts, isLoading: isLoadingBizHub } = useGetBizHubPostsQuery();
+  const { data: wallFeeds, isLoading: isLoadingWall } = useGetWallFeedsQuery({ limit: 100 });
+  const [likePost] = useLikePostMutation();
+  const [likeBizHubPost] = useLikeBizHubPostMutation();
+
   const [activeTab, setActiveTab] = useState<"all" | "bizpulse" | "bizhub">(
     initialTab
   );
   const user = useSelector((state: RootState) => state.auth.user);
   const currentUserId = user?._id || user?.id || "";
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const loading = isLoadingDaily || isLoadingBizHub || isLoadingWall;
+  const hasMore = false; // Pagination not yet implemented for combined feed
+
+  // Memoize transformed posts
+  const allPosts = useMemo(() => {
+    if (!dailyFeeds && !bizhubPosts) return [];
+
+    const transformedDaily = (dailyFeeds || []).map((wf: any) => ({
+      ...transformWallFeedPostToMock(wf),
+      postSource: "bizpulse",
+    }));
+
+    const transformedBizhubDaily = (bizhubPosts || [])
+      .filter((p: any) => p.isDailyFeed === true)
+      .map((p: any) => ({
+        ...transformBizHubPostToMock(p),
+        postSource: "bizhub",
+      }));
+
+    return [...transformedDaily, ...transformedBizhubDaily];
+  }, [dailyFeeds, bizhubPosts]);
+
+  const recentPosts = useMemo(() => {
+    if (!wallFeeds && !bizhubPosts) return [];
+
+    const allBizPulsePosts = (wallFeeds || []).map(
+      (wf: any) => ({
+        ...transformWallFeedPostToMock(wf),
+        postSource: "bizpulse",
+        createdAtTimestamp: new Date(wf.createdAt).getTime(),
+      })
+    );
+
+    const allBizHubPosts = (bizhubPosts || [])
+      .map((p: any) => ({
+        ...transformBizHubPostToMock(p),
+        postSource: "bizhub",
+        createdAtTimestamp: new Date(p.createdAt).getTime(),
+      }));
+
+    return [...allBizPulsePosts, ...allBizHubPosts]
+      .sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp)
+      .slice(0, 8)
+      .map((post): RecentPost => ({
+        id: post.id,
+        title: post.title || post.poll?.question || "Untitled Post",
+        description: post.content?.substring(0, 100),
+        author: {
+          name: post.author.name,
+          avatar: post.author.avatar
+        },
+        timeAgo: post.timeAgo,
+        postSource: post.postSource as "bizpulse" | "bizhub",
+        category: post.category,
+        isPoll: !!(post.poll || post.category === "pulse-polls"),
+      }));
+  }, [wallFeeds, bizhubPosts]);
+
+  // Filter posts based on active tab
+  const posts = useMemo(() => {
+    if (activeTab === "all") {
+      return allPosts;
+    } else if (activeTab === "bizpulse") {
+      return allPosts.filter((post) => post.postSource === "bizpulse");
+    } else if (activeTab === "bizhub") {
+      return allPosts.filter((post) => post.postSource === "bizhub");
+    }
+    return allPosts;
+  }, [activeTab, allPosts]);
+
+  const handleTabChange = (tab: "all" | "bizpulse" | "bizhub") => {
+    setActiveTab(tab);
+    setIsDropdownOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     const updateDrawer = () => setIsDrawerOpen(window.innerWidth >= 768);
@@ -90,105 +173,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Handler to change tab and update URL
-  const handleTabChange = useCallback(
-    (tab: "all" | "bizpulse" | "bizhub") => {
-      setActiveTab(tab);
-      setIsDropdownOpen(false); // Close dropdown when selection is made
-      // Update URL without full page reload
-      const params = new URLSearchParams(searchParams.toString());
-      if (tab === "all") {
-        params.delete("tab"); // Remove tab param for default "all"
-      } else {
-        params.set("tab", tab);
-      }
-      const newUrl = params.toString()
-        ? `/feeds?${params.toString()}`
-        : "/feeds";
-      router.push(newUrl, { scroll: false });
-    },
-    [router, searchParams]
-  );
-
-  const fetchDailyFeed = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [dailyFeeds, bizhubPosts, allWallFeeds] = await Promise.all([
-        bizpulseApi.fetchDailyFeeds(),
-        bizpulseApi.fetchBizHubPosts(),
-        bizpulseApi.fetchWallFeeds({ limit: 100 }), // Fetch recent posts
-      ]);
-
-      // Transform daily feed posts
-      const transformedDaily = dailyFeeds.map((wf: any) => ({
-        ...transformWallFeedPostToMock(wf),
-        postSource: "bizpulse",
-      }));
-      const transformedBizhubDaily = bizhubPosts
-        .filter((p: any) => p.isDailyFeed === true)
-        .map((p: any) => ({
-          ...transformBizHubPostToMock(p),
-          postSource: "bizhub",
-        }));
-
-      const merged = [...transformedDaily, ...transformedBizhubDaily];
-      setAllPosts(merged);
-      setPosts(merged);
-
-      // Get all recent posts (mix BizPulse and BizHub)
-      const allBizPulsePosts = (allWallFeeds?.data?.wallFeeds || []).map(
-        (wf: any) => ({
-          ...transformWallFeedPostToMock(wf),
-          postSource: "bizpulse",
-          createdAtTimestamp: new Date(wf.createdAt).getTime(),
-        })
-      );
-
-      const allBizHubPosts = bizhubPosts.map((p: any) => ({
-        ...transformBizHubPostToMock(p),
-        postSource: "bizhub",
-        createdAtTimestamp: new Date(p.createdAt).getTime(),
-      }));
-
-      // Mix and sort by most recent
-      const mixedPosts = [...allBizPulsePosts, ...allBizHubPosts]
-        .sort((a, b) => b.createdAtTimestamp - a.createdAtTimestamp)
-        .slice(0, 8)
-        .map((post) => ({
-          id: post.id,
-          title: post.title || post.poll?.question || "Untitled Post",
-          description: post.content?.substring(0, 100),
-          author: post.author,
-          timeAgo: post.timeAgo,
-          postSource: post.postSource,
-          category: post.category,
-          isPoll: !!(post.poll || post.category === "pulse-polls"),
-        }));
-
-      setRecentPosts(mixedPosts);
-      setHasMore(false);
-    } catch (e) {
-      console.error("Failed to load daily feed", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDailyFeed();
-  }, [fetchDailyFeed]);
-
-  // Filter posts based on active tab
-  useEffect(() => {
-    if (activeTab === "all") {
-      setPosts(allPosts);
-    } else if (activeTab === "bizpulse") {
-      setPosts(allPosts.filter((post) => post.postSource === "bizpulse"));
-    } else if (activeTab === "bizhub") {
-      setPosts(allPosts.filter((post) => post.postSource === "bizhub"));
-    }
-  }, [activeTab, allPosts]);
-
   return (
     <div className="relative min-h-screen">
       {/* Main content */}
@@ -202,8 +186,8 @@ export default function DashboardPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${showFilters
-                  ? "bg-orange-500 text-white shadow-md"
-                  : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200"
+                ? "bg-orange-500 text-white shadow-md"
+                : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200"
                 }`}
             >
               <Filter className="w-5 h-5" />
@@ -252,8 +236,8 @@ export default function DashboardPage() {
                       <button
                         onClick={() => handleTabChange("all")}
                         className={`w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors duration-150 first:rounded-t-lg flex items-center gap-2 ${activeTab === "all"
-                            ? "text-orange-600 bg-orange-50 font-medium"
-                            : "text-gray-700"
+                          ? "text-orange-600 bg-orange-50 font-medium"
+                          : "text-gray-700"
                           }`}
                       >
                         <Sparkles className="w-5 h-5" />
@@ -262,8 +246,8 @@ export default function DashboardPage() {
                       <button
                         onClick={() => handleTabChange("bizpulse")}
                         className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 flex items-center gap-2 ${activeTab === "bizpulse"
-                            ? "text-blue-600 bg-blue-50 font-medium"
-                            : "text-gray-700"
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-700"
                           }`}
                       >
                         <Activity className="w-5 h-5" />
@@ -272,8 +256,8 @@ export default function DashboardPage() {
                       <button
                         onClick={() => handleTabChange("bizhub")}
                         className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 last:rounded-b-lg flex items-center gap-2 ${activeTab === "bizhub"
-                            ? "text-blue-600 bg-blue-50 font-medium"
-                            : "text-gray-700"
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-700"
                           }`}
                       >
                         <Network className="w-5 h-5" />
@@ -290,8 +274,8 @@ export default function DashboardPage() {
                   <button
                     onClick={() => handleTabChange("all")}
                     className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${activeTab === "all"
-                        ? "bg-orange-500 text-white shadow-md"
-                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      ? "bg-orange-500 text-white shadow-md"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                       }`}
                   >
                     <Sparkles className="w-5 h-5" />
@@ -300,8 +284,8 @@ export default function DashboardPage() {
                   <button
                     onClick={() => handleTabChange("bizpulse")}
                     className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${activeTab === "bizpulse"
-                        ? "bg-blue-500 text-white shadow-md"
-                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                       }`}
                   >
                     <Activity className="w-5 h-5" />
@@ -310,8 +294,8 @@ export default function DashboardPage() {
                   <button
                     onClick={() => handleTabChange("bizhub")}
                     className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg transition-all ${activeTab === "bizhub"
-                        ? "bg-blue-500 text-white shadow-md"
-                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                       }`}
                   >
                     <Network className="w-5 h-5" />
@@ -322,148 +306,107 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <InfiniteScroll
-            dataLength={posts.length}
-            next={() => { }}
-            hasMore={hasMore}
-            loader={
-              <div className="text-center flex justify-center items-center">
-                {loading && (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
-                )}
-              </div>
-            }
-            endMessage={
-              <div className="text-center py-8 text-gray-500 text-sm">
-                🎉 You&apos;ve reached the end! No more posts.
-              </div>
-            }
-            style={{ overflow: "visible" }}
-          >
-            {posts.map((post) => {
-              const isPoll =
-                post.category === "pulse-polls" ||
-                (post.poll && post.postType === "poll");
-              if (isPoll && post.poll) {
-                const wallFeedPost = {
-                  _id: post.id,
-                  type: "poll",
-                  userId: {
-                    _id: currentUserId,
-                    fname: post.author.name?.split(" ")[0] || "",
-                    lname: post.author.name?.split(" ")[1] || "",
-                    avatar: post.author.avatar || undefined,
-                    username: "",
-                  },
-                  poll: post.poll,
-                  title: post.title,
-                  description: post.content,
-                  images: post.image ? [post.image] : undefined,
-                  badge: "Biz pulse",
-                  visibility: "public",
-                  likes: Array(post.stats?.likes || 0).fill({ userId: "" }),
-                  likeCount: post.stats?.likes || 0,
-                  isLiked: post.isLiked || false,
-                  comments: [],
-                  commentCount: post.stats?.comments || 0,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  timeAgo: post.timeAgo,
-                } as any;
+          {loading && posts.length === 0 ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <PostSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            <InfiniteScroll
+              dataLength={posts.length}
+              next={() => { }}
+              hasMore={hasMore}
+              loader={
+                <div className="py-4 space-y-4">
+                  <PostSkeleton />
+                  <PostSkeleton />
+                </div>
+              }
+              endMessage={
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  🎉 You&apos;ve reached the end! No more posts.
+                </div>
+              }
+              style={{ overflow: "visible" }}
+            >
+              {posts.map((post) => {
+                const isPoll =
+                  post.category === "pulse-polls" ||
+                  (post.poll && post.postType === "poll");
+                if (isPoll && post.poll) {
+                  const wallFeedPost = {
+                    _id: post.id,
+                    type: "poll",
+                    userId: {
+                      _id: currentUserId,
+                      fname: post.author.name?.split(" ")[0] || "",
+                      lname: post.author.name?.split(" ")[1] || "",
+                      avatar: post.author.avatar || undefined,
+                      username: "",
+                    },
+                    poll: post.poll,
+                    title: post.title,
+                    description: post.content,
+                    images: post.image ? [post.image] : undefined,
+                    badge: "Biz pulse",
+                    visibility: "public",
+                    likes: Array(post.stats?.likes || 0).fill({ userId: "" }),
+                    likeCount: post.stats?.likes || 0,
+                    isLiked: post.isLiked || false,
+                    comments: [],
+                    commentCount: post.stats?.comments || 0,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    timeAgo: post.timeAgo,
+                  } as any;
 
+                  return (
+                    <div key={post.id} className="mb-4">
+                      <PollCard
+                        post={wallFeedPost}
+                        currentUserId={currentUserId}
+                        onVoteSuccess={() => {
+                          // RTK Query will handle cache invalidation
+                        }}
+                        onLike={async (postId) => {
+                          try {
+                            await likePost(postId).unwrap();
+                          } catch (error) {
+                            console.error("Failed to like poll post:", error);
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                }
                 return (
                   <div key={post.id} className="mb-4">
-                    <PollCard
-                      post={wallFeedPost}
-                      currentUserId={currentUserId}
-                      onVoteSuccess={(updated) => {
-                        const updatedMock = {
-                          ...transformWallFeedPostToMock(updated as any),
-                          postSource: "bizpulse",
-                        };
-                        setAllPosts((prev) =>
-                          prev.map((p) =>
-                            p.id === updatedMock.id ? updatedMock : p
-                          )
-                        );
-                        setPosts((prev) =>
-                          prev.map((p) =>
-                            p.id === updatedMock.id ? updatedMock : p
-                          )
-                        );
-                      }}
+                    <PostCard
+                      {...post}
+                      sourceType={post.postSource}
+                      isLiked={post.isLiked}
                       onLike={async (postId) => {
-                        console.log(
-                          "[DashboardPage] Liking poll post:",
-                          postId
-                        );
-                        try {
-                          const response = await bizpulseApi.likeWallFeed(
-                            postId
-                          );
-                          console.log(
-                            "[DashboardPage] Like response:",
-                            response
-                          );
-                          if (response.success && response.data) {
-                            const updatedMock = {
-                              ...transformWallFeedPostToMock(
-                                response.data as any
-                              ),
-                              postSource: "bizpulse",
-                            };
-                            setAllPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
-                              )
-                            );
-                            setPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === updatedMock.id ? updatedMock : p
-                              )
-                            );
-                            console.log(
-                              "[DashboardPage] Post state updated successfully"
-                            );
+                        if (post.postSource === "bizpulse") {
+                          try {
+                            await likePost(postId).unwrap();
+                          } catch (error) {
+                            console.error("Failed to like post:", error);
                           }
-                        } catch (error) {
-                          console.error(
-                            "[DashboardPage] Failed to like poll post:",
-                            error
-                          );
+                        } else if (post.postSource === "bizhub") {
+                          try {
+                            await likeBizHubPost(postId).unwrap();
+                          } catch (error) {
+                            console.error("Failed to like post:", error);
+                          }
                         }
                       }}
                     />
                   </div>
                 );
-              }
-              return (
-                <div key={post.id} className="mb-4">
-                  <PostCard
-                    {...post}
-                    sourceType={post.postSource}
-                    isLiked={post.isLiked}
-                    onLike={async (postId) => {
-                      // Just call the API - don't update state
-                      if (post.postSource === "bizpulse") {
-                        try {
-                          await bizpulseApi.likeWallFeed(postId);
-                        } catch (error) {
-                          console.error("Failed to like post:", error);
-                        }
-                      } else if (post.postSource === "bizhub") {
-                        try {
-                          await bizhubApi.likePost(postId);
-                        } catch (error) {
-                          console.error("Failed to like post:", error);
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </InfiniteScroll>
+              })}
+            </InfiniteScroll>
+          )}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, Edit3, Save, X } from "lucide-react";
 
 interface AccordionItemProps {
@@ -27,6 +27,8 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
   rightContent,
 }) => {
   const [open, setOpen] = useState(defaultOpen);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(defaultOpen ? undefined : 0);
 
   // Automatically open accordion when entering edit mode
   useEffect(() => {
@@ -34,6 +36,29 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
       setOpen(true);
     }
   }, [isEditing]);
+
+  // Handle smooth height animation
+  useEffect(() => {
+    if (contentRef.current) {
+      if (open) {
+        const contentHeight = contentRef.current.scrollHeight;
+        setHeight(contentHeight);
+        // Reset to auto after animation completes
+        const timer = setTimeout(() => {
+          setHeight(undefined);
+        }, 300);
+        return () => clearTimeout(timer);
+      } else {
+        // First set to actual height, then to 0 for smooth closing
+        const contentHeight = contentRef.current.scrollHeight;
+        setHeight(contentHeight);
+        requestAnimationFrame(() => {
+          setHeight(0);
+        });
+      }
+    }
+  }, [open]);
+
   return (
     <div className="bg-white rounded-lg shadow-sm px-2">
       <div className="w-full flex justify-between items-center py-4 px-2">
@@ -99,7 +124,16 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
           </button>
         </div>
       </div>
-      {open && <div className="pb-4 px-2">{children}</div>}
+      <div
+        ref={contentRef}
+        style={{
+          height: height !== undefined ? `${height}px` : 'auto',
+          overflow: 'hidden',
+          transition: 'height 300ms ease-in-out',
+        }}
+      >
+        <div className="pb-4 px-2">{children}</div>
+      </div>
     </div>
   );
 };

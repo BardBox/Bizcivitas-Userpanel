@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { AccordionItem } from "@/components/Dashboard/MyProfile/Accordion";
 import PersonalProfileCard from "@/components/Dashboard/MyProfile/PersonalProfileCard";
 import dynamic from "next/dynamic";
@@ -25,6 +25,21 @@ import { useGetCurrentUserQuery, useGetFullProfileQuery } from "@/store/api";
 import { useAccordion } from "@/hooks/useAccordion";
 
 const MyProfileClient: React.FC = () => {
+  // Check if mobile on mount
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check window width on mount
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // API hooks
   const {
     data: user,
@@ -38,7 +53,7 @@ const MyProfileClient: React.FC = () => {
   } = useGetFullProfileQuery();
 
   const { expandedSections, toggleSection } = useAccordion({
-    defaultExpanded: ["personal"],
+    defaultExpanded: isMobile ? [] : ["personal"],
   });
 
   // ✅ PERFORMANCE FIX: Split large useMemo into smaller, granular memos

@@ -198,8 +198,9 @@ export default function BizWinChart({
 
     return {
       date: dateLabel,
-      given: item.totalGiven || 0,
-      received: item.totalReceived || 0,
+      // NOTE: Backend has swapped naming - totalReceived = what user gave, totalGiven = what user received
+      given: item.totalReceived || 0,      // What user GAVE (despite backend calling it "received")
+      received: item.totalGiven || 0,      // What user RECEIVED (despite backend calling it "given")
     };
   });
 
@@ -223,10 +224,11 @@ export default function BizWinChart({
   }
 
   // Calculate totals - either from API or sum from data
-  // Note: Till Date endpoint uses "totalGivenAmount" and "totalReceivedAmount" field names
-  const totalGiven = currentData?.overallGiven || currentData?.totalGiven || currentData?.totalGivenAmount ||
+  // NOTE: Backend has swapped naming - we need to swap here too
+  // overallReceived = what user gave, overallGiven = what user received
+  const totalGiven = currentData?.overallReceived || currentData?.totalReceived || currentData?.totalReceivedAmount ||
     chartData.reduce((sum, item) => sum + item.given, 0);
-  const totalReceived = currentData?.overallReceived || currentData?.totalReceived || currentData?.totalReceivedAmount ||
+  const totalReceived = currentData?.overallGiven || currentData?.totalGiven || currentData?.totalGivenAmount ||
     chartData.reduce((sum, item) => sum + item.received, 0);
 
 

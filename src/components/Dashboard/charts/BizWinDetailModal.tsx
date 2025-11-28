@@ -177,11 +177,12 @@ export default function BizWinDetailModal({
 
       if (response.ok && data.success) {
 
-        // Normal data assignments - given gets given data, received gets received data
-        setGivenData(data.data.tyfcbGiven || []);
-        setReceivedData(data.data.tyfcbReceived || []);
-        setTotalGivenAmount(data.data.totalGivenAmount || 0);
-        setTotalReceivedAmount(data.data.totalReceivedAmount || 0);
+        // NOTE: Backend has swapped naming - tyfcbReceived = what user gave, tyfcbGiven = what user received
+        // Swap the assignments to match correct semantics
+        setGivenData(data.data.tyfcbReceived || []);        // What user GAVE (backend calls it "received")
+        setReceivedData(data.data.tyfcbGiven || []);        // What user RECEIVED (backend calls it "given")
+        setTotalGivenAmount(data.data.totalReceivedAmount || 0);     // Swapped
+        setTotalReceivedAmount(data.data.totalGivenAmount || 0);     // Swapped
 
       } else {
         console.error("BizWin API error:", data);
@@ -512,13 +513,15 @@ export default function BizWinDetailModal({
             <div className="space-y-4">
               {currentData
                 .filter((record) => {
-                  // Normal logic: given tab shows toUser (who you gave to), received tab shows fromUser (who gave to you)
-                  const user = activeTab === "given" ? record.toUser : record.fromUser;
+                  // NOTE: Since we swapped the data arrays, the user fields are now reversed
+                  // Given tab now has records where fromUser = who you gave to (because we swapped arrays)
+                  // Received tab now has records where toUser = who you received from (because we swapped arrays)
+                  const user = activeTab === "given" ? record.fromUser : record.toUser;
                   return user !== null && user !== undefined;
                 })
                 .map((record) => {
-                  // Normal logic: given tab shows toUser (who you gave to), received tab shows fromUser (who gave to you)
-                  const user = activeTab === "given" ? record.toUser : record.fromUser;
+                  // NOTE: Since we swapped the data arrays, the user fields are now reversed
+                  const user = activeTab === "given" ? record.fromUser : record.toUser;
                   const displayUser = typeof user === 'object' ? user : null;
 
                   let userName = "Unknown User";

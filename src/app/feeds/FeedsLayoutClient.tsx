@@ -14,12 +14,16 @@ export default function FeedsLayoutClient({
   children: React.ReactNode;
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMainFeedsPage, setIsMainFeedsPage] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
   const pathname = usePathname();
 
   // Main /feeds page should only have horizontal padding, no vertical padding
-  const isMainFeedsPage = pathname === "/feeds";
+  // Use useEffect to avoid hydration mismatch
+  useEffect(() => {
+    setIsMainFeedsPage(pathname === "/feeds");
+  }, [pathname]);
 
   useEffect(() => {
     const mainElement = mainRef.current;

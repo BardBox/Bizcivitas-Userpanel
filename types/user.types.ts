@@ -45,9 +45,11 @@ export interface ProfessionalDetails {
   businessSubcategory?: string;
   companyLogo?: string;
   businessAddress?: string;
+  businessArea?: string;
   businessCity?: string;
   businessState?: string;
   businessCountry?: string;
+  businessPincode?: string;
   isPublic?: boolean; // Privacy setting for contact visibility
 }
 
@@ -57,6 +59,7 @@ export interface ProfessionalDetails {
 export interface Address {
   addressLine1?: string;
   addressLine2?: string;
+  area?: string;
   city?: string;
   state?: string;
   country?: string;

@@ -23,6 +23,9 @@ import LocationDropdowns, {
   getCountryName,
   getStateName,
 } from "../../ui/LocationDropdowns";
+import { AreaDropdown } from "../../ui/AreaDropdown";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface BusinessDetailsProps {
   professionalDetails?: {
@@ -37,9 +40,11 @@ interface BusinessDetailsProps {
     business?: string;
     businessSubcategory?: string;
     companyAddress?: string;
+    businessArea?: string;
     businessCity?: string;
     businessState?: string;
     businessCountry?: string;
+    businessPincode?: string;
     workExperience?: string;
     skills?: string[];
     achievements?: string[];
@@ -68,9 +73,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
     business: professionalDetails?.business || "",
     businessSubcategory: professionalDetails?.businessSubcategory || "",
     companyAddress: professionalDetails?.companyAddress || "",
+    businessArea: professionalDetails?.businessArea || "",
     businessCity: professionalDetails?.businessCity || "",
     businessState: professionalDetails?.businessState || "",
     businessCountry: professionalDetails?.businessCountry || "",
+    businessPincode: professionalDetails?.businessPincode || "",
   };
 
   const {
@@ -94,6 +101,8 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedState, setSelectedState] = useState<string>("");
   const [selectedCity, setSelectedCity] = useState<string>("");
+  const [selectedArea, setSelectedArea] = useState<string>("");
+  const [selectedPincode, setSelectedPincode] = useState<string>("");
 
   // Reset form when professionalDetails changes to include new fields
   useEffect(() => {
@@ -109,9 +118,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         business: professionalDetails?.business || "",
         businessSubcategory: professionalDetails?.businessSubcategory || "",
         companyAddress: professionalDetails?.companyAddress || "",
+        businessArea: professionalDetails?.businessArea || "",
         businessCity: professionalDetails?.businessCity || "",
         businessState: professionalDetails?.businessState || "",
         businessCountry: professionalDetails?.businessCountry || "",
+        businessPincode: professionalDetails?.businessPincode || "",
       });
 
       // Initialize location dropdowns with ISO codes
@@ -126,6 +137,8 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
       setSelectedCountry(countryISO);
       setSelectedState(stateISO);
       setSelectedCity(professionalDetails?.businessCity || "");
+      setSelectedArea(professionalDetails?.businessArea || "");
+      setSelectedPincode(professionalDetails?.businessPincode || "");
     }
   }, [professionalDetails, reset]);
 
@@ -145,7 +158,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         : "";
 
       // Remove old location fields from form data (we'll add them back properly)
-      const { businessCity, businessState, businessCountry, ...formData } =
+      const { businessCity, businessState, businessCountry, businessArea, businessPincode, ...formData } =
         data;
 
       // Clean professional details data - remove empty strings and undefined values
@@ -162,9 +175,20 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
       // Add business location fields to professionalDetails
       // This ensures BizWin Analytics can filter by country/state/city
+      cleanedData.businessArea = selectedArea;
       cleanedData.businessCity = cityName;
       cleanedData.businessState = stateName;
       cleanedData.businessCountry = countryName;
+      cleanedData.businessPincode = selectedPincode;
+
+      // Debug logging
+      console.log('💾 Saving Business Location:', {
+        businessArea: selectedArea,
+        businessCity: cityName,
+        businessState: stateName,
+        businessCountry: countryName,
+        businessPincode: selectedPincode,
+      });
 
       // Prepare addresses data - only send address fields we're updating
       // Keep this for backward compatibility with other parts of the system
@@ -193,8 +217,8 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
         err instanceof Error
           ? err.message
           : typeof err === "object" && err !== null && "data" in err
-          ? JSON.stringify((err as any).data?.message || err)
-          : "Failed to update business details. Please try again.";
+            ? JSON.stringify((err as any).data?.message || err)
+            : "Failed to update business details. Please try again.";
       setSaveError(errorMessage);
     }
   };
@@ -270,8 +294,8 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                   {professionalDetails?.email && isConnected
                     ? professionalDetails.email
                     : !isConnected && !professionalDetails?.email
-                    ? "-"
-                    : "•••••••••@••••••••"}
+                      ? "-"
+                      : "•••••••••@••••••••"}
                 </span>
               ) : (
                 <input
@@ -296,8 +320,8 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                   {professionalDetails?.mobile && isConnected
                     ? professionalDetails.mobile
                     : !isConnected && !professionalDetails?.mobile
-                    ? "-"
-                    : "•••••••••"}
+                      ? "-"
+                      : "•••••••••"}
                 </span>
               ) : (
                 <input
@@ -464,7 +488,7 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
             </div>
           </div>
 
-          {/* Business Location - Country, State, City */}
+          {/* Business Location - Country, State, City, Area, Pincode */}
           <div className="grid grid-cols-1 md:grid-cols-[35%_1fr] gap-1 md:gap-4 py-2">
             <div>
               <span className="font-medium text-gray-700 flex items-center gap-2">
@@ -472,35 +496,103 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                 Business Location:
               </span>
             </div>
-            <div>
+            <div className="space-y-4">
               {!isEditing ? (
                 <div className="text-gray-600 space-y-1">
                   <div>
-                    <span className="font-medium">City: </span>
-                    {professionalDetails?.businessCity || "-"}
+                    <span className="font-medium">Country: </span>
+                    {professionalDetails?.businessCountry || "-"}
                   </div>
                   <div>
                     <span className="font-medium">State: </span>
                     {professionalDetails?.businessState || "-"}
                   </div>
                   <div>
-                    <span className="font-medium">Country: </span>
-                    {professionalDetails?.businessCountry || "-"}
+                    <span className="font-medium">City: </span>
+                    {professionalDetails?.businessCity || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Area: </span>
+                    {professionalDetails?.businessArea || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Pincode: </span>
+                    {professionalDetails?.businessPincode || "-"}
                   </div>
                 </div>
               ) : (
-                <LocationDropdowns
-                  countryValue={selectedCountry}
-                  stateValue={selectedState}
-                  cityValue={selectedCity}
-                  onCountryChange={setSelectedCountry}
-                  onStateChange={setSelectedState}
-                  onCityChange={setSelectedCity}
-                  disabled={false}
-                />
+                <>
+                  <LocationDropdowns
+                    countryValue={selectedCountry}
+                    stateValue={selectedState}
+                    cityValue={selectedCity}
+                    onCountryChange={(value) => {
+                      setSelectedCountry(value);
+                      setSelectedState("");
+                      setSelectedCity("");
+                      setSelectedArea("");
+                      setSelectedPincode("");
+                    }}
+                    onStateChange={(value) => {
+                      setSelectedState(value);
+                      setSelectedCity("");
+                      setSelectedArea("");
+                      setSelectedPincode("");
+                    }}
+                    onCityChange={(value) => {
+                      setSelectedCity(value);
+                      setSelectedArea("");
+                      setSelectedPincode("");
+                    }}
+                    disabled={false}
+                  />
+
+                  {/* Area Dropdown - Auto-fetches based on city */}
+                  {selectedCity && selectedCountry && (
+                    <AreaDropdown
+                      cityName={selectedCity}
+                      countryName={getCountryName(selectedCountry)}
+                      areaValue={selectedArea}
+                      pincodeValue={selectedPincode}
+                      onAreaChange={setSelectedArea}
+                      onPincodeChange={setSelectedPincode}
+                      disabled={false}
+                    />
+                  )}
+
+                  {/* Pincode Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Pincode / ZIP Code
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedPincode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setSelectedPincode(value);
+                      }}
+                      placeholder={
+                        selectedArea
+                          ? "Auto-filled from area selection"
+                          : "Enter pincode manually"
+                      }
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      maxLength={10}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {selectedArea
+                        ? "Pincode was auto-filled. You can modify it if needed."
+                        : "Select an area above to auto-fill pincode, or enter manually."}
+                    </p>
+                  </div>
+                </>
               )}
             </div>
           </div>
+
+          {/* Toast Container */}
+          <ToastContainer />
 
           {/* Display only fields (shown only in view mode) */}
           {!isEditing && professionalDetails && (
@@ -587,12 +679,12 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                   <div>
                     Professional details error:{" "}
                     {typeof professionError === "object" &&
-                    professionError !== null &&
-                    "data" in professionError
+                      professionError !== null &&
+                      "data" in professionError
                       ? JSON.stringify(
-                          (professionError as any).data?.message ||
-                            professionError
-                        )
+                        (professionError as any).data?.message ||
+                        professionError
+                      )
                       : String(professionError)}
                   </div>
                 )}
@@ -600,11 +692,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                   <div>
                     Address details error:{" "}
                     {typeof addressError === "object" &&
-                    addressError !== null &&
-                    "data" in addressError
+                      addressError !== null &&
+                      "data" in addressError
                       ? JSON.stringify(
-                          (addressError as any).data?.message || addressError
-                        )
+                        (addressError as any).data?.message || addressError
+                      )
                       : String(addressError)}
                   </div>
                 )}

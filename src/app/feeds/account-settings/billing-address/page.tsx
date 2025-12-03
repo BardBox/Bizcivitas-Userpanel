@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 import { useGetFullProfileQuery, useUpdateAddressDetailsMutation } from "@/store/api/profileApi";
 import { toast } from "react-hot-toast";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import LocationDropdowns from "@/components/ui/LocationDropdowns";
+import { AreaDropdown } from "@/components/ui/AreaDropdown";
 import { Country, State } from "country-state-city";
 
 export default function BillingAddressPage() {
@@ -16,6 +19,7 @@ export default function BillingAddressPage() {
   // Form state
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
+  const [area, setArea] = useState("");
   const [country, setCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
@@ -29,14 +33,15 @@ export default function BillingAddressPage() {
 
       setAddressLine1(billing.addressLine1 || "");
       setAddressLine2(billing.addressLine2 || "");
+      setArea(billing.area || "");
       setPincode(billing.pincode?.toString() || "");
-      
+
       // Backend stores FULL NAMES, but LocationDropdowns expects ISO CODES
       // Convert full names to ISO codes
       let countryISO = "";
       let stateISO = "";
       let cityName = billing.city || "";
-      
+
       if (billing.country) {
         // Find country by name and get its ISO code
         const countryObj = Country.getAllCountries().find(
@@ -52,7 +57,7 @@ export default function BillingAddressPage() {
           stateISO = stateObj?.isoCode || "";
         }
       }
-      
+
       setCountry(countryISO);
       setState(stateISO);
       setCity(cityName);
@@ -90,6 +95,7 @@ export default function BillingAddressPage() {
       // Set address lines from personal address
       setAddressLine1(personalAddress.addressLine1 || "");
       setAddressLine2(personalAddress.addressLine2 || "");
+      setArea(personalAddress.area || "");
       setPincode(personalAddress.pincode?.toString() || "");
 
       // Convert personal address country/state names to ISO codes for dropdowns
@@ -135,6 +141,7 @@ export default function BillingAddressPage() {
           // Restore existing separate billing data
           setAddressLine1(existingBilling.addressLine1 || "");
           setAddressLine2(existingBilling.addressLine2 || "");
+          setArea(existingBilling.area || "");
           setPincode(existingBilling.pincode?.toString() || "");
 
           // Convert to ISO codes
@@ -162,6 +169,7 @@ export default function BillingAddressPage() {
           // Clear fields if billing was same as personal address
           setAddressLine1("");
           setAddressLine2("");
+          setArea("");
           setCountry("");
           setState("");
           setCity("");
@@ -171,6 +179,7 @@ export default function BillingAddressPage() {
         // No existing billing data, clear fields
         setAddressLine1("");
         setAddressLine2("");
+        setArea("");
         setCountry("");
         setState("");
         setCity("");
@@ -215,6 +224,7 @@ export default function BillingAddressPage() {
           billing: {
             addressLine1: addressLine1.trim(),
             addressLine2: addressLine2.trim(),
+            area: area.trim(),
             city, // City is already a name
             state: stateName, // Send full state name (e.g., "Gujarat")
             country: countryName, // Send full country name (e.g., "India")
@@ -330,16 +340,37 @@ export default function BillingAddressPage() {
                 setCountry(value);
                 setState("");
                 setCity("");
+                setArea("");
+                setPincode("");
               }}
               onStateChange={(value) => {
                 setState(value);
                 setCity("");
+                setArea("");
+                setPincode("");
               }}
               onCityChange={(value) => {
                 setCity(value);
+                setArea("");
+                setPincode("");
               }}
               disabled={useBusinessAddress}
             />
+
+            {/* Area Dropdown - Auto-fetches based on city */}
+            {city && country && (
+              <AreaDropdown
+                cityName={city}
+                countryName={
+                  Country.getCountryByCode(country)?.name || "India"
+                }
+                areaValue={area}
+                pincodeValue={pincode}
+                onAreaChange={(value) => setArea(value)}
+                onPincodeChange={(value) => setPincode(value)}
+                disabled={useBusinessAddress}
+              />
+            )}
 
             {/* Pincode */}
             <div>
@@ -353,13 +384,22 @@ export default function BillingAddressPage() {
                   const value = e.target.value.replace(/\D/g, ""); // Only numbers
                   setPincode(value);
                 }}
-                placeholder="Enter pincode"
+                placeholder={
+                  area
+                    ? "Auto-filled from area selection"
+                    : "Enter pincode manually"
+                }
                 className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   useBusinessAddress ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}
                 disabled={useBusinessAddress}
                 maxLength={10}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                {area
+                  ? "Pincode was auto-filled. You can modify it if needed."
+                  : "Select an area above to auto-fill pincode, or enter manually."}
+              </p>
             </div>
           </div>
 
@@ -412,6 +452,9 @@ export default function BillingAddressPage() {
           </div>
         </form>
       </div>
+
+      {/* Toast Container for react-toastify notifications */}
+      <ToastContainer />
     </div>
   );
 }

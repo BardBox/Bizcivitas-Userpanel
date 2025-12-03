@@ -76,24 +76,44 @@ const MyProfileClient: React.FC = () => {
 
   // Business data - recalculates only if user or professionalDetails change
   const businessData = useMemo(
-    () => ({
-      ...profile?.professionalDetails,
-      email: user?.email,
-      mobile: user?.mobile,
-      location: user?.city || profile?.addresses?.address?.city,
-      companyLogo: profile?.professionalDetails?.companyLogo,
-      // Business location data comes from professionalDetails (can be updated by user)
-      // Fallback to addresses.address if not set in professionalDetails
-      businessCity:
-        profile?.professionalDetails?.businessCity ||
-        profile?.addresses?.address?.city,
-      businessState:
-        profile?.professionalDetails?.businessState ||
-        profile?.addresses?.address?.state,
-      businessCountry:
-        profile?.professionalDetails?.businessCountry ||
-        profile?.addresses?.address?.country,
-    }),
+    () => {
+      const data = {
+        ...profile?.professionalDetails,
+        email: user?.email,
+        mobile: user?.mobile,
+        location: user?.city || profile?.addresses?.address?.city,
+        companyLogo: profile?.professionalDetails?.companyLogo,
+        // Business location data comes from professionalDetails (can be updated by user)
+        // Fallback to addresses.address if not set in professionalDetails
+        businessArea:
+          profile?.professionalDetails?.businessArea ||
+          profile?.addresses?.address?.area,
+        businessCity:
+          profile?.professionalDetails?.businessCity ||
+          profile?.addresses?.address?.city,
+        businessState:
+          profile?.professionalDetails?.businessState ||
+          profile?.addresses?.address?.state,
+        businessCountry:
+          profile?.professionalDetails?.businessCountry ||
+          profile?.addresses?.address?.country,
+        businessPincode:
+          profile?.professionalDetails?.businessPincode ||
+          profile?.addresses?.address?.pincode?.toString(),
+      };
+
+      // Debug logging
+      console.log('📍 Business Location Data:', {
+        businessArea: data.businessArea,
+        businessCity: data.businessCity,
+        businessState: data.businessState,
+        businessCountry: data.businessCountry,
+        businessPincode: data.businessPincode,
+        rawProfessionalDetails: profile?.professionalDetails,
+      });
+
+      return data;
+    },
     [
       user?.email,
       user?.mobile,

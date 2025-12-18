@@ -1,48 +1,49 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "../../store/store";
 import { initializeAuth } from "@/lib/authInitializer";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     initializeAuth();
+    setMounted(true);
   }, []);
 
   return (
     <ReduxProvider store={store}>
       {children}
-      {/* Suppress hydration warning for Toaster - it's client-only */}
-      <div suppressHydrationWarning>
-        {typeof window !== 'undefined' && (
-          <Toaster
-            position="top-right"
-            toastOptions={{
+      {/* Only render Toaster on client side to avoid hydration mismatch */}
+      {mounted && (
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: "#363636",
+              color: "#fff",
+            },
+            success: {
               duration: 3000,
-              style: {
-                background: "#363636",
-                color: "#fff",
+              iconTheme: {
+                primary: "#10B981",
+                secondary: "#fff",
               },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: "#10B981",
-                  secondary: "#fff",
-                },
+            },
+            error: {
+              duration: 4000,
+              iconTheme: {
+                primary: "#EF4444",
+                secondary: "#fff",
               },
-              error: {
-                duration: 4000,
-                iconTheme: {
-                  primary: "#EF4444",
-                  secondary: "#fff",
-                },
-              },
-            }}
-          />
-        )}
-      </div>
+            },
+          }}
+        />
+      )}
     </ReduxProvider>
   );
 }

@@ -48,6 +48,8 @@ export const baseApi = createApi({
     "Collection",
     "Chat",
     "Message",
+    "UserEmails",
+    "EmailHistory",
   ],
   endpoints: () => ({}), // Individual APIs will inject endpoints
 });

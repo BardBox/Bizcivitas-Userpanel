@@ -13,6 +13,8 @@ import "./api/dashboardApi";
 import "./api/messageApi";
 // Import bizpulse API
 import "./api/bizpulseApi";
+// Import email management API
+import "./api/emailManagementApi";
 
 // Placeholder slice to prevent empty reducer error
 const placeholderSlice = createSlice({

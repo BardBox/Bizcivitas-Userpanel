@@ -15,9 +15,15 @@ export default function FeedsLayoutClient({
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMainFeedsPage, setIsMainFeedsPage] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
   const pathname = usePathname();
+
+  // Mount check to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Main /feeds page should only have horizontal padding, no vertical padding
   // Use useEffect to avoid hydration mismatch
@@ -68,6 +74,11 @@ export default function FeedsLayoutClient({
       })
     );
   }, [isMobileMenuOpen]);
+
+  // Show nothing until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <SidebarProvider>

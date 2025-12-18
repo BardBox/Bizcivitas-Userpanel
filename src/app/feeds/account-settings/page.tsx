@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Lock, Eye, MapPin } from "lucide-react";
+import { ChevronRight, Lock, Eye, MapPin, Mail } from "lucide-react";
 import { useGetFullProfileQuery, useToggleProfessionalVisibilityMutation } from "@/store/api/profileApi";
 import { toast } from "react-hot-toast";
 
@@ -42,6 +42,13 @@ export default function AccountSettingsPage() {
   };
 
   const settingsOptions = [
+    {
+      id: "email-management",
+      label: "Email Management",
+      icon: Mail,
+      description: "Manage primary and secondary emails",
+      onClick: () => router.push("/feeds/account-settings/email-management"),
+    },
     {
       id: "password",
       label: "Update Password",

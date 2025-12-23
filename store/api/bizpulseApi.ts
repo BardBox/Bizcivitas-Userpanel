@@ -115,7 +115,7 @@ export const bizpulseApi = baseApi.injectEndpoints({
         }),
         editComment: builder.mutation<WallFeedPost, { postId: string; commentId: string; content: string }>({
             query: ({ postId, commentId, content }) => ({
-                url: `/wallfeed/comment/${postId}/${commentId}`,
+                url: `/wallfeed/comment/${postId}/${commentId}/edit`,
                 method: "PUT",
                 body: { content },
             }),

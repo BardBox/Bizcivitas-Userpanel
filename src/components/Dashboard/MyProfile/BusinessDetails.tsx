@@ -23,7 +23,7 @@ import LocationDropdowns, {
   getCountryName,
   getStateName,
 } from "../../ui/LocationDropdowns";
-import { AreaDropdown } from "../../ui/AreaDropdown";
+import { FranchiseZoneAreaDropdown } from "../../ui/FranchiseZoneAreaDropdown";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -40,6 +40,7 @@ interface BusinessDetailsProps {
     business?: string;
     businessSubcategory?: string;
     companyAddress?: string;
+    businessZone?: string;
     businessArea?: string;
     businessCity?: string;
     businessState?: string;
@@ -101,8 +102,13 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedState, setSelectedState] = useState<string>("");
   const [selectedCity, setSelectedCity] = useState<string>("");
-  const [selectedArea, setSelectedArea] = useState<string>("");
   const [selectedPincode, setSelectedPincode] = useState<string>("");
+
+  // Franchise Zone and Area states (ObjectIds + names)
+  const [selectedZoneId, setSelectedZoneId] = useState<string>("");
+  const [selectedZoneName, setSelectedZoneName] = useState<string>("");
+  const [selectedAreaId, setSelectedAreaId] = useState<string>("");
+  const [selectedAreaName, setSelectedAreaName] = useState<string>("");
 
   // Reset form when professionalDetails changes to include new fields
   useEffect(() => {
@@ -137,8 +143,11 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
       setSelectedCountry(countryISO);
       setSelectedState(stateISO);
       setSelectedCity(professionalDetails?.businessCity || "");
-      setSelectedArea(professionalDetails?.businessArea || "");
       setSelectedPincode(professionalDetails?.businessPincode || "");
+
+      // Initialize zone and area names (ObjectIds will be populated by dropdown)
+      setSelectedZoneName(professionalDetails?.businessZone || "");
+      setSelectedAreaName(professionalDetails?.businessArea || "");
     }
   }, [professionalDetails, reset]);
 
@@ -175,7 +184,10 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
       // Add business location fields to professionalDetails
       // This ensures BizWin Analytics can filter by country/state/city
-      cleanedData.businessArea = selectedArea;
+      cleanedData.businessZoneId = selectedZoneId || undefined; // ObjectId
+      cleanedData.businessAreaId = selectedAreaId || undefined; // ObjectId
+      cleanedData.businessZone = selectedZoneName || ""; // String fallback
+      cleanedData.businessArea = selectedAreaName || ""; // String fallback
       cleanedData.businessCity = cityName;
       cleanedData.businessState = stateName;
       cleanedData.businessCountry = countryName;
@@ -183,7 +195,10 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
       // Debug logging
       console.log('💾 Saving Business Location:', {
-        businessArea: selectedArea,
+        businessZoneId: selectedZoneId,
+        businessAreaId: selectedAreaId,
+        businessZone: selectedZoneName,
+        businessArea: selectedAreaName,
         businessCity: cityName,
         businessState: stateName,
         businessCountry: countryName,
@@ -512,6 +527,10 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                     {professionalDetails?.businessCity || "-"}
                   </div>
                   <div>
+                    <span className="font-medium">Zone: </span>
+                    {professionalDetails?.businessZone || "-"}
+                  </div>
+                  <div>
                     <span className="font-medium">Area: </span>
                     {professionalDetails?.businessArea || "-"}
                   </div>
@@ -530,33 +549,52 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                       setSelectedCountry(value);
                       setSelectedState("");
                       setSelectedCity("");
-                      setSelectedArea("");
+                      setSelectedZoneId("");
+                      setSelectedZoneName("");
+                      setSelectedAreaId("");
+                      setSelectedAreaName("");
                       setSelectedPincode("");
                     }}
                     onStateChange={(value) => {
                       setSelectedState(value);
                       setSelectedCity("");
-                      setSelectedArea("");
+                      setSelectedZoneId("");
+                      setSelectedZoneName("");
+                      setSelectedAreaId("");
+                      setSelectedAreaName("");
                       setSelectedPincode("");
                     }}
                     onCityChange={(value) => {
                       setSelectedCity(value);
-                      setSelectedArea("");
+                      setSelectedZoneId("");
+                      setSelectedZoneName("");
+                      setSelectedAreaId("");
+                      setSelectedAreaName("");
                       setSelectedPincode("");
                     }}
                     disabled={false}
                   />
 
-                  {/* Area Dropdown - Auto-fetches based on city */}
-                  {selectedCity && selectedCountry && (
-                    <AreaDropdown
+                  {/* Franchise Zone & Area Dropdown - Auto-fetches based on city */}
+                  {selectedCity && (
+                    <FranchiseZoneAreaDropdown
                       cityName={selectedCity}
-                      countryName={getCountryName(selectedCountry)}
-                      areaValue={selectedArea}
-                      pincodeValue={selectedPincode}
-                      onAreaChange={setSelectedArea}
-                      onPincodeChange={setSelectedPincode}
+                      selectedZoneId={selectedZoneId}
+                      selectedAreaId={selectedAreaId}
+                      selectedAreaName={selectedAreaName}
+                      onZoneChange={(zoneId, zoneName) => {
+                        setSelectedZoneId(zoneId);
+                        setSelectedZoneName(zoneName);
+                        // Clear area when zone changes
+                        setSelectedAreaId("");
+                        setSelectedAreaName("");
+                      }}
+                      onAreaChange={(areaId, areaName) => {
+                        setSelectedAreaId(areaId);
+                        setSelectedAreaName(areaName);
+                      }}
                       disabled={false}
+                      required={true}
                     />
                   )}
 
@@ -572,18 +610,12 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                         const value = e.target.value.replace(/\D/g, "");
                         setSelectedPincode(value);
                       }}
-                      placeholder={
-                        selectedArea
-                          ? "Auto-filled from area selection"
-                          : "Enter pincode manually"
-                      }
+                      placeholder="Enter pincode"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       maxLength={10}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      {selectedArea
-                        ? "Pincode was auto-filled. You can modify it if needed."
-                        : "Select an area above to auto-fill pincode, or enter manually."}
+                      Enter your business location pincode
                     </p>
                   </div>
                 </>

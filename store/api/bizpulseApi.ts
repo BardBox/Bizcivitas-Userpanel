@@ -80,7 +80,10 @@ export const bizpulseApi = baseApi.injectEndpoints({
                     patchResultDetail.undo();
                 }
             },
-            invalidatesTags: (result, error, id) => [{ type: "Post", id }],
+            invalidatesTags: (result, error, id) => [
+                { type: "Post", id },
+                { type: "Post", id: "LIST" }
+            ],
         }),
         likeBizHubPost: builder.mutation<any, string>({
             query: (postId) => ({
@@ -88,7 +91,10 @@ export const bizpulseApi = baseApi.injectEndpoints({
                 method: "POST",
                 body: { postId },
             }),
-            invalidatesTags: (result, error, id) => [{ type: "Post", id: "BIZHUB_LIST" }],
+            invalidatesTags: (result, error, postId) => [
+                { type: "Post", id: "BIZHUB_LIST" },
+                { type: "Post", id: postId }
+            ],
         }),
         voteOnPoll: builder.mutation<WallFeedPost, { id: string; optionIndex: number }>({
             query: ({ id, optionIndex }) => ({

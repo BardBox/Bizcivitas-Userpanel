@@ -26,9 +26,44 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
   isSaving = false,
   rightContent,
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  // Check if desktop (>= lg breakpoint which is 1024px)
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
+
+  // On mobile, always open. On desktop, use defaultOpen
+  const [open, setOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024 ? true : defaultOpen;
+    }
+    return defaultOpen;
+  });
+
   const contentRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | undefined>(defaultOpen ? undefined : 0);
+  const [height, setHeight] = useState<number | undefined>(
+    (typeof window !== 'undefined' && window.innerWidth < 1024) || defaultOpen ? undefined : 0
+  );
+
+  // Update isDesktop on resize
+  useEffect(() => {
+    const checkDesktop = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+
+      // On mobile, always open
+      if (!desktop && !open) {
+        setOpen(true);
+      }
+    };
+
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, [open]);
 
   // Automatically open accordion when entering edit mode
   useEffect(() => {
@@ -37,9 +72,9 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
     }
   }, [isEditing]);
 
-  // Handle smooth height animation
+  // Handle smooth height animation (only on desktop)
   useEffect(() => {
-    if (contentRef.current) {
+    if (isDesktop && contentRef.current) {
       if (open) {
         const contentHeight = contentRef.current.scrollHeight;
         setHeight(contentHeight);
@@ -57,18 +92,25 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
         });
       }
     }
-  }, [open]);
+  }, [open, isDesktop]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm px-2">
       <div className="w-full flex justify-between items-center py-4 px-2">
-        <button
-          className="flex items-center gap-3 text-left focus:outline-none flex-1"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-        >
-          <span className="font-semibold text-gray-900 ">{title}</span>
-        </button>
+        {/* On mobile, title is just text. On desktop (lg+), it's a button */}
+        {!isDesktop ? (
+          <div className="flex items-center gap-3 flex-1">
+            <span className="font-semibold text-gray-900">{title}</span>
+          </div>
+        ) : (
+          <button
+            className="flex items-center gap-3 text-left focus:outline-none flex-1"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+          >
+            <span className="font-semibold text-gray-900">{title}</span>
+          </button>
+        )}
 
         {/* Right content area for edit buttons */}
         <div className="flex items-center gap-2 ml-4">
@@ -110,30 +152,38 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
           {/* Additional custom content */}
           {rightContent}
 
-          {/* Dropdown arrow - moved to the end */}
-          <button
-            className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
-            onClick={() => setOpen((o) => !o)}
-            aria-label={`${open ? "Collapse" : "Expand"} ${title}`}
-          >
-            <ChevronDown
-              className={`h-5 w-5 transition-transform duration-200 ${
-                open ? "rotate-180" : "rotate-0"
-              }`}
-            />
-          </button>
+          {/* Dropdown arrow - only show on desktop */}
+          {isDesktop && (
+            <button
+              className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+              onClick={() => setOpen((o) => !o)}
+              aria-label={`${open ? "Collapse" : "Expand"} ${title}`}
+            >
+              <ChevronDown
+                className={`h-5 w-5 transition-transform duration-200 ${
+                  open ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
+          )}
         </div>
       </div>
-      <div
-        ref={contentRef}
-        style={{
-          height: height !== undefined ? `${height}px` : 'auto',
-          overflow: 'hidden',
-          transition: 'height 300ms ease-in-out',
-        }}
-      >
+
+      {/* Content area - always visible on mobile, collapsible on desktop */}
+      {!isDesktop ? (
         <div className="pb-4 px-2">{children}</div>
-      </div>
+      ) : (
+        <div
+          ref={contentRef}
+          style={{
+            height: height !== undefined ? `${height}px` : 'auto',
+            overflow: 'hidden',
+            transition: 'height 300ms ease-in-out',
+          }}
+        >
+          <div className="pb-4 px-2">{children}</div>
+        </div>
+      )}
     </div>
   );
 };

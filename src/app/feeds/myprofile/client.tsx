@@ -18,10 +18,11 @@ import Bizleads, {
 import BizNeeds, {
   useBizNeedsWithAccordion,
 } from "@/components/Dashboard/MyProfile/BizNeeds/BizNeeds";
-import WeeklyPresentation, {
-  useWeeklyPresentationWithAccordion,
-} from "@/components/Dashboard/MyProfile/WeeklyPresentation";
+import EventsAttending, {
+  useEventsAttendingWithAccordion,
+} from "@/components/Dashboard/MyProfile/EventsAttending";
 import { useGetCurrentUserQuery, useGetFullProfileQuery } from "@/store/api";
+import { useGetUserEventsQuery } from "@/store/api/eventsApi";
 import { useAccordion } from "@/hooks/useAccordion";
 
 const MyProfileClient: React.FC = () => {
@@ -56,6 +57,11 @@ const MyProfileClient: React.FC = () => {
     isLoading: profileLoading,
     error: profileError,
   } = useGetFullProfileQuery();
+  const {
+    data: userEvents,
+    isLoading: eventsLoading,
+    error: eventsError,
+  } = useGetUserEventsQuery();
 
   // Close all accordions on mobile, keep personal open on desktop
   const { expandedSections, toggleSection } = useAccordion({
@@ -144,10 +150,14 @@ const MyProfileClient: React.FC = () => {
     [profile?.travelDiary]
   );
 
-  // Presentation data - only recalculates if weeklyPresentation changes
-  const presentationData = useMemo(
-    () => profile?.weeklyPresentation,
-    [profile?.weeklyPresentation]
+  // Events data - only recalculates if userEvents changes
+  const eventsData = useMemo(
+    () => ({
+      upcoming: userEvents?.upcomingEvents || [],
+      past: userEvents?.pastEvents || [],
+      booked: [...(userEvents?.upcomingEvents || []), ...(userEvents?.pastEvents || [])],
+    }),
+    [userEvents]
   );
 
   // Skills data - only recalculates if mySkillItems changes
@@ -164,7 +174,7 @@ const MyProfileClient: React.FC = () => {
       leads: leadsData,
       needs: needsData,
       travel: travelData,
-      presentation: presentationData,
+      events: eventsData,
       skills: skillsData,
     }),
     [
@@ -173,7 +183,7 @@ const MyProfileClient: React.FC = () => {
       leadsData,
       needsData,
       travelData,
-      presentationData,
+      eventsData,
       skillsData,
     ]
   );
@@ -185,8 +195,8 @@ const MyProfileClient: React.FC = () => {
   const bizleadsHook = useBizleadsWithAccordion(normalizedData.leads);
   const bizNeedsHook = useBizNeedsWithAccordion(normalizedData.needs);
   const travelDiaryHook = useTravelDiaryWithAccordion(normalizedData.travel);
-  const weeklyPresentationHook = useWeeklyPresentationWithAccordion(
-    normalizedData.presentation
+  const eventsAttendingHook = useEventsAttendingWithAccordion(
+    normalizedData.events
   );
 
   // Simple PersonalDetails state management
@@ -305,11 +315,11 @@ const MyProfileClient: React.FC = () => {
       props: { travelDiary: normalizedData.travel },
     },
     {
-      key: "presentation",
-      title: "Weekly Presentation",
-      hook: weeklyPresentationHook,
-      component: WeeklyPresentation,
-      props: { weeklyPresentation: normalizedData.presentation },
+      key: "events",
+      title: "Events Attending",
+      hook: eventsAttendingHook,
+      component: EventsAttending,
+      props: { events: normalizedData.events },
     },
   ];
 
@@ -351,12 +361,15 @@ const MyProfileClient: React.FC = () => {
 
             {accordionSections.map((section) => {
               const Component = section.component;
+              // Events Attending section doesn't have edit functionality
+              const isEditable = section.key !== "events";
+
               return (
                 <AccordionItem
                   key={section.key}
                   title={section.title}
                   defaultOpen={expandedSections[section.key] || false}
-                  editable={true}
+                  editable={isEditable}
                   onEdit={section.hook.handleEdit}
                   onSave={section.hook.handleSave}
                   onCancel={section.hook.handleCancel}

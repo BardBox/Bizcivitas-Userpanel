@@ -133,6 +133,7 @@ export default function BizPulsePage() {
       {/* Tab Navigation and Content */}
       <div className="bg-white rounded-lg shadow overflow-visible">
         <TabNavigation
+        
           activeCategory={activeCategory}
           onTabChange={handleTabChange}
           loading={isLoading}

@@ -40,7 +40,9 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
       const link = document.createElement("a");
       link.href = url;
 
-      const filename = imageUrl.split("/").pop() || `image-${index + 1}.jpg`;
+      // Extract filename and strip query parameters
+      const rawFilename = imageUrl.split("/").pop() || `image-${index + 1}.jpg`;
+      const filename = rawFilename.split("?")[0];
       link.download = filename;
 
       document.body.appendChild(link);
@@ -72,6 +74,7 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
               className="object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               priority
+              unoptimized
             />
             {/* Zoom hint overlay */}
             <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
@@ -126,69 +129,70 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
             onSlideChange={(swiper: SwiperType) => setCurrentIndex(swiper.activeIndex)}
             className="w-full"
           >
-          {images.map((image, index) => (
-            <SwiperSlide key={index}>
-              <div
-                className="relative w-full aspect-video bg-gray-100 cursor-pointer hover:opacity-95 transition-opacity"
-                onClick={() => setIsGalleryOpen(true)}
-              >
-                <Image
-                  src={image}
-                  alt={`${alt} ${index + 1}`}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                  priority={index === 0}
-                />
-                {/* Zoom hint overlay */}
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                  <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-800 pointer-events-none">
-                    Click to view fullscreen
+            {images.map((image, index) => (
+              <SwiperSlide key={index}>
+                <div
+                  className="relative w-full aspect-video bg-gray-100 cursor-pointer hover:opacity-95 transition-opacity"
+                  onClick={() => setIsGalleryOpen(true)}
+                >
+                  <Image
+                    src={image}
+                    alt={`${alt} ${index + 1}`}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                    priority={index === 0}
+                    unoptimized
+                  />
+                  {/* Zoom hint overlay */}
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-800 pointer-events-none">
+                      Click to view fullscreen
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
-      {/* Custom Navigation Buttons */}
-      <button
-        className="swiper-button-prev-custom absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        aria-label="Previous image"
-      >
-        <svg
-          className="w-6 h-6 text-gray-800"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-      </button>
+          {/* Custom Navigation Buttons */}
+          <button
+            className="swiper-button-prev-custom absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            aria-label="Previous image"
+          >
+            <svg
+              className="w-6 h-6 text-gray-800"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
 
-      <button
-        className="swiper-button-next-custom absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        aria-label="Next image"
-      >
-        <svg
-          className="w-6 h-6 text-gray-800"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </button>
+          <button
+            className="swiper-button-next-custom absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            aria-label="Next image"
+          >
+            <svg
+              className="w-6 h-6 text-gray-800"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
 
           {/* Top right controls */}
           <div className="absolute top-3 right-3 z-10 flex items-center gap-2">

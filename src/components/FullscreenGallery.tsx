@@ -84,8 +84,8 @@ export default function FullscreenGallery({
       link.href = url;
 
       // Extract filename from URL or use a default name
-      const filename =
-        currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
+      const rawFilename = currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
+      const filename = rawFilename.split("?")[0];
       link.download = filename;
 
       // Trigger download
@@ -171,9 +171,8 @@ export default function FullscreenGallery({
 
       {/* Main image container */}
       <div
-        className={`relative w-full h-full flex items-center justify-center p-16 transition-all duration-300 ${
-          isZoomed ? "cursor-zoom-out overflow-auto" : "cursor-zoom-in"
-        }`}
+        className={`relative w-full h-full flex items-center justify-center p-16 transition-all duration-300 ${isZoomed ? "cursor-zoom-out overflow-auto" : "cursor-zoom-in"
+          }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             toggleZoom();
@@ -181,18 +180,16 @@ export default function FullscreenGallery({
         }}
       >
         <div
-          className={`relative transition-all duration-300 ${
-            isZoomed ? "w-auto h-auto max-w-none" : "max-w-[90vw] max-h-full"
-          }`}
+          className={`relative transition-all duration-300 ${isZoomed ? "w-auto h-auto max-w-none" : "max-w-[90vw] max-h-full"
+            }`}
         >
           <img
             src={images[currentIndex]}
             alt={`${alt} ${currentIndex + 1}`}
-            className={`object-contain transition-all duration-300 ${
-              isZoomed
+            className={`object-contain transition-all duration-300 ${isZoomed
                 ? "w-auto h-auto max-w-none cursor-grab active:cursor-grabbing"
                 : "max-w-full max-h-[85vh] w-auto h-auto"
-            }`}
+              }`}
             style={isZoomed ? { imageRendering: "crisp-edges" } : {}}
             draggable={false}
           />
@@ -209,11 +206,10 @@ export default function FullscreenGallery({
                 setCurrentIndex(index);
                 setIsZoomed(false);
               }}
-              className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
-                index === currentIndex
+              className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${index === currentIndex
                   ? "ring-2 ring-white scale-110"
                   : "opacity-60 hover:opacity-100 hover:scale-105"
-              }`}
+                }`}
             >
               <img
                 src={image}

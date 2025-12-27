@@ -30,31 +30,51 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
   const handleDownload = async (e: React.MouseEvent, imageUrl: string, index: number) => {
     e.stopPropagation(); // Prevent opening fullscreen gallery
 
+    // 1. Sanitize filename
+    const rawFilename = imageUrl.split("/").pop() || `image-${index + 1}.jpg`;
+    const filename = rawFilename.split("?")[0];
+
     try {
       const loadingToast = toast.loading("Downloading image...");
 
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+      const response = await fetch(imageUrl, {
+        mode: 'cors', // Try to get CORS headers
+      });
 
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
+      link.download = filename;
 
-      // Extract filename and strip query parameters
-      const rawFilename = imageUrl.split("/").pop() || `image-${index + 1}.jpg`;
-      const filename = rawFilename.split("?")[0];
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Image downloaded successfully!", { id: loadingToast });
+    } catch (error) {
+      console.error("Download failed, using fallback:", error);
+      toast.dismiss(); // dismiss loading toast
+
+      // Fallback: Open in new tab allow user to standard save
+      const link = document.createElement("a");
+      link.href = imageUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      // Try 'download' attribute, though browser might ignore for cross-origin
       link.download = filename;
 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      window.URL.revokeObjectURL(url);
-
-      toast.success("Image downloaded successfully!", { id: loadingToast });
-    } catch (error) {
-      console.error("Download failed:", error);
-      toast.error("Failed to download image. Please try again.");
+      toast('Image opened in new tab. Right-click to "Save As".', {
+        icon: 'ℹ️',
+        duration: 4000
+      });
     }
   };
 

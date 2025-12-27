@@ -69,13 +69,18 @@ export default function FullscreenGallery({
 
   const handleDownload = async () => {
     const currentImage = images[currentIndex];
+    const rawFilename = currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
+    const filename = rawFilename.split("?")[0];
 
     try {
       // Show loading toast
       const loadingToast = toast.loading("Downloading image...");
 
       // Fetch the image
-      const response = await fetch(currentImage);
+      const response = await fetch(currentImage, { mode: 'cors' });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+
       const blob = await response.blob();
 
       // Create a download link
@@ -83,9 +88,6 @@ export default function FullscreenGallery({
       const link = document.createElement("a");
       link.href = url;
 
-      // Extract filename from URL or use a default name
-      const rawFilename = currentImage.split("/").pop() || `image-${currentIndex + 1}.jpg`;
-      const filename = rawFilename.split("?")[0];
       link.download = filename;
 
       // Trigger download
@@ -100,7 +102,23 @@ export default function FullscreenGallery({
       toast.success("Image downloaded successfully!", { id: loadingToast });
     } catch (error) {
       console.error("Download failed:", error);
-      toast.error("Failed to download image. Please try again.");
+      toast.dismiss();
+
+      // Fallback
+      const link = document.createElement("a");
+      link.href = currentImage;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = filename;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast('Image opened in new tab. Right-click to "Save As".', {
+        icon: 'ℹ️',
+        duration: 4000
+      });
     }
   };
 
@@ -187,8 +205,8 @@ export default function FullscreenGallery({
             src={images[currentIndex]}
             alt={`${alt} ${currentIndex + 1}`}
             className={`object-contain transition-all duration-300 ${isZoomed
-                ? "w-auto h-auto max-w-none cursor-grab active:cursor-grabbing"
-                : "max-w-full max-h-[85vh] w-auto h-auto"
+              ? "w-auto h-auto max-w-none cursor-grab active:cursor-grabbing"
+              : "max-w-full max-h-[85vh] w-auto h-auto"
               }`}
             style={isZoomed ? { imageRendering: "crisp-edges" } : {}}
             draggable={false}
@@ -207,8 +225,8 @@ export default function FullscreenGallery({
                 setIsZoomed(false);
               }}
               className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${index === currentIndex
-                  ? "ring-2 ring-white scale-110"
-                  : "opacity-60 hover:opacity-100 hover:scale-105"
+                ? "ring-2 ring-white scale-110"
+                : "opacity-60 hover:opacity-100 hover:scale-105"
                 }`}
             >
               <img

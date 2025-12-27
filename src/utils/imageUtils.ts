@@ -21,6 +21,12 @@ export const getAbsoluteImageUrl = (imagePath: string | undefined): string => {
   }
 
   // For relative paths, use the backend URL from environment
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080/api/v1";
+  let backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080/api/v1";
+
+  // Auto-upgrade to HTTPS if on client-side and page is HTTPS to avoid Mixed Content
+  if (typeof window !== "undefined" && window.location.protocol === "https:" && backendUrl.startsWith("http://")) {
+    backendUrl = backendUrl.replace("http://", "https://");
+  }
+
   return `${backendUrl}/image/${imagePath}`;
 };

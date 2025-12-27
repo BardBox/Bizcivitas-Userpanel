@@ -13,6 +13,10 @@ export const getAbsoluteImageUrl = (imagePath: string | undefined): string => {
 
   // If it's already an absolute URL starting with http/https, return as is
   if (imagePath.startsWith("https://") || imagePath.startsWith("http://")) {
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && imagePath.startsWith("http://")) {
+      return imagePath.replace("http://", "https://");
+    }
+
     // If it's from icon-library.com, return our default avatar instead
     if (imagePath.includes("icon-library.com")) {
       return "/images/favicon.svg";

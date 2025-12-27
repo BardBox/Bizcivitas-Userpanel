@@ -54,7 +54,7 @@ const transformCommentToMock = (
     id: comment.userId?._id || "",
     name: comment.userId
       ? `${comment.userId.fname || ""} ${comment.userId.lname || ""}`.trim() ||
-        "Unknown User"
+      "Unknown User"
       : "Unknown User",
     avatar: comment.userId?.avatar
       ? `${baseUrl}/image/${comment.userId.avatar}?width=32&height=32&format=webp`
@@ -87,18 +87,35 @@ export function transformBizPulsePostToMock(
     type: "avatar" | "post" | "thumbnail" = "post"
   ): string | undefined => {
     if (!path) return undefined;
+
+    console.log('[BizPulse Image Debug] Raw path:', path, 'Type:', type, 'BASE_URL:', BASE_URL);
+
     // Check if it's an absolute URL
     if (path.startsWith("http://") || path.startsWith("https://")) {
       // For external URLs, check if they're from allowed domains
       try {
         const url = new URL(path);
         const allowedDomains = ["backend.bizcivitas.com", "images.unsplash.com"];
+
+        // Also allow the configured BASE_URL hostname (vital for localhost or custom deployments)
+        try {
+          const baseUrlHost = new URL(BASE_URL).hostname;
+          if (baseUrlHost && !allowedDomains.includes(baseUrlHost)) {
+            allowedDomains.push(baseUrlHost);
+          }
+        } catch (e) {
+          // invalid BASE_URL, ignore
+        }
+
         if (allowedDomains.includes(url.hostname)) {
+          console.log('[BizPulse Image Debug] Using absolute URL:', path);
           return path;
         }
         // For other external URLs, return undefined to use fallback
+        console.log('[BizPulse Image Debug] Blocked external URL:', path);
         return undefined;
       } catch {
+        console.log('[BizPulse Image Debug] Invalid URL:', path);
         return undefined;
       }
     }
@@ -107,7 +124,9 @@ export function transformBizPulsePostToMock(
       post: "width=600&height=400",
       thumbnail: "width=150&height=150",
     };
-    return `${BASE_URL}/image/${path}?${sizes[type]}&format=webp`;
+    const finalUrl = `${BASE_URL}/image/${path}?${sizes[type]}&format=webp`;
+    console.log('[BizPulse Image Debug] Final constructed URL:', finalUrl);
+    return finalUrl;
   };
 
   const isWallFeedPost = (p: any): p is WallFeedPost => {
@@ -133,9 +152,9 @@ export function transformBizPulsePostToMock(
       title: post.title || post.poll?.question || "Untitled Post",
       content: Array.isArray(post.description)
         ? post.description
-            .map((desc) => desc.trim())
-            .filter((desc) => desc)
-            .join("<br><br>")
+          .map((desc) => desc.trim())
+          .filter((desc) => desc)
+          .join("<br><br>")
         : post.description || "",
       author: {
         name: post.userId
@@ -210,9 +229,9 @@ export function transformBizPulsePostToMock(
       title: post.title || "Untitled Post",
       content: Array.isArray(post.description)
         ? post.description
-            .map((desc) => desc.trim())
-            .filter((desc) => desc)
-            .join("<br><br>")
+          .map((desc) => desc.trim())
+          .filter((desc) => desc)
+          .join("<br><br>")
         : post.description || "",
       author: {
         name: "BizCivitas Admin",

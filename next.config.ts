@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "icon-library.com",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8080",
+      },
     ],
     dangerouslyAllowSVG: true,
   },

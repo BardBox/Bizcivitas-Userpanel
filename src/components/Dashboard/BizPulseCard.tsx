@@ -114,6 +114,12 @@ export default function BizPulseCard({
               fill
               className="object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              onError={(e) => {
+                console.error('[BizPulse Image Error] Failed to load:', image);
+                // Hide image on error
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+              unoptimized
             />
           </div>
         )}

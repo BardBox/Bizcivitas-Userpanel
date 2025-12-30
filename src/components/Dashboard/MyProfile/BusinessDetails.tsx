@@ -184,10 +184,6 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
       // Add business location fields to professionalDetails
       // This ensures BizWin Analytics can filter by country/state/city
-      cleanedData.businessZoneId = selectedZoneId || undefined; // ObjectId
-      cleanedData.businessAreaId = selectedAreaId || undefined; // ObjectId
-      cleanedData.businessZone = selectedZoneName || ""; // String fallback
-      cleanedData.businessArea = selectedAreaName || ""; // String fallback
       cleanedData.businessCity = cityName;
       cleanedData.businessState = stateName;
       cleanedData.businessCountry = countryName;
@@ -195,10 +191,6 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
 
       // Debug logging
       console.log('💾 Saving Business Location:', {
-        businessZoneId: selectedZoneId,
-        businessAreaId: selectedAreaId,
-        businessZone: selectedZoneName,
-        businessArea: selectedAreaName,
         businessCity: cityName,
         businessState: stateName,
         businessCountry: countryName,
@@ -527,14 +519,6 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                     {professionalDetails?.businessCity || "-"}
                   </div>
                   <div>
-                    <span className="font-medium">Zone: </span>
-                    {professionalDetails?.businessZone || "-"}
-                  </div>
-                  <div>
-                    <span className="font-medium">Area: </span>
-                    {professionalDetails?.businessArea || "-"}
-                  </div>
-                  <div>
                     <span className="font-medium">Pincode: </span>
                     {professionalDetails?.businessPincode || "-"}
                   </div>
@@ -549,54 +533,19 @@ const BusinessDetails: React.FC<BusinessDetailsProps> = ({
                       setSelectedCountry(value);
                       setSelectedState("");
                       setSelectedCity("");
-                      setSelectedZoneId("");
-                      setSelectedZoneName("");
-                      setSelectedAreaId("");
-                      setSelectedAreaName("");
                       setSelectedPincode("");
                     }}
                     onStateChange={(value) => {
                       setSelectedState(value);
                       setSelectedCity("");
-                      setSelectedZoneId("");
-                      setSelectedZoneName("");
-                      setSelectedAreaId("");
-                      setSelectedAreaName("");
                       setSelectedPincode("");
                     }}
                     onCityChange={(value) => {
                       setSelectedCity(value);
-                      setSelectedZoneId("");
-                      setSelectedZoneName("");
-                      setSelectedAreaId("");
-                      setSelectedAreaName("");
                       setSelectedPincode("");
                     }}
                     disabled={false}
                   />
-
-                  {/* Franchise Zone & Area Dropdown - Auto-fetches based on city */}
-                  {selectedCity && (
-                    <FranchiseZoneAreaDropdown
-                      cityName={selectedCity}
-                      selectedZoneId={selectedZoneId}
-                      selectedAreaId={selectedAreaId}
-                      selectedAreaName={selectedAreaName}
-                      onZoneChange={(zoneId, zoneName) => {
-                        setSelectedZoneId(zoneId);
-                        setSelectedZoneName(zoneName);
-                        // Clear area when zone changes
-                        setSelectedAreaId("");
-                        setSelectedAreaName("");
-                      }}
-                      onAreaChange={(areaId, areaName) => {
-                        setSelectedAreaId(areaId);
-                        setSelectedAreaName(areaName);
-                      }}
-                      disabled={false}
-                      required={true}
-                    />
-                  )}
 
                   {/* Pincode Field */}
                   <div>

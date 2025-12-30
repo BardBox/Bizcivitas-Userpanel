@@ -46,7 +46,7 @@ const SidebarIcon = memo(
     isCollapsed?: boolean;
   }) => (
     <div
-      className={`transition-all duration-300 ${isCollapsed ? "w-8 h-8" : "w-5 h-5"
+      className={`transition-all duration-300 ${isCollapsed ? "w-6 h-6" : "w-5 h-5"
         }`}
       style={{
         WebkitMask: `url(${src}) center/contain no-repeat`,
@@ -55,7 +55,7 @@ const SidebarIcon = memo(
       }}
     />
   ),
-  (prev, next) => prev.src === next.src && prev.isActive === next.isActive
+  (prev, next) => prev.src === next.src && prev.isActive === next.isActive && prev.isCollapsed === next.isCollapsed
 );
 
 const navigationSections = [
@@ -75,7 +75,7 @@ const navigationSections = [
       {
         href: "/feeds/connections",
         text: "Connections",
-        icon: "/dashboard/sidebaricons/connections.svg",
+        icon: "/dashboard/sidebaricons/connection.png",
       },
       {
         href: "/feeds/events",
@@ -130,17 +130,17 @@ const navigationSections = [
       {
         href: "/feeds/rewards",
         text: "Rewards",
-        icon: "/dashboard/sidebaricons/dashboard.svg",
+        icon: "/dashboard/sidebaricons/rewards.png",
       },
       {
         href: "/feeds/my-membership",
         text: "My Membership",
-        icon: "/dashboard/sidebaricons/dashboard.svg",
+        icon: "/dashboard/sidebaricons/membership.png",
       },
       {
         href: "/feeds/account-settings",
         text: "Account Settings",
-        icon: "/dashboard/sidebaricons/settings.svg",
+        icon: "/dashboard/sidebaricons/accountsetting.png",
       },
       // {
       //   href: "#",
@@ -322,7 +322,7 @@ export default function DashboardSidebar({
         >
           <LogOut
             strokeWidth={2.5}
-            className={`transition-all duration-300 ${isCollapsed ? "w-8 h-8" : "w-5 h-5"
+            className={`transition-all duration-300 ${isCollapsed ? "w-6 h-6" : "w-5 h-5"
               } text-gray-500 group-hover:text-red-600`}
           />
           {!isCollapsed && <span className="ml-3 truncate text-sm font-medium">Logout</span>}
@@ -360,7 +360,7 @@ const SidebarLink = memo(
         {LucideIcon ? (
           <LucideIcon
             strokeWidth={2.5}
-            className={`transition-all duration-300 ${isCollapsed ? "w-8 h-8" : "w-5 h-5"
+            className={`transition-all duration-300 ${isCollapsed ? "w-6 h-6" : "w-5 h-5"
               } ${isLogout
                 ? "text-gray-500 group-hover:text-red-600"
                 : isActive

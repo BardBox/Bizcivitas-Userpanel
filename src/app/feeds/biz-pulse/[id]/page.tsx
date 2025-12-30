@@ -254,8 +254,20 @@ export default function BizPulseDetailPage() {
             </div>
           </div>
 
-          {/* Hero Image(s) */}
-          {Array.isArray((post as any).images) && (post as any).images.length > 0 ? (
+          {/* Hero Video or Image(s) */}
+          {(post as any).videos && (post as any).videos.length > 0 ? (
+            // Display Vimeo video player - Same approach as Knowledge Hub
+            <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+              <iframe
+                src={(post as any).videos[0].embedLink || `https://player.vimeo.com/video/${(post as any).videos[0].vimeoId}`}
+                className="absolute top-0 left-0 w-full h-full"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={post.title}
+              />
+            </div>
+          ) : Array.isArray((post as any).images) && (post as any).images.length > 0 ? (
             <ImageCarousel images={(post as any).images} alt={post.title} />
           ) : post.image ? (
             <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
@@ -269,13 +281,16 @@ export default function BizPulseDetailPage() {
 
           {/* Article Content */}
           <div className="px-2 py-4 md:px-6 md:py-8">
-            {/* Category Badge */}
+            {/* Category Badge - Clickable */}
             <div className="mb-4">
-              <span className="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full font-medium">
+              <button
+                onClick={() => router.push(`/feeds/biz-pulse?category=${post.category}`)}
+                className="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 text-sm rounded-full font-medium transition-colors cursor-pointer"
+              >
                 {post.category
-                  .replace("-", " ")
+                  .replace(/-/g, " ")
                   .replace(/\b\w/g, (l) => l.toUpperCase())}
-              </span>
+              </button>
             </div>
 
             {/* Title */}

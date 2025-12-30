@@ -111,6 +111,7 @@ const PostsGrid = memo(function PostsGrid({
             content={post.content}
             author={post.author}
             image={post.image}
+            videos={post.videos}
             stats={post.stats}
             timeAgo={post.timeAgo}
             category={post.category}

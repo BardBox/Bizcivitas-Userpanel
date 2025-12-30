@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ThumbsUp, MessageSquare } from "lucide-react";
+import { ThumbsUp, MessageSquare, Play } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Image from "next/image";
+import { VimeoVideo } from "../../../types/bizpulse.types";
 
 interface BizPulseCardProps {
   id: string;
@@ -16,6 +17,7 @@ interface BizPulseCardProps {
     avatar?: string | null;
   };
   image?: string;
+  videos?: VimeoVideo[];
   stats: {
     likes: number;
     comments: number;
@@ -36,6 +38,7 @@ export default function BizPulseCard({
   content,
   author,
   image,
+  videos,
   stats,
   timeAgo,
   category,
@@ -64,6 +67,13 @@ export default function BizPulseCard({
     e.stopPropagation();
     setIsLiked(!isLiked);
     onLike?.(id);
+  };
+
+  const handleCategoryClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Navigate to BizPulse page with category parameter
+    window.location.href = `/feeds/biz-pulse?category=${category}`;
   };
 
   return (
@@ -105,8 +115,27 @@ export default function BizPulseCard({
           </div>
         </div>
 
-        {/* Image with maintained aspect ratio */}
-        {image && (
+        {/* Video or Image with maintained aspect ratio */}
+        {videos && videos.length > 0 ? (
+          // Show video thumbnail with play button
+          <div className="w-full aspect-video relative overflow-hidden bg-gray-100 group">
+            <Image
+              src={videos[0].thumbnailUrl || "/images/default-video-thumb.jpg"}
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized
+            />
+            {/* Play button overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+              <div className="bg-white/90 rounded-full p-4 group-hover:scale-110 transition-transform">
+                <Play className="w-8 h-8 text-gray-900 fill-current" />
+              </div>
+            </div>
+          </div>
+        ) : image ? (
+          // Show regular image if no video
           <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
             <Image
               src={image}
@@ -116,27 +145,31 @@ export default function BizPulseCard({
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               onError={(e) => {
                 console.error('[BizPulse Image Error] Failed to load:', image);
-                // Hide image on error
-                (e.target as HTMLImageElement).style.display = 'none';
+                // Hide the entire image container on error
+                const container = (e.target as HTMLElement).closest('.aspect-video');
+                if (container) {
+                  (container as HTMLElement).style.display = 'none';
+                }
               }}
               unoptimized
             />
           </div>
-        )}
+        ) : null}
 
         {/* Content Section */}
         <div className="p-3 flex-1 flex flex-col">
-          {/* Category Badge */}
+          {/* Category Badge - Clickable */}
           <div className="mb-2">
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
+            <button
+              onClick={handleCategoryClick}
+              className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all hover:scale-105 hover:shadow-md ${getCategoryColor(
                 category
               )}`}
             >
               {category
-                .replace("-", " ")
+                .replace(/-/g, " ")
                 .replace(/\b\w/g, (l) => l.toUpperCase())}
-            </span>
+            </button>
           </div>
 
           {/* Title */}

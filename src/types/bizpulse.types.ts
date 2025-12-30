@@ -47,12 +47,12 @@ export interface Post {
 
 export type BizPulseCategory =
   | "all"
-  | "foundersDesk"
-  | "businessBoosters"
-  | "pulsePolls"
-  | "article"
-  | "lightPulse"
-  | "travelStories"
+  | "founders-desk"
+  | "business-boosters"
+  | "pulse-polls"
+  | "spotlight-stories"
+  | "light-pulse"
+  | "travel-stories"
   | "trip"
   | "upcomingEvent"
   | "announcement"
@@ -66,12 +66,12 @@ export interface BizPulseTab {
 
 export const BIZPULSE_TABS: BizPulseTab[] = [
   { id: "all", label: "All" },
-  { id: "foundersDesk", label: "Founders Desk" },
-  { id: "businessBoosters", label: "Business Boosters" },
-  { id: "pulsePolls", label: "Pulse Polls" },
-  { id: "article", label: "Spotlight Stories" },
-  { id: "lightPulse", label: "Light Pulse" },
-  { id: "travelStories", label: "Travel Stories" },
+  { id: "founders-desk", label: "Founders Desk" },
+  { id: "business-boosters", label: "Business Boosters" },
+  { id: "pulse-polls", label: "Pulse Polls" },
+  { id: "spotlight-stories", label: "Spotlight Stories" },
+  { id: "light-pulse", label: "Light Pulse" },
+  { id: "travel-stories", label: "Travel Stories" },
 ];
 
 // Poll Types

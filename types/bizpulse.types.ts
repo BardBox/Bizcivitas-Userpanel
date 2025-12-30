@@ -319,6 +319,8 @@ export interface BizPulseMockPost {
     avatar?: string | null; // Allow null values from backend
   };
   image?: string; // Add this for component compatibility
+  images?: string[]; // Multiple images support
+  videos?: VimeoVideo[]; // Vimeo videos support
   stats: {
     likes: number;
     comments: number;

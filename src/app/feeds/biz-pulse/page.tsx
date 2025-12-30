@@ -37,6 +37,29 @@ export default function BizPulsePage() {
     }
   }, [searchParams]);
 
+  // Map hyphenated categories to backend format (camelCase)
+  const categoryToBackendType = (category: BizPulseCategory): string | undefined => {
+    if (category === "all") return undefined;
+
+    const map: Record<BizPulseCategory, string> = {
+      "all": "",
+      "founders-desk": "foundersDesk",
+      "business-boosters": "businessBoosters",
+      "pulse-polls": "pulsePolls",
+      "spotlight-stories": "spotlightStories",  // Backend uses spotlightStories, not article
+      "light-pulse": "lightPulse",
+      "travel-stories": "travelStories",
+      "trip": "trip",
+      "upcomingEvent": "upcomingEvent",
+      "announcement": "announcement",
+      "poll": "poll",
+    };
+
+    const backendType = map[category];
+    console.log('[BizPulse Filter] Frontend category:', category, '→ Backend type:', backendType);
+    return backendType;
+  };
+
   // Fetch posts using RTK Query
   // We pass type (category) and search to the query
   const {
@@ -45,7 +68,7 @@ export default function BizPulsePage() {
     error,
     refetch,
   } = useGetWallFeedsQuery({
-    type: activeCategory !== "all" ? activeCategory : undefined,
+    type: categoryToBackendType(activeCategory),
     search: searchQuery || undefined,
   });
 

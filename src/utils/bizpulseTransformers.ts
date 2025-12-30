@@ -81,6 +81,12 @@ export function transformBizPulsePostToMock(
     );
   }
 
+  // Use production backend for images if local backend is being used
+  // This is useful for development when images don't exist locally
+  const IMAGE_BASE_URL = BASE_URL.includes('localhost')
+    ? 'https://backend.bizcivitas.com/api/v1'
+    : BASE_URL;
+
   // Helper to safely construct image URLs with size optimization
   const getImageUrl = (
     path?: string,
@@ -95,13 +101,22 @@ export function transformBizPulsePostToMock(
       // For external URLs, check if they're from allowed domains
       try {
         const url = new URL(path);
-        const allowedDomains = ["backend.bizcivitas.com", "images.unsplash.com"];
+        const allowedDomains = [
+          "backend.bizcivitas.com",
+          "images.unsplash.com",
+          "icon-library.com",
+          "s3.ap-south-1.amazonaws.com" // AWS S3 for uploaded media
+        ];
 
-        // Also allow the configured BASE_URL hostname (vital for localhost or custom deployments)
+        // Also allow the configured BASE_URL and IMAGE_BASE_URL hostnames
         try {
           const baseUrlHost = new URL(BASE_URL).hostname;
           if (baseUrlHost && !allowedDomains.includes(baseUrlHost)) {
             allowedDomains.push(baseUrlHost);
+          }
+          const imageBaseUrlHost = new URL(IMAGE_BASE_URL).hostname;
+          if (imageBaseUrlHost && !allowedDomains.includes(imageBaseUrlHost)) {
+            allowedDomains.push(imageBaseUrlHost);
           }
         } catch (e) {
           // invalid BASE_URL, ignore
@@ -124,7 +139,16 @@ export function transformBizPulsePostToMock(
       post: "width=600&height=400",
       thumbnail: "width=150&height=150",
     };
-    const finalUrl = `${BASE_URL}/image/${path}?${sizes[type]}&format=webp`;
+
+    // Ensure path doesn't start with a slash
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+
+    // For now, don't encode the path - let the browser handle it naturally
+    // or let Next.js Image component handle encoding if needed
+    // Backend should handle the raw path with spaces
+    const finalUrl = `${IMAGE_BASE_URL}/image/${cleanPath}?${sizes[type]}&format=webp`;
+    console.log('[BizPulse Image Debug] Raw path:', path);
+    console.log('[BizPulse Image Debug] Using IMAGE_BASE_URL:', IMAGE_BASE_URL);
     console.log('[BizPulse Image Debug] Final constructed URL:', finalUrl);
     return finalUrl;
   };
@@ -134,16 +158,29 @@ export function transformBizPulsePostToMock(
   };
 
   const normalizeCategory = (type: string): BizPulseCategory => {
+    console.log('[BizPulse Category Debug] Input type:', type);
+
     const map: Record<string, BizPulseCategory> = {
       travelStories: "travel-stories",
       lightPulse: "light-pulse",
-      article: "spotlight-stories" as BizPulseCategory,
+      article: "spotlight-stories",
+      spotlightStories: "spotlight-stories",  // Backend sends this for spotlight stories
       poll: "pulse-polls",
       pulsePolls: "pulse-polls",
       businessBoosters: "business-boosters",
       foundersDesk: "founders-desk",
+      // Also handle if backend sends hyphenated format already
+      "travel-stories": "travel-stories",
+      "light-pulse": "light-pulse",
+      "spotlight-stories": "spotlight-stories",
+      "pulse-polls": "pulse-polls",
+      "business-boosters": "business-boosters",
+      "founders-desk": "founders-desk",
     };
-    return map[type] || "all";
+
+    const result = map[type] || "all";
+    console.log('[BizPulse Category Debug] Mapped to:', result);
+    return result;
   };
 
   if (isWallFeedPost(post)) {
@@ -190,6 +227,7 @@ export function transformBizPulsePostToMock(
         }
         return undefined;
       })(),
+      videos: post.videos, // Pass through Vimeo videos
       stats: {
         likes: post.likeCount || 0,
         // Use actual comments array length if available, otherwise fall back to commentCount
@@ -217,7 +255,7 @@ export function transformBizPulsePostToMock(
       });
 
       transformedPost.comments = sortedComments.map((comment) =>
-        transformCommentToMock(comment, BASE_URL)
+        transformCommentToMock(comment, IMAGE_BASE_URL)
       );
     }
 
@@ -264,7 +302,7 @@ export function transformBizPulsePostToMock(
       });
 
       transformedPost.comments = sortedComments.map((comment) =>
-        transformCommentToMock(comment, BASE_URL)
+        transformCommentToMock(comment, IMAGE_BASE_URL)
       );
     }
 

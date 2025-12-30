@@ -161,6 +161,12 @@ export interface FrontendEvent {
     totalMembers: number;
   }[];
   pendingCount?: number; // computed from pendingParticipants.length
+
+  // Membership-based pricing
+  membershipAccessType?: {
+    membership: "Core Membership" | "Flagship Membership" | "Industria Membership" | "Digital Membership";
+    type: "free" | "paid";
+  }[];
 }
 
 // API Response types (UPDATED)
@@ -301,6 +307,9 @@ export function convertMongoEventToFrontend(
       })),
       pendingCount:
         mongoEvent.totalPending || mongoEvent.pendingParticipants?.length || 0,
+
+      // Membership-based pricing
+      membershipAccessType: mongoEvent.membershipAccessType,
     };
   } catch (error) {
     console.error("Error converting mongo event to frontend:", error);

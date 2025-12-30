@@ -7,12 +7,48 @@ import { Calendar, MapPin, Users, Clock } from "lucide-react";
 import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 import DOMPurify from "dompurify";
 import { FrontendEvent } from "../../../types/mongoEvent.types.latest";
+import { useAppSelector } from "@/store/hooks";
 
 interface EventCardProps {
   event: FrontendEvent;
 }
 
+// Helper function to check if event is free for user's membership
+const isEventFreeForUser = (
+  event: FrontendEvent,
+  userMembershipType?: string
+): boolean => {
+  // If event has no membership access rules, use default accessMode
+  if (!event.membershipAccessType || event.membershipAccessType.length === 0) {
+    return event.accessMode === "free";
+  }
+
+  // If user has no membership, show default pricing
+  if (!userMembershipType) {
+    return event.accessMode === "free";
+  }
+
+  // Check if user's membership gets free access
+  const userMembershipAccess = event.membershipAccessType.find(
+    (access) => access.membership === userMembershipType
+  );
+
+  if (userMembershipAccess) {
+    return userMembershipAccess.type === "free";
+  }
+
+  // If user's membership is not in the list, fall back to accessMode
+  return event.accessMode === "free";
+};
+
 const EventCard: React.FC<EventCardProps> = ({ event }) => {
+  // Get user's membership from Redux store
+  const user = useAppSelector((state) => state.auth.user);
+  const userMembershipType = user?.membershipType;
+
+  // Determine if event is free for this specific user
+  const isFreeForUser = isEventFreeForUser(event, userMembershipType);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return {
@@ -71,9 +107,9 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           </span>
         </div>
 
-        {/* Price Badge */}
+        {/* Price Badge - Shows "Free" if event is free for user's membership */}
         <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
-          {event.accessMode === "free" || event.isFree ? (
+          {isFreeForUser ? (
             <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-green-100 text-green-800">
               Free
             </span>
@@ -83,7 +119,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
             </span>
           ) : event.accessMode === "freepaid" ? (
             <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-800">
-              Mixed
+              Mixed Pricing
             </span>
           ) : (
             <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-orange-100 text-orange-800">

@@ -21,9 +21,38 @@ import {
 import { FrontendEvent } from "../../../../types/mongoEvent.types.latest";
 import EventCard from "@/components/Events/EventCard";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useAppSelector } from "@/store/hooks";
 
 type FilterType = "upcoming" | "past";
 type PriceFilter = "all" | "free" | "paid" | "freepaid";
+
+// Helper function to check if event is free for user's membership
+const isEventFreeForUser = (
+  event: FrontendEvent,
+  userMembershipType?: string
+): boolean => {
+  // If event has no membership access rules, use default accessMode
+  if (!event.membershipAccessType || event.membershipAccessType.length === 0) {
+    return event.accessMode === "free";
+  }
+
+  // If user has no membership, show default pricing
+  if (!userMembershipType) {
+    return event.accessMode === "free";
+  }
+
+  // Check if user's membership gets free access
+  const userMembershipAccess = event.membershipAccessType.find(
+    (access) => access.membership === userMembershipType
+  );
+
+  if (userMembershipAccess) {
+    return userMembershipAccess.type === "free";
+  }
+
+  // If user's membership is not in the list, fall back to accessMode
+  return event.accessMode === "free";
+};
 
 export default function EventsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +61,10 @@ export default function EventsPage() {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { isCollapsed } = useSidebar();
+
+  // Get user's membership from Redux store
+  const user = useAppSelector((state) => state.auth.user);
+  const userMembershipType = user?.membershipType;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -86,14 +119,20 @@ export default function EventsPage() {
       return true;
     });
 
-    // Price filter
+    // Price filter (considers user's membership for personalized pricing)
     if (priceFilter !== "all") {
       filtered = filtered.filter((event: FrontendEvent) => {
+        // Check if event is free for this specific user
+        const isFreeForUser = isEventFreeForUser(event, userMembershipType);
+
         if (priceFilter === "free") {
-          return event.isFree || event.accessMode === "free";
+          // Show events that are free for this user
+          return isFreeForUser;
         } else if (priceFilter === "paid") {
-          return !event.isFree || event.accessMode === "paid";
+          // Show events that are NOT free for this user
+          return !isFreeForUser;
         } else if (priceFilter === "freepaid") {
+          // Show only mixed pricing events (regardless of user's membership)
           return event.accessMode === "freepaid";
         }
         return true;
@@ -115,7 +154,7 @@ export default function EventsPage() {
     });
 
     return sorted;
-  }, [events, searchQuery, activeFilter, priceFilter]);
+  }, [events, searchQuery, activeFilter, priceFilter, userMembershipType]);
 
   // Loading state
   if (isLoading) {

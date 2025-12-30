@@ -346,7 +346,7 @@ export default function MemberDirectory() {
               className="relative flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
             >
               <Filter className="h-5 w-5" />
-              <span>Advanced Search</span>
+              <span>Filter</span>
               {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
                   {activeFilterCount}

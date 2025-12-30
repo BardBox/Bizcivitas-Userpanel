@@ -59,13 +59,17 @@ export default function KnowledgeHubPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Sync activeTab with URL parameter changes
+  // Ensure URL always has tab parameter - add default if missing
   useEffect(() => {
-    const urlTab = searchParams.get("tab") as TabType;
-    if (urlTab && KNOWLEDGE_HUB_TABS.some(tab => tab.id === urlTab)) {
-      setActiveTab(urlTab);
+    const urlTab = searchParams.get("tab");
+    if (!urlTab) {
+      // No tab in URL, add default "tutorials" tab
+      router.replace("/feeds/knowledge-hub?tab=tutorials", { scroll: false });
+    } else if (KNOWLEDGE_HUB_TABS.some(tab => tab.id === urlTab)) {
+      // Valid tab in URL, sync state
+      setActiveTab(urlTab as TabType);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // Get current user
   const { data: currentUser } = useGetCurrentUserQuery();

@@ -20,6 +20,7 @@ import {
   type Collection,
 } from "../../../../store/api/knowledgeHubApi";
 import toast from "react-hot-toast";
+import SavedResourcesButton from "@/components/KnowledgeHub/SavedResourcesButton";
 
 type TabType = "expert" | "knowledge" | "membership" | "resource";
 
@@ -125,8 +126,12 @@ export default function SavedResourcesPage() {
     SAVED_TABS.find((tab) => tab.id === activeTab) || SAVED_TABS[0];
 
   return (
-    <div className="space-y-4 bg-gray-50 mt-4 md:mt-8  md:space-y-6 px-3 md:px-0">
-      {/* Header with Breadcrumb */}
+    <>
+      {/* Knowledge Hub Floating Button */}
+      <SavedResourcesButton mode="knowledgeHub" />
+
+      <div className="space-y-4 bg-gray-50 mt-4 md:mt-8  md:space-y-6 px-3 md:px-0">
+        {/* Header with Breadcrumb */}
       <div className="bg-white rounded-lg shadow p-4 md:p-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
@@ -355,5 +360,6 @@ export default function SavedResourcesPage() {
         resources.
       </div>
     </div>
+    </>
   );
 }

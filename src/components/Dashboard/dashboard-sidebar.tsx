@@ -118,7 +118,7 @@ const navigationSections = [
         icon: "/dashboard/sidebaricons/knowledgehub.svg",
       },
       {
-        href: "/feeds/saved-resources",
+        href: "/feeds/saved-resources?tab=knowledge",
         text: "Saved Resources",
         lucideIcon: Bookmark,
       },
@@ -271,12 +271,15 @@ export default function DashboardSidebar({
                     // Get the 'from' query parameter
                     const fromParam = searchParams?.get('from');
 
+                    // Extract path from href (remove query parameters for comparison)
+                    const itemPath = item.href.split('?')[0];
+
                     // Check if current path matches or is a child route
                     // For exact match on home page, only match /feeds exactly
                     let isActive =
-                      item.href === "/feeds"
+                      itemPath === "/feeds"
                         ? pathname === "/feeds"
-                        : pathname.startsWith(item.href);
+                        : pathname.startsWith(itemPath);
 
                     // Special handling for connection profile pages
                     // If we're on /feeds/connections/[id] with a 'from' parameter,

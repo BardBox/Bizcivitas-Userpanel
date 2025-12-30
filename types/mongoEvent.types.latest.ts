@@ -184,6 +184,7 @@ export interface EventFilters {
   state?: string | string[];
   region?: string | string[];
   country?: string;
+  city?: string | string[];
   eventType?: "onedayevent" | "onlineevent" | "tripevent";
   accessMode?: "free" | "paid" | "freepaid";
 }

@@ -9,6 +9,7 @@ import {
   useEditBizHubPostMutation,
   useGetBizHubPostByIdQuery,
 } from "../../../../../store/api/bizpulseApi";
+import { getAbsoluteImageUrl } from "@/utils/imageUtils";
 
 const categories = [
   { value: "general-chatter", label: "General Chatter" },
@@ -71,8 +72,12 @@ export default function CreateBizHubPostPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Limit to 10 images
-    const remainingSlots = 10 - selectedImages.length;
+    // Limit to 10 images (existing + new)
+    const currentTotal = existingImageUrls.length + selectedImages.length;
+    const remainingSlots = 10 - currentTotal;
+
+    if (remainingSlots <= 0) return;
+
     const newImages = files.slice(0, remainingSlots);
 
     setSelectedImages((prev) => [...prev, ...newImages]);
@@ -87,9 +92,15 @@ export default function CreateBizHubPostPage() {
     });
   };
 
-  const removeImage = (index: number) => {
+  // Remove newly selected image
+  const removeNewImage = (index: number) => {
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove existing image
+  const removeExistingImage = (index: number) => {
+    setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -111,32 +122,40 @@ export default function CreateBizHubPostPage() {
     }
 
     try {
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("type", formData.type);
+      data.append("visibility", "public");
+
+      // Append new images
+      selectedImages.forEach((image) => {
+        data.append("media", image);
+      });
+
       if (editId) {
-        // Edit mode - use JSON, not FormData
+        // Edit mode
+
+        // Handle existing images logic
+        if (existingImageUrls.length === 0) {
+          // If user cleared all existing images, tell backend to remove them
+          data.append("removeMedia", "true");
+        } else {
+          // Otherwise, send the list of images to keep
+          existingImageUrls.forEach(url => {
+            data.append("mediaUrl", url as string); // casting as string just in case
+          });
+        }
+
         await editBizHubPost({
           postId: editId,
-          data: {
-            title: formData.title,
-            description: formData.description,
-            type: formData.type,
-          },
+          data: data,
         }).unwrap();
+
         // Navigate back to detail page
         router.push(`/feeds/biz-hub/${editId}`);
       } else {
-        // Create mode - use FormData for images
-        const data = new FormData();
-        data.append("title", formData.title);
-        data.append("description", formData.description);
-        data.append("type", formData.type);
-        data.append("visibility", "public");
-
-        // Append images
-        selectedImages.forEach((image) => {
-          data.append("media", image);
-        });
-
-        // Dispatch action
+        // Create mode
         await createBizHubPost(data).unwrap();
 
         // Navigate back to BizHub
@@ -275,7 +294,7 @@ export default function CreateBizHubPostPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={loading || selectedImages.length >= 10}
+              disabled={loading || (existingImageUrls.length + selectedImages.length) >= 10}
               className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <svg
@@ -292,7 +311,7 @@ export default function CreateBizHubPostPage() {
                 />
               </svg>
               <span className="text-gray-600">
-                {selectedImages.length >= 10
+                {(existingImageUrls.length + selectedImages.length) >= 10
                   ? "Maximum 10 images reached"
                   : "Click to upload images"}
               </span>
@@ -307,40 +326,78 @@ export default function CreateBizHubPostPage() {
             />
 
             {/* Image Previews */}
-            {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
-                    <Image
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      width={200}
-                      height={200}
-                      className="w-full h-40 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {/* Existing Images */}
+              {existingImageUrls.map((url, index) => (
+                <div key={`existing-${index}`} className="relative group">
+                  <Image
+                    src={getAbsoluteImageUrl(url) || "/placeholder.jpg"}
+                    alt={`Existing ${index + 1}`}
+                    width={200}
+                    height={200}
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                  <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-0.5 rounded">
+                    Existing
                   </div>
-                ))}
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onClick={() => removeExistingImage(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+
+              {/* New Images */}
+              {imagePreviews.map((preview, index) => (
+                <div key={`new-${index}`} className="relative group">
+                  <Image
+                    src={preview}
+                    alt={`Preview ${index + 1}`}
+                    width={200}
+                    height={200}
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                  <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
+                    New
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+
           </div>
         </div>
 

@@ -233,7 +233,9 @@ export default function ImageCarousel({ images, alt = "Post image" }: ImageCarou
         </div>
 
         {/* Pagination dots below image */}
-        <div className="custom-pagination flex justify-center pb-2"></div>
+        <div className="flex justify-center pb-2 w-full">
+          <div className="custom-pagination"></div>
+        </div>
       </div>
 
       {/* Fullscreen Gallery Modal */}

@@ -1,24 +1,52 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+### What this repo contains — Detailed overview
 
-First, run the development server:
+- Purpose: Member-facing web app for Bizcivitas that provides member directory, event feeds, messaging, and membership management.
+- Core responsibilities:
+  - **Events feed** and event detail pages (view and sometimes register for events via the website/back-end).
+  - **Member Directory** and **Member Profiles** (view, connect, and message members).
+  - **Messaging & Notifications** — direct messages, notifications, and invitation flows.
+  - **Membership features** (membership cards, tiers like Core Member, Digital Member, Flagship, etc.) and dashboards.
+- Key modules & files:
+  - `src/app/feeds/events/` — events listing and event detail
+  - `src/app/feeds/member-directory/` — member directory pages
+  - `src/store/membersSlice.ts` — fetch/create/update member APIs
+  - `src/components/Membership/` — membership UI components
+  - Notification and messaging components in `src/components/` and integration with backend API (`NEXT_PUBLIC_API_URL`)
+- Tech: Next.js + TypeScript; uses API endpoints from the backend for dynamic data; deploys on Vercel.
+
+## Getting Started (Developer Guide)
+
+This Next.js application is the User Panel frontend for Bizcivitas.
+
+### Prerequisites
+
+- Node.js 18+
+- npm / yarn / pnpm
+
+### Quick setup
 
 ```bash
+git clone <repo-url>
+cd BizCivitas-Userpanel
+npm install
+cp .env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Important environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- NEXT_PUBLIC_API_URL - backend base URL
+- NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (if using Supabase directly)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Running and deploying
+
+- Development: `npm run dev`
+- Build: `npm run build`
+- Deploy: Vercel recommended; set env vars in Vercel dashboard
+
+**Project relationships:** The User Panel communicates with the backend APIs for user-related operations. For repository status and handover env files, see `../REPOSITORY_STATUS_AND_ENV_HANDOVER.md`.
 
 ## Learn More
 
@@ -34,3 +62,5 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+**Project relationships:** The User Panel is a frontend in the Bizcivitas ecosystem and communicates with the central backend service for user-related operations. For repository status and environment files included in the handover, see `../REPOSITORY_STATUS_AND_ENV_HANDOVER.md`.

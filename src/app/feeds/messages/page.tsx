@@ -254,6 +254,7 @@ export default function MessagesPage() {
       // Only show members WITHOUT existing chats (prevent duplicates)
       ...allMembers
         .filter((member) =>
+          member && member._id && // Ensure member and ID exist
           member._id !== currentUserId &&
           !existingChatUserIds.includes(member._id) // Exclude members with existing chats
         )
@@ -647,7 +648,7 @@ export default function MessagesPage() {
                     </div>
                   ) : (
                     <div className="py-1">
-                      {searchResults.map((result: any) => {
+                      {searchResults.map((result: any, index: number) => {
                         if (result.type === "chat") {
                           const chat = result.data;
                           const otherParticipant = getOtherParticipant(chat);
@@ -656,7 +657,7 @@ export default function MessagesPage() {
 
                           return (
                             <div
-                              key={chat._id}
+                              key={chat._id || `chat-${index}`}
                               onClick={() => {
                                 handleChatClick(chat._id);
                                 setSearchQuery("");
@@ -714,7 +715,7 @@ export default function MessagesPage() {
 
                           return (
                             <div
-                              key={`member-${member._id}`}
+                              key={`member-${member._id || index}`}
                               onClick={() => handleStartConversation(member)}
                               className="px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 border-b border-gray-100 last:border-b-0"
                             >
@@ -785,7 +786,7 @@ export default function MessagesPage() {
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {searchResults.map((result: any) => {
+                {searchResults.map((result: any, index: number) => {
                   if (result.type === "chat") {
                     const chat = result.data;
                     const otherParticipant = getOtherParticipant(chat);
@@ -794,7 +795,7 @@ export default function MessagesPage() {
 
                     return (
                       <div
-                        key={chat._id}
+                        key={chat._id || `chat-${index}`}
                         className={`p-3 hover:bg-gray-50 transition-colors flex items-center gap-3 group relative border-b border-gray-100 last:border-b-0 ${selectedChat?._id === chat._id ? "bg-teal-50 border-l-4 border-l-teal-600" : "bg-white"
                           }`}
                       >
@@ -896,7 +897,7 @@ export default function MessagesPage() {
 
                     return (
                       <div
-                        key={`member-${member._id}`}
+                        key={`member-${member._id || index}`}
                         onClick={() => handleStartConversation(member)}
                         className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3 ${hasChat ? "border-l-2 border-blue-300" : "border-l-2 border-green-500"
                           }`}

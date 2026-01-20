@@ -48,9 +48,26 @@ const AllMembers: React.FC<AllMembersProps> = ({
     return suggestions.map((user: any) => {
       const fullName = `${user.fname || ""} ${user.lname || ""}`.trim();
 
-      // Get title/classification
+      // Format role for franchise partners
+      const formatRole = (role: string | undefined) => {
+        if (!role) return null;
+        const roleMap: Record<string, string> = {
+          "master-franchise": "Master Franchise Partner",
+          "area-franchise": "Area Franchise Partner",
+          "dcp": "DCP",
+          "cgc": "CGC",
+          "admin": "Admin",
+          "core-member": "Core Member",
+        };
+        return roleMap[role.toLowerCase()] || null;
+      };
+
+      // Get title/classification - prioritize role for franchise partners
       let title = "";
-      if (
+      const franchiseRoles = ["master-franchise", "area-franchise", "dcp", "cgc"];
+      if (user.role && franchiseRoles.includes(user.role.toLowerCase())) {
+        title = formatRole(user.role) || "Business Professional";
+      } else if (
         user.classification &&
         user.classification.length <= 50 &&
         !user.classification.includes("@")
@@ -64,7 +81,7 @@ const AllMembers: React.FC<AllMembersProps> = ({
       const company =
         user.companyName ||
         user.profile?.professionalDetails?.companyName ||
-        "BizCivitas Member";
+        title; // Use title as fallback instead of "BizCivitas Member"
 
       return {
         id: user._id || user.id || "",

@@ -117,9 +117,26 @@ function ConnectionsPageContent() {
       // Get proper name with fallback
       const fullName = `${connection.fname || ""} ${connection.lname || ""}`.trim();
 
-      // Get title with proper fallbacks
+      // Format role for franchise partners
+      const formatRole = (role: string | undefined) => {
+        if (!role) return null;
+        const roleMap: Record<string, string> = {
+          "master-franchise": "Master Franchise Partner",
+          "area-franchise": "Area Franchise Partner",
+          "dcp": "DCP",
+          "cgc": "CGC",
+          "admin": "Admin",
+          "core-member": "Core Member",
+        };
+        return roleMap[role.toLowerCase()] || null;
+      };
+
+      // Get title with proper fallbacks - prioritize role for franchise partners
       let title = "";
-      if (
+      const franchiseRoles = ["master-franchise", "area-franchise", "dcp", "cgc"];
+      if (connection.role && franchiseRoles.includes(connection.role.toLowerCase())) {
+        title = formatRole(connection.role) || "Business Professional";
+      } else if (
         connection.classification &&
         connection.classification.length <= 50 &&
         !connection.classification.includes("@") &&
@@ -136,7 +153,7 @@ function ConnectionsPageContent() {
       const company =
         connection.companyName ||
         connection.profile?.professionalDetails?.companyName ||
-        "BizCivitas Member";
+        title; // Use title as fallback instead of "BizCivitas Member"
 
       return {
         id: connection._id || connection.id || "",

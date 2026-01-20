@@ -121,7 +121,33 @@ export default function PollCard({
   };
 
   const getAuthorName = () => `${post.userId.fname} ${post.userId.lname}`;
-  const getAuthorCompany = () => "BizCivitas Member";
+  const getAuthorCompany = () => {
+    // Format role for franchise partners
+    const formatRole = (role: string | undefined) => {
+      if (!role) return null;
+      const roleMap: Record<string, string> = {
+        "master-franchise": "Master Franchise Partner",
+        "area-franchise": "Area Franchise Partner",
+        "dcp": "DCP",
+        "cgc": "CGC",
+        "admin": "Admin",
+        "core-member": "Core Member",
+      };
+      return roleMap[role.toLowerCase()] || null;
+    };
+
+    // Priority 1: Show role for franchise partners
+    const franchiseRoles = ["master-franchise", "area-franchise", "dcp", "cgc"];
+    if (post.userId?.role && franchiseRoles.includes(post.userId.role.toLowerCase())) {
+      return formatRole(post.userId.role);
+    }
+
+    // Priority 2: Show classification
+    if (post.userId?.classification) return post.userId.classification;
+
+    // Fallback
+    return "BizCivitas Member";
+  };
 
   return (
     <div

@@ -61,15 +61,40 @@ const ProfileSection = memo(function ProfileSection({
     return `${user?.fname?.[0] || ""}${user?.lname?.[0] || ""}`.toUpperCase();
   };
 
+  // Helper to format role for display
+  const formatRole = (role: string | undefined) => {
+    if (!role) return null;
+    const roleMap: Record<string, string> = {
+      "master-franchise": "Master Franchise Partner",
+      "area-franchise": "Area Franchise Partner",
+      "dcp": "DCP",
+      "cgc": "CGC",
+      "admin": "Admin",
+      "core-member": "Core Member",
+      "member": "BizCivitas Member",
+    };
+    return roleMap[role.toLowerCase()] || role;
+  };
+
   const getUserTitle = () => {
     if (!user) return "BizCivitas Member";
-    return (
-      user.profile?.professionalDetails?.companyName ||
-      user.companyName ||
-      user.profile?.professionalDetails?.classification ||
-      user.classification ||
-      "BizCivitas Member"
-    );
+
+    // Priority 1: For franchise partners, show their role
+    const franchiseRoles = ["master-franchise", "area-franchise", "dcp", "cgc"];
+    if (user.role && franchiseRoles.includes(user.role.toLowerCase())) {
+      return formatRole(user.role);
+    }
+
+    // Priority 2: Show classification (e.g., "Business Owner", "Professional")
+    const classification = user.profile?.professionalDetails?.classification || user.classification;
+    if (classification) return classification;
+
+    // Priority 3: Show company name
+    const companyName = user.profile?.professionalDetails?.companyName || user.companyName;
+    if (companyName) return companyName;
+
+    // Fallback
+    return "BizCivitas Member";
   };
 
   // Skip loading state - render immediately with cached data or placeholders

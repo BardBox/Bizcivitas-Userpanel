@@ -129,8 +129,10 @@ export default function MessagesPage() {
           // Mark as read
           const other = (existingChat.users || existingChat.participants || []).find((u) => u._id !== currentUserId);
           if (other?._id) {
-            markAsRead({ chatId: existingChat._id, targetUserId: other._id }).catch((err) => {
-            });
+            markAsRead({ chatId: existingChat._id, targetUserId: other._id })
+              .then(() => refetch())
+              .catch((err) => {
+              });
           }
 
           // Clean up URL after opening chat
@@ -400,8 +402,10 @@ export default function MessagesPage() {
       const other = (c.users || c.participants || []).find((u) => u._id !== currentUserId);
       if (other?._id) {
         // Mark as read by sending targetUserId or chatId
-        markAsRead({ chatId: c._id, targetUserId: other._id }).catch((err) => {
-        });
+        markAsRead({ chatId: c._id, targetUserId: other._id })
+          .then(() => refetch())
+          .catch((err) => {
+          });
       }
     }
 
@@ -697,13 +701,7 @@ export default function MessagesPage() {
                                 )}
                               </div>
 
-                              {isUnread && (
-                                <div className="flex-shrink-0">
-                                  <div className="bg-green-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
-                                    {chat.unseenMsg || chat.unreadCount}
-                                  </div>
-                                </div>
-                              )}
+
                             </div>
                           );
                         }
@@ -850,13 +848,8 @@ export default function MessagesPage() {
                             )}
                           </div>
 
-                          {isUnread && (
-                            <div className="flex-shrink-0">
-                              <div className="bg-green-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
-                                {chat.unseenMsg || chat.unreadCount}
-                              </div>
-                            </div>
-                          )}
+
+
                         </div>
 
                         {/* Three-dot menu */}

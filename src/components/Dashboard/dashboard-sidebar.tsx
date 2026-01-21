@@ -354,6 +354,7 @@ const SidebarLink = memo(
     isCollapsed: boolean;
     onClick?: () => void;
     isLogout?: boolean;
+    unreadCount?: number;
   }) => {
     const content = (
       <>
@@ -361,16 +362,18 @@ const SidebarLink = memo(
           <div className="absolute left-0 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full" />
         )}
         {LucideIcon ? (
-          <LucideIcon
-            strokeWidth={2.5}
-            className={`transition-all duration-300 ${isCollapsed ? "w-6 h-6" : "w-5 h-5"
-              } ${isLogout
-                ? "text-gray-500 group-hover:text-red-600"
-                : isActive
-                  ? "text-blue-600"
-                  : "text-gray-500"
-              }`}
-          />
+          <div className="relative">
+            <LucideIcon
+              strokeWidth={2.5}
+              className={`transition-all duration-300 ${isCollapsed ? "w-6 h-6" : "w-5 h-5"
+                } ${isLogout
+                  ? "text-gray-500 group-hover:text-red-600"
+                  : isActive
+                    ? "text-blue-600"
+                    : "text-gray-500"
+                }`}
+            />
+          </div>
         ) : icon ? (
           <SidebarIcon
             src={icon}
@@ -378,7 +381,12 @@ const SidebarLink = memo(
             isCollapsed={isCollapsed}
           />
         ) : null}
-        {!isCollapsed && <span className="ml-3 truncate text-sm">{text}</span>}
+
+        {!isCollapsed && (
+          <div className="flex-1 flex justify-between items-center ml-3 min-w-0">
+            <span className="truncate text-sm">{text}</span>
+          </div>
+        )}
       </>
     );
 
@@ -387,7 +395,7 @@ const SidebarLink = memo(
       : isActive
         ? "bg-blue-50/50 text-blue-700 font-semibold"
         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-      } ${isCollapsed ? "justify-center px-2 py-3" : "px-3 py-2.5"}`;
+      } ${isCollapsed ? "justify-center px-2 py-3 relative" : "px-3 py-2.5"}`;
 
     return (
       <li>

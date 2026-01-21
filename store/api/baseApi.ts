@@ -29,10 +29,10 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  // Aggressive caching for instant navigation
+  // Caching configuration
   refetchOnFocus: false, // Don't refetch on window focus
   refetchOnReconnect: false, // Don't refetch on network reconnect
-  refetchOnMountOrArgChange: false, // Use cached data, don't refetch on mount
+  refetchOnMountOrArgChange: true, // Refetch when query arguments change (e.g., tab filters)
   // Cache data for 10 minutes - keep data fresh without constant refetching
   keepUnusedDataFor: 600,
   // NOTE: Tag invalidation from mutations (like endorseSkill) will automatically refetch affected data

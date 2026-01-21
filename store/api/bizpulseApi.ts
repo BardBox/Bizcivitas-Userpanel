@@ -20,20 +20,34 @@ export const bizpulseApi = baseApi.injectEndpoints({
                     : [{ type: "Post", id: "LIST" }],
         }),
         getWallFeeds: builder.query<WallFeedPost[], { limit?: number; search?: string; type?: string }>({
-            query: (params) => ({
-                url: "/wallfeed",
-                params,
-            }),
+            query: (params) => {
+                // Filter out undefined/null values to ensure clean query params
+                const cleanParams: Record<string, string | number> = {};
+                if (params.type) cleanParams.type = params.type;
+                if (params.search) cleanParams.search = params.search;
+                if (params.limit) cleanParams.limit = params.limit;
+
+                console.log('[RTK Query] Fetching wallfeeds with params:', cleanParams);
+
+                return {
+                    url: "/wallfeed",
+                    params: cleanParams,
+                };
+            },
+            // Ensure each type/search combo gets its own cache entry
+            serializeQueryArgs: ({ queryArgs }) => {
+                return `wallfeeds-${queryArgs.type || 'all'}-${queryArgs.search || ''}-${queryArgs.limit || ''}`;
+            },
             transformResponse: (response: { data: { wallFeeds: WallFeedPost[] } }) => {
                 return response.data.wallFeeds;
             },
-            providesTags: (result) =>
+            providesTags: (result, error, args) =>
                 result
                     ? [
                         ...result.map(({ _id }) => ({ type: "Post" as const, id: _id })),
-                        { type: "Post", id: "LIST" },
+                        { type: "Post", id: `LIST-${args.type || 'all'}` },
                     ]
-                    : [{ type: "Post", id: "LIST" }],
+                    : [{ type: "Post", id: `LIST-${args.type || 'all'}` }],
         }),
         getBizHubPosts: builder.query<any[], void>({
             query: () => ({

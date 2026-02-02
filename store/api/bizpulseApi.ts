@@ -2,6 +2,7 @@ import { baseApi } from "./baseApi";
 import { WallFeedPost } from "../../src/types/bizpulse.types";
 
 export const bizpulseApi = baseApi.injectEndpoints({
+    overrideExisting: true,
     endpoints: (builder) => ({
         getDailyFeeds: builder.query<WallFeedPost[], void>({
             query: () => ({
@@ -76,28 +77,51 @@ export const bizpulseApi = baseApi.injectEndpoints({
                 method: "POST",
                 body: { wallFeedId },
             }),
+            transformResponse: (response: { data: WallFeedPost }) => response.data,
             async onQueryStarted(wallFeedId, { dispatch, queryFulfilled }) {
+                console.log('[Like] Starting like mutation for:', wallFeedId);
+
+                // Optimistic update for immediate UI feedback
                 const patchResultDetail = dispatch(
-                    bizpulseApi.util.updateQueryData("getPostById", wallFeedId, (draft) => {
-                        draft.isLiked = !draft.isLiked;
-                        draft.likes = draft.likes || [];
-                        if (draft.isLiked) {
-                            draft.likes.push({ userId: "me" } as any);
+                    bizpulseApi.util.updateQueryData("getPostById", wallFeedId, (draft: any) => {
+                        const target = draft.wallFeed || draft;
+                        console.log('[Like] Optimistic update - current isLiked:', target.isLiked);
+                        target.isLiked = !target.isLiked;
+                        target.likes = target.likes || [];
+                        if (target.isLiked) {
+                            target.likes.push({ userId: "me" });
+                            target.likeCount = (target.likeCount || 0) + 1;
                         } else {
-                            draft.likes.pop();
+                            target.likes.pop();
+                            target.likeCount = Math.max(0, (target.likeCount || 1) - 1);
                         }
+                        console.log('[Like] Optimistic update - new isLiked:', target.isLiked, 'likeCount:', target.likeCount);
                     })
                 );
                 try {
-                    await queryFulfilled;
-                } catch {
+                    const { data } = await queryFulfilled;
+                    console.log('[Like] API Success - server response:', {
+                        isLiked: data.isLiked,
+                        likeCount: data.likeCount,
+                        likesLength: data.likes?.length
+                    });
+                    // On success, update cache with actual server response
+                    dispatch(
+                        bizpulseApi.util.updateQueryData("getPostById", wallFeedId, (draft: any) => {
+                            const target = draft.wallFeed || draft;
+                            // Update with server response values
+                            target.isLiked = data.isLiked;
+                            target.likes = data.likes || [];
+                            target.likeCount = data.likeCount || (data.likes?.length || 0);
+                        })
+                    );
+                } catch (error) {
+                    console.error('[Like] API Error:', error);
                     patchResultDetail.undo();
                 }
             },
-            invalidatesTags: (result, error, id) => [
-                { type: "Post", id },
-                { type: "Post", id: "LIST" }
-            ],
+            // Don't invalidate tags - we update the cache directly on success
+            // This prevents the refetch from overwriting our update
         }),
         likeBizHubPost: builder.mutation<any, string>({
             query: (postId) => ({

@@ -8,8 +8,19 @@ export interface User {
   classification?: string;
 }
 
+// User info for likes (populated from backend)
+export interface LikeUser {
+  _id: string;
+  fname: string;
+  lname: string;
+  avatar?: string;
+  username?: string;
+  role?: string;
+  classification?: string;
+}
+
 export interface Like {
-  userId: string;
+  userId: string | LikeUser;  // Can be string (ID) or populated user object
 }
 
 export interface Comment {

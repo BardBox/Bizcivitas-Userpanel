@@ -20,6 +20,7 @@ import {
   useGetUnreadNotificationsQuery,
   useMarkAllNotificationsAsReadMutation,
   useMarkNotificationAsReadMutation,
+  useLazyCheckInDailyFeedQuery,
 } from "../../store/api/notificationApi";
 // FCM disabled - using API-only approach for in-app notifications
 // import { useFirebaseNotifications } from "@/hooks/useFirebaseNotifications";
@@ -78,6 +79,7 @@ export default function NotificationDropdown({
   const [markAsRead] = useMarkNotificationAsReadMutation();
   const [markAllAsRead] = useMarkAllNotificationsAsReadMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
+  const [checkInDailyFeed] = useLazyCheckInDailyFeedQuery();
 
   // Firebase notifications hook - DISABLED (using API-only approach)
   // const {
@@ -156,11 +158,20 @@ export default function NotificationDropdown({
           return;
         }
 
-        // Post notification - use backend-provided postType
+        // Post notification - use backend-provided postType or check DailyFeed
         if (notification.metadata.postId) {
-          // Use postType from backend, default to bizhub if not specified
-          const postType = notification.metadata.postType || "bizhub";
           const postId = notification.metadata.postId;
+          let postType = notification.metadata.postType;
+
+          // If postType not set, check if post is in DailyFeed
+          if (!postType) {
+            try {
+              const result = await checkInDailyFeed(postId).unwrap();
+              postType = result.isInDailyFeed ? "bizpulse" : "bizhub";
+            } catch {
+              postType = "bizhub"; // Default to bizhub on error
+            }
+          }
 
           const url =
             postType === "bizpulse"
@@ -176,11 +187,20 @@ export default function NotificationDropdown({
           return;
         }
 
-        // Wall Feed notification - use backend-provided postType
+        // Wall Feed notification - use backend-provided postType or check DailyFeed
         if (notification.metadata.wallFeedId) {
-          // Use postType from backend, default to bizhub if not specified
-          const postType = notification.metadata.postType || "bizhub";
           const wallFeedId = notification.metadata.wallFeedId;
+          let postType = notification.metadata.postType;
+
+          // If postType not set, check if wallFeed is in DailyFeed
+          if (!postType) {
+            try {
+              const result = await checkInDailyFeed(wallFeedId).unwrap();
+              postType = result.isInDailyFeed ? "bizpulse" : "bizhub";
+            } catch {
+              postType = "bizhub"; // Default to bizhub on error
+            }
+          }
 
           const url =
             postType === "bizpulse"

@@ -23,6 +23,7 @@ import { transformBizPulsePostToMock } from "../../../../../src/utils/bizpulseTr
 import toast from "react-hot-toast";
 import Avatar from "@/components/ui/Avatar";
 import ReportModal from "@/components/modals/ReportModal";
+import LikesModal from "@/components/modals/LikesModal";
 import { reportApi } from "../../../../../src/services/reportApi";
 import ImageCarousel from "@/components/ImageCarousel";
 import PostSkeleton from "@/components/ui/skeletons/PostSkeleton";
@@ -40,6 +41,7 @@ export default function BizPulseDetailPage() {
 
   const [newComment, setNewComment] = useState("");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(null);
@@ -55,6 +57,11 @@ export default function BizPulseDetailPage() {
     // The API might return the post wrapped in 'wallFeed' or directly
     const postData = (rawPost as any).wallFeed || rawPost;
     return transformBizPulsePostToMock(postData);
+  }, [rawPost]);
+
+  // Get likes array from raw post for display
+  const likesArray = useMemo(() => {
+    return ((rawPost as any)?.wallFeed?.likes || (rawPost as any)?.likes) || [];
   }, [rawPost]);
 
   // Get current user from auth state
@@ -306,15 +313,56 @@ export default function BizPulseDetailPage() {
             {/* Stats */}
             <div className="py-4 border-y border-gray-200">
               <div className="flex items-center gap-6 text-gray-700">
-                <button
-                  onClick={handleLike}
-                  disabled={isLiking}
-                  className={`flex items-center space-x-2 transition-all hover:scale-105 ${post.isLiked ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
-                    } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <ThumbsUp className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`} />
-                  <span className="font-medium text-sm">{post.stats?.likes || 0} Likes</span>
-                </button>
+                {/* Like Button + Instagram-style Text */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLike}
+                    disabled={isLiking}
+                    className={`p-1 rounded-full transition-all hover:scale-110 ${post.isLiked ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                      } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+                    title={post.isLiked ? "Unlike" : "Like"}
+                  >
+                    <ThumbsUp className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`} />
+                  </button>
+                  <button
+                    onClick={() => (post.stats?.likes || 0) > 0 && setIsLikesModalOpen(true)}
+                    className={`text-sm ${(post.stats?.likes || 0) > 0 ? "hover:text-blue-600 cursor-pointer" : "text-gray-500 cursor-default"}`}
+                  >
+                    {(() => {
+                      const likeCount = post.stats?.likes || 0;
+                      if (likeCount === 0) return <span className="text-gray-500">Be the first to like</span>;
+
+                      const currentUserId = currentUser?._id || currentUser?.id;
+
+                      // Get the most recent liker's name (check if it's current user)
+                      const recentLike = likesArray[likesArray.length - 1];
+                      let recentLikerName = "Someone";
+                      let isRecentLikerCurrentUser = false;
+
+                      if (recentLike?.userId && typeof recentLike.userId === "object") {
+                        const user = recentLike.userId as any;
+                        const likerUserId = user._id || user.id;
+                        isRecentLikerCurrentUser = likerUserId === currentUserId;
+                        recentLikerName = isRecentLikerCurrentUser
+                          ? "you"
+                          : `${user.fname || ""} ${user.lname || ""}`.trim() || "Someone";
+                      }
+
+                      if (likeCount === 1) {
+                        return <span>Liked by <span className="font-semibold">{recentLikerName}</span></span>;
+                      } else {
+                        const othersCount = likeCount - 1;
+                        return (
+                          <span>
+                            Liked by <span className="font-semibold">{recentLikerName}</span>
+                            {" and "}
+                            <span className="font-semibold">{othersCount} {othersCount === 1 ? "other" : "others"}</span>
+                          </span>
+                        );
+                      }
+                    })()}
+                  </button>
+                </div>
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="w-5 h-5 text-gray-400" />
                   <span className="font-medium text-sm">{post.stats?.comments || 0} Comments</span>
@@ -498,6 +546,14 @@ export default function BizPulseDetailPage() {
         }}
         onSubmit={handleReportComment}
         type="comment"
+      />
+
+      {/* Likes Modal */}
+      <LikesModal
+        isOpen={isLikesModalOpen}
+        onClose={() => setIsLikesModalOpen(false)}
+        likes={likesArray}
+        postId={postId}
       />
     </div>
   );

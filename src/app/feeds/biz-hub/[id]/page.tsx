@@ -19,6 +19,7 @@ import {
 } from "../../../../../store/api/bizpulseApi";
 import { reportApi } from "@/services/reportApi";
 import ReportModal from "@/components/modals/ReportModal";
+import LikesModal from "@/components/modals/LikesModal";
 import HtmlContent from "@/components/HtmlContent";
 import ImageCarousel from "@/components/ImageCarousel";
 import Avatar from "@/components/ui/Avatar";
@@ -74,10 +75,16 @@ export default function BizHubPostDetail() {
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{ label: string; path: string }>>([
     { label: "Home", path: "/feeds" },
     { label: "BizHub", path: "/feeds/biz-hub" },
   ]);
+
+  // Get likes array from post data
+  const likesArray = useMemo(() => {
+    return (post?.likes || []);
+  }, [post]);
 
   // Determine breadcrumbs based on referrer and post type
   useEffect(() => {
@@ -432,6 +439,7 @@ export default function BizHubPostDetail() {
             className="text-sm text-gray-700 leading-relaxed"
           />
 
+          {/* Stats Section - Update likes display */}
           <div className="flex items-center gap-6 pt-4 border-t text-gray-700">
             <button
               onClick={handleLike}
@@ -439,8 +447,51 @@ export default function BizHubPostDetail() {
                 }`}
             >
               <ThumbsUp className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`} />
-              <span className="font-medium">{post.likeCount || 0} Likes</span>
             </button>
+
+            {/* Instagram-style likes display */}
+            <button
+              onClick={() => likesArray.length > 0 && setIsLikesModalOpen(true)}
+              disabled={likesArray.length === 0}
+              className={`text-sm ${
+                likesArray.length === 0
+                  ? "text-gray-500 cursor-default"
+                  : "hover:underline font-medium transition-colors"
+              }`}
+            >
+              {(() => {
+                const likeCount = post.likeCount || 0;
+                if (likeCount === 0) return <span className="text-gray-500">Be the first to like</span>;
+
+                const currentUserId = currentUser?._id || currentUser?.id;
+                const recentLike = likesArray[likesArray.length - 1];
+                let recentLikerName = "Someone";
+                let isRecentLikerCurrentUser = false;
+
+                if (recentLike?.userId && typeof recentLike.userId === "object") {
+                  const user = recentLike.userId as any;
+                  const likerUserId = user._id || user.id;
+                  isRecentLikerCurrentUser = likerUserId === currentUserId;
+                  recentLikerName = isRecentLikerCurrentUser
+                    ? "you"
+                    : `${user.fname || ""} ${user.lname || ""}`.trim() || "Someone";
+                }
+
+                if (likeCount === 1) {
+                  return <span>Liked by <span className="font-semibold">{recentLikerName}</span></span>;
+                } else {
+                  const othersCount = likeCount - 1;
+                  return (
+                    <span>
+                      Liked by <span className="font-semibold">{recentLikerName}</span>
+                      {" and "}
+                      <span className="font-semibold">{othersCount} {othersCount === 1 ? "other" : "others"}</span>
+                    </span>
+                  );
+                }
+              })()}
+            </button>
+
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-gray-400" />
               <span className="font-medium">{post.commentCount || 0} Comments</span>
@@ -618,6 +669,7 @@ export default function BizHubPostDetail() {
         </div>
       </div>
 
+      {/* Report Modal */}
       <ReportModal
         isOpen={isReportModalOpen}
         onClose={() => {
@@ -629,6 +681,15 @@ export default function BizHubPostDetail() {
         type={reportType}
       />
 
+      {/* Likes Modal - show users who liked this post */}
+      <LikesModal
+        isOpen={isLikesModalOpen}
+        onClose={() => setIsLikesModalOpen(false)}
+        likes={likesArray}
+        postId={postId}
+      />
+
+      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">

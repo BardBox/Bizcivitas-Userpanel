@@ -164,6 +164,13 @@ export const notificationApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: ApiResponse<any>) => response.data,
     }),
+
+    // Check if a post/wallFeed is in DailyFeed (for notification routing)
+    checkInDailyFeed: builder.query<{ isInDailyFeed: boolean }, string>({
+      query: (itemId) => `/dailyfeed/check/${itemId}`,
+      transformResponse: (response: ApiResponse<{ isInDailyFeed: boolean }>) =>
+        response.data,
+    }),
   }),
 });
 
@@ -179,4 +186,5 @@ export const {
   useRemoveFcmTokenMutation,
   useSendNotificationToUserMutation,
   useSendNotificationToAllMutation,
+  useLazyCheckInDailyFeedQuery,
 } = notificationApi;

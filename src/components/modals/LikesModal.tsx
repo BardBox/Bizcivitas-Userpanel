@@ -1,35 +1,25 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
-import { X, Heart, Search, UserPlus, Check, Clock, Loader2 } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { X, Heart, Search, Check, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../store/store";
 import { Like, LikeUser } from "../../types/bizpulse.types";
-import {
-  useGetConnectionsQuery,
-  useGetConnectionRequestsQuery,
-  useSendConnectionRequestMutation,
-  useAcceptConnectionRequestMutation,
-} from "../../../store/api/connectionsApi";
-import { useAppDispatch } from "../../../store/hooks";
-import { addToast } from "../../../store/toastSlice";
+import { useGetConnectionsQuery } from "../../../store/api/connectionsApi";
 import Avatar from "../ui/Avatar";
 
 interface LikesModalProps {
   isOpen: boolean;
   onClose: () => void;
   likes: Like[];
-  postId: string;
 }
 
 type ConnectionStatus = "self" | "connected" | "pending_sent" | "pending_received" | "none";
 
-export default function LikesModal({ isOpen, onClose, likes, postId }: LikesModalProps) {
+export default function LikesModal({ isOpen, onClose, likes }: LikesModalProps) {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState("");
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   // Get current user
   const currentUser = useSelector((state: RootState) => state.auth.user);
@@ -37,39 +27,16 @@ export default function LikesModal({ isOpen, onClose, likes, postId }: LikesModa
 
   // Get connections data for status checking
   const { data: connections } = useGetConnectionsQuery();
-  const { data: sentRequests } = useGetConnectionRequestsQuery("sent");
-  const { data: receivedRequests } = useGetConnectionRequestsQuery("received");
 
-  // Mutations
-  const [sendConnectionRequest] = useSendConnectionRequestMutation();
-  const [acceptConnectionRequest] = useAcceptConnectionRequestMutation();
-
-  // Build sets for quick lookup - connections can have _id or id
+  // Build set for quick lookup - connections can have _id or id
   const connectedIds = useMemo(() => {
     const ids = new Set<string>();
     connections?.forEach((c: any) => {
       if (c._id) ids.add(c._id);
       if (c.id) ids.add(c.id);
     });
-    console.log('[LikesModal] Connected IDs:', Array.from(ids));
     return ids;
   }, [connections]);
-
-  const pendingSentIds = useMemo(() => {
-    return new Set(
-      sentRequests?.data?.connections?.map((r: any) => r.receiver?.id) || []
-    );
-  }, [sentRequests]);
-
-  const pendingReceivedMap = useMemo(() => {
-    const map = new Map<string, string>();
-    receivedRequests?.data?.connections?.forEach((r: any) => {
-      if (r.sender?.id) {
-        map.set(r.sender.id, r.connectionId);
-      }
-    });
-    return map;
-  }, [receivedRequests]);
 
   // Helper to get avatar URL
   const getAvatarUrl = useCallback((avatarPath?: string) => {
@@ -87,16 +54,12 @@ export default function LikesModal({ isOpen, onClose, likes, postId }: LikesModa
     return null;
   }, []);
 
-  // Get connection status for a user
+  // Get connection status for a user (self, connected, or none)
   const getConnectionStatus = useCallback((userId: string): ConnectionStatus => {
-    console.log('[LikesModal] Checking status for userId:', userId, 'currentUserId:', currentUserId);
-    console.log('[LikesModal] Is in connectedIds?', connectedIds.has(userId));
     if (userId === currentUserId) return "self";
     if (connectedIds.has(userId)) return "connected";
-    if (pendingSentIds.has(userId)) return "pending_sent";
-    if (pendingReceivedMap.has(userId)) return "pending_received";
     return "none";
-  }, [currentUserId, connectedIds, pendingSentIds, pendingReceivedMap]);
+  }, [currentUserId, connectedIds]);
 
   // Filter likes based on search
   const filteredLikes = useMemo(() => {
@@ -121,131 +84,35 @@ export default function LikesModal({ isOpen, onClose, likes, postId }: LikesModa
     }
   }, [currentUserId, onClose, router]);
 
-  // Handle connect button click
-  const handleConnect = useCallback(async (userId: string) => {
-    setProcessingIds((prev) => new Set(prev).add(userId));
-    try {
-      await sendConnectionRequest({ receiverId: userId }).unwrap();
-      dispatch(
-        addToast({
-          type: "success",
-          message: "Connection request sent!",
-          duration: 3000,
-        })
+  // Render connection status or view profile link
+  const renderStatusBadge = useCallback((userId: string, status: ConnectionStatus) => {
+    // For self, show nothing
+    if (status === "self") return null;
+
+    // For connected users, show Connected badge
+    if (status === "connected") {
+      return (
+        <span className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+          <Check className="w-3 h-3" />
+          Connected
+        </span>
       );
-    } catch (error: any) {
-      dispatch(
-        addToast({
-          type: "error",
-          message: error?.data?.message || "Failed to send request",
-          duration: 3000,
-        })
-      );
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(userId);
-        return next;
-      });
     }
-  }, [sendConnectionRequest, dispatch]);
 
-  // Handle accept button click
-  const handleAccept = useCallback(async (userId: string) => {
-    const connectionId = pendingReceivedMap.get(userId);
-    if (!connectionId) return;
-
-    setProcessingIds((prev) => new Set(prev).add(userId));
-    try {
-      await acceptConnectionRequest({ connectionId }).unwrap();
-      dispatch(
-        addToast({
-          type: "success",
-          message: "Connection accepted!",
-          duration: 3000,
-        })
-      );
-    } catch (error: any) {
-      dispatch(
-        addToast({
-          type: "error",
-          message: error?.data?.message || "Failed to accept request",
-          duration: 3000,
-        })
-      );
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(userId);
-        return next;
-      });
-    }
-  }, [acceptConnectionRequest, pendingReceivedMap, dispatch]);
-
-  // Render connect button based on status
-  const renderConnectButton = useCallback((userId: string, status: ConnectionStatus) => {
-    const isProcessing = processingIds.has(userId);
-
-    switch (status) {
-      case "self":
-        return null;
-
-      case "connected":
-        return (
-          <span className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-            <Check className="w-3 h-3" />
-            Connected
-          </span>
-        );
-
-      case "pending_sent":
-        return (
-          <span className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
-            <Clock className="w-3 h-3" />
-            Pending
-          </span>
-        );
-
-      case "pending_received":
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAccept(userId);
-            }}
-            disabled={isProcessing}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-full transition-colors disabled:opacity-50"
-          >
-            {isProcessing ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Check className="w-3 h-3" />
-            )}
-            Accept
-          </button>
-        );
-
-      case "none":
-      default:
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleConnect(userId);
-            }}
-            disabled={isProcessing}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors disabled:opacity-50"
-          >
-            {isProcessing ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <UserPlus className="w-3 h-3" />
-            )}
-            Connect
-          </button>
-        );
-    }
-  }, [processingIds, handleConnect, handleAccept]);
+    // For everyone else (pending, none, etc.), show View Profile
+    return (
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          handleUserClick(userId);
+        }}
+        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+      >
+        <ExternalLink className="w-3 h-3" />
+        View Profile
+      </span>
+    );
+  }, [handleUserClick]);
 
   if (!isOpen) return null;
 
@@ -320,7 +187,6 @@ export default function LikesModal({ isOpen, onClose, likes, postId }: LikesModa
                 const userId = user._id || (user as any).id;
                 const userName = `${user.fname || ""} ${user.lname || ""}`.trim() || "Unknown User";
                 const status = getConnectionStatus(userId);
-                console.log('[LikesModal] User:', userName, 'userId:', userId, 'status:', status);
 
                 return (
                   <div
@@ -350,9 +216,9 @@ export default function LikesModal({ isOpen, onClose, likes, postId }: LikesModa
                       </p>
                     </div>
 
-                    {/* Connect Button */}
+                    {/* Status Badge / View Profile */}
                     <div onClick={(e) => e.stopPropagation()}>
-                      {renderConnectButton(userId, status)}
+                      {renderStatusBadge(userId, status)}
                     </div>
                   </div>
                 );

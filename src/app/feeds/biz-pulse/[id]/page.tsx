@@ -553,7 +553,6 @@ export default function BizPulseDetailPage() {
         isOpen={isLikesModalOpen}
         onClose={() => setIsLikesModalOpen(false)}
         likes={likesArray}
-        postId={postId}
       />
     </div>
   );

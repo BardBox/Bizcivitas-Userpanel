@@ -686,7 +686,6 @@ export default function BizHubPostDetail() {
         isOpen={isLikesModalOpen}
         onClose={() => setIsLikesModalOpen(false)}
         likes={likesArray}
-        postId={postId}
       />
 
       {/* Delete Confirmation Modal */}

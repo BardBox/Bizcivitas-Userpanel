@@ -4,7 +4,8 @@ import { PasswordResetApiResponse } from "../../types/PasswordTypes";
 interface UseForgotPasswordReturn {
   loading: boolean;
   error: string;
-  sendOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
+  accountType: string | null;
+  sendOtp: (email: string) => Promise<{ success: boolean; error?: string; accountType?: string }>;
   verifyOtp: (
     email: string,
     otp: string
@@ -18,15 +19,17 @@ interface UseForgotPasswordReturn {
 export default function useForgotPassword(): UseForgotPasswordReturn {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [accountType, setAccountType] = useState<string | null>(null);
 
   const sendOtp = async (
     email: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; accountType?: string }> => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/forgot-password/send-otp", {
+      // Use unified password reset endpoint that supports both Users and Franchise Partners
+      const response = await fetch("/api/proxy/api/v1/password-reset/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -38,7 +41,11 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
         throw new Error(data.message || "Failed to send OTP");
       }
 
-      return { success: true };
+      // Store account type for display purposes
+      const accType = data.data?.accountType || "user";
+      setAccountType(accType);
+
+      return { success: true, accountType: accType };
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error occurred";
@@ -57,7 +64,8 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
     setError("");
 
     try {
-      const response = await fetch("/api/forgot-password/verify-otp", {
+      // Use unified password reset endpoint
+      const response = await fetch("/api/proxy/api/v1/password-reset/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
@@ -88,7 +96,8 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
     setError("");
 
     try {
-      const response = await fetch("/api/forgot-password/reset-password", {
+      // Use unified password reset endpoint
+      const response = await fetch("/api/proxy/api/v1/password-reset/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, newPassword }),
@@ -114,6 +123,7 @@ export default function useForgotPassword(): UseForgotPasswordReturn {
   return {
     loading,
     error,
+    accountType,
     sendOtp,
     verifyOtp,
     resetPassword,

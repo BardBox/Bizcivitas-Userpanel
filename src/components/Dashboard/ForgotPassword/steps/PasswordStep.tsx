@@ -58,14 +58,14 @@ export default function PasswordStep({
     setError("");
 
     try {
+      // Use unified password reset endpoint
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/reset-password`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/password-reset/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: formData.email,
-            otp: formData.otp,
             newPassword: formData.newpassword,
           }),
         }

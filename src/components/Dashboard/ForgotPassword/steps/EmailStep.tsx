@@ -21,8 +21,9 @@ export default function EmailStep({
     setError("");
 
     try {
+      // Use unified password reset endpoint that supports both Users and Franchise Partners
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/send-otp`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/password-reset/send-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

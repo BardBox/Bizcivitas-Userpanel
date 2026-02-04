@@ -234,3 +234,290 @@ NEXT_PUBLIC_BACKEND_URL=https://backend.bizcivitas.com/api/v1
 
 **Last Updated**: November 26, 2025
 **Next Steps**: Fix all pending issues systematically, starting with HIGH priority items
+
+---
+
+# Unified Password Reset - User Panel Implementation Plan
+
+## Branch: `feature/unified-password-reset`
+
+## Problem Statement
+
+DCP, Master Franchise Partners, and Area Partners cannot reset their passwords through the user panel because:
+
+1. The user panel calls `/api/forgot-password/send-otp` which proxies to `/api/v1/forgetpassword/send-otp`
+2. This endpoint only searches the `User` model in the backend
+3. Franchise partners are stored in the `FranchisePartner` model
+4. When franchise partners try to reset password, they get "User not found with this email"
+
+## Current Architecture
+
+### Existing Files
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/useForgotPassword.ts` | API calls for password reset |
+| `src/app/forgot-password/page.tsx` | Forgot password page |
+| `src/components/Dashboard/ForgotPassword/ForgotPasswordWizard.tsx` | Main wizard component |
+| `src/components/Dashboard/ForgotPassword/steps/EmailStep.tsx` | Email input step |
+| `src/components/Dashboard/ForgotPassword/steps/OtpStep.tsx` | OTP verification step |
+| `src/components/Dashboard/ForgotPassword/steps/PasswordStep.tsx` | New password step |
+| `src/components/Dashboard/ForgotPassword/steps/SuccessStep.tsx` | Success confirmation |
+| `src/app/api/proxy/[...path]/route.ts` | API proxy to backend |
+
+### Current API Endpoints Called
+
+```
+/api/forgot-password/send-otp     → Backend: /api/v1/forgetpassword/send-otp
+/api/forgot-password/verify-otp   → Backend: /api/v1/forgetpassword/verify-otp
+/api/forgot-password/reset-password → Backend: /api/v1/forgetpassword/reset-password
+```
+
+## Implementation Plan
+
+### Step 1: Update useForgotPassword Hook
+
+Update `src/hooks/useForgotPassword.ts` to use the new unified backend endpoint:
+
+```typescript
+import { useState } from "react";
+import { PasswordResetApiResponse } from "../../types/PasswordTypes";
+
+interface UseForgotPasswordReturn {
+  loading: boolean;
+  error: string;
+  accountType: string | null;
+  sendOtp: (email: string) => Promise<{ success: boolean; error?: string; accountType?: string }>;
+  verifyOtp: (
+    email: string,
+    otp: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (
+    email: string,
+    newPassword: string
+  ) => Promise<{ success: boolean; error?: string }>;
+}
+
+export default function useForgotPassword(): UseForgotPasswordReturn {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [accountType, setAccountType] = useState<string | null>(null);
+
+  const sendOtp = async (
+    email: string
+  ): Promise<{ success: boolean; error?: string; accountType?: string }> => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Use new unified endpoint
+      const response = await fetch("/api/proxy/api/v1/password-reset/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data: PasswordResetApiResponse = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to send OTP");
+      }
+
+      // Store account type for display purposes
+      const accType = data.data?.accountType || 'user';
+      setAccountType(accType);
+
+      return { success: true, accountType: accType };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (
+    email: string,
+    otp: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Use new unified endpoint
+      const response = await fetch("/api/proxy/api/v1/password-reset/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data: PasswordResetApiResponse = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to verify OTP");
+      }
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (
+    email: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Use new unified endpoint
+      const response = await fetch("/api/proxy/api/v1/password-reset/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newPassword }),
+      });
+
+      const data: PasswordResetApiResponse = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to reset password");
+      }
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    error,
+    accountType,
+    sendOtp,
+    verifyOtp,
+    resetPassword,
+  };
+}
+```
+
+### Step 2: Update Types
+
+Update `src/types/PasswordTypes.ts` if needed:
+
+```typescript
+export interface PasswordResetApiResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data?: {
+    accountType?: 'user' | 'franchise_partner';
+  };
+}
+```
+
+### Step 3: Update ForgotPasswordWizard Component (Optional Enhancement)
+
+Update `src/components/Dashboard/ForgotPassword/ForgotPasswordWizard.tsx` to show account type:
+
+```typescript
+// Add state to track account type
+const [accountType, setAccountType] = useState<string | null>(null);
+
+// In handleSendOtp
+const handleSendOtp = async () => {
+  const result = await sendOtp(email);
+  if (result.success) {
+    setAccountType(result.accountType || null);
+    setStep(2);
+  }
+};
+
+// Optionally show a message based on account type
+{accountType === 'franchise_partner' && (
+  <p className="text-sm text-blue-600">
+    Resetting password for your franchise partner account
+  </p>
+)}
+```
+
+### Step 4: Update EmailStep Component (Optional Enhancement)
+
+Add helper text in `src/components/Dashboard/ForgotPassword/steps/EmailStep.tsx`:
+
+```tsx
+<p className="text-sm text-gray-500 mt-2">
+  Works for all account types: Members, DCP, Master Franchise Partners, and Area Partners
+</p>
+```
+
+## API Endpoint Changes
+
+### Before (Current)
+
+```
+Frontend: /api/forgot-password/send-otp
+         → Proxy: /api/v1/forgetpassword/send-otp
+         → Only searches User model
+```
+
+### After (New)
+
+```
+Frontend: /api/proxy/api/v1/password-reset/send-otp
+         → Backend: /api/v1/password-reset/send-otp
+         → Searches BOTH User and FranchisePartner models
+```
+
+## Files to Modify
+
+| File | Action | Priority |
+|------|--------|----------|
+| `src/hooks/useForgotPassword.ts` | MODIFY - Update API endpoints | HIGH |
+| `src/types/PasswordTypes.ts` | MODIFY - Add accountType | MEDIUM |
+| `src/components/Dashboard/ForgotPassword/ForgotPasswordWizard.tsx` | MODIFY - Handle accountType | LOW |
+| `src/components/Dashboard/ForgotPassword/steps/EmailStep.tsx` | MODIFY - Add helper text | LOW |
+
+## Testing Checklist
+
+- [ ] Test password reset for regular User via user panel
+- [ ] Test password reset for DCP via user panel
+- [ ] Test password reset for Master Franchise Partner via user panel
+- [ ] Test password reset for Area Partner via user panel
+- [ ] Test email validation
+- [ ] Test OTP input and auto-submit
+- [ ] Test OTP resend functionality
+- [ ] Test password strength indicator
+- [ ] Test password confirmation matching
+- [ ] Test success redirect to login
+
+## Dependencies
+
+- **Backend**: Must deploy `feature/unified-password-reset` branch first
+- **API Proxy**: No changes needed (already proxies all paths)
+
+## Deployment Order
+
+1. Deploy Backend `feature/unified-password-reset` first
+2. Verify backend endpoints work via API testing
+3. Deploy User Panel `feature/unified-password-reset`
+4. Test end-to-end flow
+
+## Rollback Plan
+
+If issues arise:
+1. Revert hook to use old endpoints
+2. Old endpoints remain functional for regular users
+3. Franchise partners will need admin password reset as temporary workaround

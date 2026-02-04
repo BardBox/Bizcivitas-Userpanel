@@ -57,8 +57,9 @@ export default function OtpStep({
     setError("");
 
     try {
+      // Use unified password reset endpoint
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/verify-otp`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/password-reset/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -92,8 +93,9 @@ export default function OtpStep({
     setCanResend(false);
 
     try {
+      // Use unified password reset endpoint
       await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/forgetpassword/send-otp`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/password-reset/send-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

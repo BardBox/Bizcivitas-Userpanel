@@ -109,6 +109,8 @@ export interface BizPulseComment {
   hiddenForUsers?: string[];
   edited?: boolean;
   editedAt?: string;
+  parentCommentId?: string | null;
+  replyCount?: number;
 }
 
 /**
@@ -340,6 +342,8 @@ export interface BizPulseMockPost {
     };
     timeAgo: string;
     likes?: number;
+    parentCommentId?: string | null;
+    replyCount?: number;
   }>;
   // Poll data (for pulse-polls type)
   poll?: {

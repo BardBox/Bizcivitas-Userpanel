@@ -35,6 +35,8 @@ export interface Comment {
   mentions?: User[];
   edited?: boolean;
   editedAt?: string;
+  parentCommentId?: string | null;
+  replyCount?: number;
 }
 
 export interface Post {
@@ -130,6 +132,8 @@ export interface WallFeedComment {
   isLiked: boolean;
   createdAt: string;
   updatedAt?: string;
+  parentCommentId?: string | null;
+  replyCount?: number;
 }
 
 // Event, Article, Announcement Types

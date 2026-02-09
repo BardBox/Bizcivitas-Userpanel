@@ -17,7 +17,8 @@ import {
   useLikePostMutation,
   useAddCommentMutation,
   useDeleteCommentMutation,
-  useEditCommentMutation
+  useEditCommentMutation,
+  useLikeCommentMutation
 } from "../../../../../store/api/bizpulseApi";
 import { transformBizPulsePostToMock } from "../../../../../src/utils/bizpulseTransformers";
 import toast from "react-hot-toast";
@@ -27,6 +28,7 @@ import LikesModal from "@/components/modals/LikesModal";
 import { reportApi } from "../../../../../src/services/reportApi";
 import ImageCarousel from "@/components/ImageCarousel";
 import PostSkeleton from "@/components/ui/skeletons/PostSkeleton";
+import { groupComments } from "@/utils/commentUtils";
 
 export default function BizPulseDetailPage() {
   const params = useParams();
@@ -38,6 +40,7 @@ export default function BizPulseDetailPage() {
   const [addComment, { isLoading: isSubmitting }] = useAddCommentMutation();
   const [deleteComment] = useDeleteCommentMutation();
   const [editComment] = useEditCommentMutation();
+  const [likeComment] = useLikeCommentMutation();
 
   const [newComment, setNewComment] = useState("");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -46,26 +49,35 @@ export default function BizPulseDetailPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isEditingCommentId, setIsEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{ label: string; path: string }>>([
     { label: "Home", path: "/feeds" },
     { label: "BizPulse", path: "/feeds/biz-pulse" },
   ]);
+
+  // Get current user from auth state (must be before post transform)
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   // Transform the raw post data
   const post = useMemo(() => {
     if (!rawPost) return null;
     // The API might return the post wrapped in 'wallFeed' or directly
     const postData = (rawPost as any).wallFeed || rawPost;
-    return transformBizPulsePostToMock(postData);
-  }, [rawPost]);
+    const userId = currentUser?._id || currentUser?.id;
+    return transformBizPulsePostToMock(postData, userId);
+  }, [rawPost, currentUser]);
 
   // Get likes array from raw post for display
   const likesArray = useMemo(() => {
     return ((rawPost as any)?.wallFeed?.likes || (rawPost as any)?.likes) || [];
   }, [rawPost]);
 
-  // Get current user from auth state
-  const currentUser = useSelector((state: RootState) => state.auth.user);
+  // Group comments into top-level and replies
+  const groupedComments = useMemo(() => {
+    if (!post?.comments) return { topLevel: [], repliesByParentId: {} };
+    return groupComments(post.comments);
+  }, [post?.comments]);
 
   // Helper function to format category
   const formatCategory = (category?: string): string => {
@@ -108,6 +120,35 @@ export default function BizPulseDetailPage() {
       toast.error("Failed to add comment. Please try again.");
     }
   }, [newComment, isSubmitting, postId, addComment]);
+
+  // Handle reply submit
+  const handleReply = useCallback(async (parentCommentId: string) => {
+    if (!replyText.trim()) return;
+
+    try {
+      await addComment({
+        postId,
+        content: replyText.trim(),
+        parentCommentId
+      }).unwrap();
+      setReplyText("");
+      setReplyingToCommentId(null);
+      toast.success("Reply posted!");
+    } catch (error) {
+      console.error("Failed to add reply:", error);
+      toast.error("Failed to add reply. Please try again.");
+    }
+  }, [replyText, postId, addComment]);
+
+  // Handle like comment
+  const handleLikeComment = useCallback(async (commentId: string) => {
+    try {
+      await likeComment({ postId, commentId }).unwrap();
+    } catch (error) {
+      console.error("Failed to like comment:", error);
+      toast.error("Failed to like comment");
+    }
+  }, [postId, likeComment]);
 
   // Determine breadcrumbs based on referrer and post category
   useEffect(() => {
@@ -412,116 +453,341 @@ export default function BizPulseDetailPage() {
               </h3>
 
               <div className="space-y-4">
-                {post.comments && post.comments.length > 0 ? (
-                  post.comments.map((comment: any) => {
+                {groupedComments.topLevel.length > 0 ? (
+                  groupedComments.topLevel.map((comment: any) => {
                     const isCurrentUserComment = comment.author.id === (currentUser?._id || currentUser?.id);
                     const commentProfileUrl = isCurrentUserComment
                       ? "/feeds/myprofile"
                       : `/feeds/connections/${comment.author.id}?from=connect-members`;
 
+                    const replies = groupedComments.repliesByParentId[comment.id] || [];
+
                     return (
-                      <div key={comment.id} className="flex space-x-3 pb-4 border-b border-gray-100 last:border-0">
-                        <Link href={commentProfileUrl}>
-                          <Avatar
-                            src={getAvatarUrl(comment.author.avatar)}
-                            alt={comment.author.name}
-                            size="sm"
-                            fallbackText={comment.author.name}
-                            showMembershipBorder={false}
-                            className="cursor-pointer"
-                          />
-                        </Link>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-1">
-                            <div className="flex flex-col">
-                              <Link
-                                href={commentProfileUrl}
-                                className="font-semibold text-sm text-gray-900 hover:text-blue-600 transition-colors"
-                              >
-                                {comment.author.name}
-                              </Link>
-                              <span className="text-xs text-gray-500">{comment.timeAgo}</span>
-                            </div>
-                            {(isCurrentUserComment ||
-                              ['admin', 'master-franchise', 'area-franchise', 'dcp', 'cgc'].includes(currentUser?.role || "")
-                            ) && (
-                                <div className="flex gap-2">
-                                  {/* Only author can edit */}
-                                  {isCurrentUserComment && (
+                      <div key={comment.id} className="space-y-3">
+                        {/* Top-level comment */}
+                        <div className="flex space-x-3 pb-4 border-b border-gray-100">
+                          <Link href={commentProfileUrl}>
+                            <Avatar
+                              src={getAvatarUrl(comment.author.avatar)}
+                              alt={comment.author.name}
+                              size="sm"
+                              fallbackText={comment.author.name}
+                              showMembershipBorder={false}
+                              className="cursor-pointer"
+                            />
+                          </Link>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <div className="flex flex-col">
+                                <Link
+                                  href={commentProfileUrl}
+                                  className="font-semibold text-sm text-gray-900 hover:text-blue-600 transition-colors"
+                                >
+                                  {comment.author.name}
+                                </Link>
+                                <span className="text-xs text-gray-500">{comment.timeAgo}</span>
+                              </div>
+                              {(isCurrentUserComment ||
+                                ['admin', 'master-franchise', 'area-franchise', 'dcp', 'cgc'].includes(currentUser?.role || "")
+                              ) && (
+                                  <div className="flex gap-2">
+                                    {/* Only author can edit */}
+                                    {isCurrentUserComment && (
+                                      <button
+                                        onClick={() => {
+                                          setIsEditingCommentId(comment.id);
+                                          setEditingContent(comment.content);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-700 p-1"
+                                        title="Edit comment"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                      </button>
+                                    )}
                                     <button
-                                      onClick={() => {
-                                        setIsEditingCommentId(comment.id);
-                                        setEditingContent(comment.content);
+                                      onClick={async () => {
+                                        if (!confirm("Are you sure you want to delete this comment?")) return;
+                                        try {
+                                          await deleteComment({ postId, commentId: comment.id }).unwrap();
+                                          toast.success("Comment deleted");
+                                        } catch (err) {
+                                          console.error("Failed to delete comment", err);
+                                          toast.error("Failed to delete comment");
+                                        }
                                       }}
-                                      className="text-blue-600 hover:text-blue-700 p-1"
-                                      title="Edit comment"
+                                      className="text-red-600 hover:text-red-700 p-1"
+                                      title="Delete comment"
                                     >
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                       </svg>
                                     </button>
-                                  )}
+                                  </div>
+                                )}
+                            </div>
+                            {isEditingCommentId === comment.id ? (
+                              <div className="mt-2 space-y-2">
+                                <textarea
+                                  value={editingContent}
+                                  onChange={(e) => setEditingContent(e.target.value)}
+                                  className="w-full border rounded-lg p-2 text-sm"
+                                  rows={3}
+                                />
+                                <div className="flex items-center gap-2">
                                   <button
                                     onClick={async () => {
-                                      if (!confirm("Are you sure you want to delete this comment?")) return;
                                       try {
-                                        await deleteComment({ postId, commentId: comment.id }).unwrap();
-                                        toast.success("Comment deleted");
+                                        await editComment({ postId, commentId: comment.id, content: editingContent.trim() }).unwrap();
+                                        toast.success("Comment updated");
+                                        setIsEditingCommentId(null);
+                                        setEditingContent("");
                                       } catch (err) {
-                                        console.error("Failed to delete comment", err);
-                                        toast.error("Failed to delete comment");
+                                        console.error("Failed to update comment", err);
+                                        toast.error("Failed to update comment");
                                       }
                                     }}
-                                    className="text-red-600 hover:text-red-700 p-1"
-                                    title="Delete comment"
+                                    className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                                   >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
+                                    Save
                                   </button>
-                                </div>
-                              )}
-                          </div>
-                          {isEditingCommentId === comment.id ? (
-                            <div className="mt-2 space-y-2">
-                              <textarea
-                                value={editingContent}
-                                onChange={(e) => setEditingContent(e.target.value)}
-                                className="w-full border rounded-lg p-2 text-sm"
-                                rows={3}
-                              />
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={async () => {
-                                    try {
-                                      await editComment({ postId, commentId: comment.id, content: editingContent.trim() }).unwrap();
-                                      toast.success("Comment updated");
+                                  <button
+                                    onClick={() => {
                                       setIsEditingCommentId(null);
                                       setEditingContent("");
-                                    } catch (err) {
-                                      console.error("Failed to update comment", err);
-                                      toast.error("Failed to update comment");
-                                    }
-                                  }}
-                                  className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setIsEditingCommentId(null);
-                                    setEditingContent("");
-                                  }}
-                                  className="px-3 py-1.5 text-xs font-medium text-gray-700 border rounded-lg hover:bg-gray-50"
-                                >
-                                  Cancel
-                                </button>
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-medium text-gray-700 border rounded-lg hover:bg-gray-50"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
+                                <div className="flex items-center gap-4 mt-2">
+                                  <button
+                                    onClick={() => handleLikeComment(comment.id)}
+                                    className={`flex items-center gap-1 text-sm ${
+                                      comment.isLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
+                                    }`}
+                                  >
+                                    <ThumbsUp className={`w-4 h-4 ${comment.isLiked ? "fill-current" : ""}`} />
+                                    {comment.likeCount || 0}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setReplyingToCommentId(comment.id);
+                                      setReplyText("");
+                                    }}
+                                    className="text-gray-500 hover:text-blue-600 text-sm"
+                                  >
+                                    Reply
+                                  </button>
+                                  {!isCurrentUserComment && (
+                                    <button
+                                      onClick={() => {
+                                        setReportingCommentId(comment.id);
+                                        setIsReportModalOpen(true);
+                                      }}
+                                      className="text-gray-500 hover:text-red-600 text-sm"
+                                    >
+                                      Report
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Inline reply input */}
+                        {replyingToCommentId === comment.id && (
+                          <div className="ml-12 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex gap-2 items-start">
+                              <Avatar
+                                src={getAvatarUrl(currentUser?.avatar)}
+                                alt={currentUser?.fname || "User"}
+                                size="xs"
+                                fallbackText={currentUser?.fname || "U"}
+                                showMembershipBorder={false}
+                              />
+                              <div className="flex-1 space-y-2">
+                                <textarea
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  placeholder={`Reply to ${comment.author.name}...`}
+                                  rows={2}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleReply(comment.id)}
+                                    disabled={!replyText.trim()}
+                                    className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                                      !replyText.trim()
+                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                        : "bg-blue-600 text-white hover:bg-blue-700"
+                                    }`}
+                                  >
+                                    Reply
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setReplyingToCommentId(null);
+                                      setReplyText("");
+                                    }}
+                                    className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          ) : (
-                            <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
-                          )}
-                        </div>
+                          </div>
+                        )}
+
+                        {/* Replies (indented) */}
+                        {replies.length > 0 && (
+                          <div className="ml-12 space-y-3">
+                            {replies.map((reply: any) => {
+                              const isCurrentUserReply = reply.author.id === (currentUser?._id || currentUser?.id);
+                              const replyProfileUrl = isCurrentUserReply
+                                ? "/feeds/myprofile"
+                                : `/feeds/connections/${reply.author.id}?from=connect-members`;
+
+                              return (
+                                <div key={reply.id} className="flex space-x-3 p-3 bg-white rounded-lg border border-gray-200">
+                                  <Link href={replyProfileUrl}>
+                                    <Avatar
+                                      src={getAvatarUrl(reply.author.avatar)}
+                                      alt={reply.author.name}
+                                      size="xs"
+                                      fallbackText={reply.author.name}
+                                      showMembershipBorder={false}
+                                      className="cursor-pointer"
+                                    />
+                                  </Link>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between mb-1">
+                                      <div className="flex flex-col">
+                                        <Link
+                                          href={replyProfileUrl}
+                                          className="font-semibold text-sm text-gray-900 hover:text-blue-600 transition-colors"
+                                        >
+                                          {reply.author.name}
+                                        </Link>
+                                        <span className="text-xs text-gray-500">{reply.timeAgo}</span>
+                                      </div>
+                                      {(isCurrentUserReply ||
+                                        ['admin', 'master-franchise', 'area-franchise', 'dcp', 'cgc'].includes(currentUser?.role || "")
+                                      ) && (
+                                          <div className="flex gap-2">
+                                            {isCurrentUserReply && (
+                                              <button
+                                                onClick={() => {
+                                                  setIsEditingCommentId(reply.id);
+                                                  setEditingContent(reply.content);
+                                                }}
+                                                className="text-blue-600 hover:text-blue-700 p-1"
+                                                title="Edit reply"
+                                              >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                              </button>
+                                            )}
+                                            <button
+                                              onClick={async () => {
+                                                if (!confirm("Are you sure you want to delete this reply?")) return;
+                                                try {
+                                                  await deleteComment({ postId, commentId: reply.id }).unwrap();
+                                                  toast.success("Reply deleted");
+                                                } catch (err) {
+                                                  console.error("Failed to delete reply", err);
+                                                  toast.error("Failed to delete reply");
+                                                }
+                                              }}
+                                              className="text-red-600 hover:text-red-700 p-1"
+                                              title="Delete reply"
+                                            >
+                                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                              </svg>
+                                            </button>
+                                          </div>
+                                        )}
+                                    </div>
+                                    {isEditingCommentId === reply.id ? (
+                                      <div className="mt-2 space-y-2">
+                                        <textarea
+                                          value={editingContent}
+                                          onChange={(e) => setEditingContent(e.target.value)}
+                                          className="w-full border rounded-lg p-2 text-sm"
+                                          rows={3}
+                                        />
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                await editComment({ postId, commentId: reply.id, content: editingContent.trim() }).unwrap();
+                                                toast.success("Reply updated");
+                                                setIsEditingCommentId(null);
+                                                setEditingContent("");
+                                              } catch (err) {
+                                                console.error("Failed to update reply", err);
+                                                toast.error("Failed to update reply");
+                                              }
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                                          >
+                                            Save
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setIsEditingCommentId(null);
+                                              setEditingContent("");
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-medium text-gray-700 border rounded-lg hover:bg-gray-50"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <p className="text-gray-700 text-sm leading-relaxed">{reply.content}</p>
+                                        <div className="flex items-center gap-4 mt-2">
+                                          <button
+                                            onClick={() => handleLikeComment(reply.id)}
+                                            className={`flex items-center gap-1 text-sm ${
+                                              reply.isLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
+                                            }`}
+                                          >
+                                            <ThumbsUp className={`w-4 h-4 ${reply.isLiked ? "fill-current" : ""}`} />
+                                            {reply.likeCount || 0}
+                                          </button>
+                                          {!isCurrentUserReply && (
+                                            <button
+                                              onClick={() => {
+                                                setReportingCommentId(reply.id);
+                                                setIsReportModalOpen(true);
+                                              }}
+                                              className="text-gray-500 hover:text-red-600 text-sm"
+                                            >
+                                              Report
+                                            </button>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })

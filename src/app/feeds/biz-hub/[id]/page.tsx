@@ -24,6 +24,7 @@ import HtmlContent from "@/components/HtmlContent";
 import ImageCarousel from "@/components/ImageCarousel";
 import Avatar from "@/components/ui/Avatar";
 import PostNotAvailable from "@/components/ui/PostNotAvailable";
+import { groupComments } from "@/utils/commentUtils";
 
 // Utility functions
 const getInitials = (name: string): string => {
@@ -69,6 +70,8 @@ export default function BizHubPostDetail() {
   const [commentText, setCommentText] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportType, setReportType] = useState<"comment" | "post">("comment");
@@ -148,6 +151,24 @@ export default function BizHubPostDetail() {
     } catch (err) {
       console.error("Failed to add comment:", err);
       toast.error("Failed to add comment. Please try again.");
+    }
+  };
+
+  const handleReply = async (parentCommentId: string) => {
+    if (!replyText.trim() || !postId) return;
+
+    try {
+      await addBizHubComment({
+        postId,
+        content: replyText.trim(),
+        parentCommentId
+      }).unwrap();
+      setReplyText("");
+      setReplyingToCommentId(null);
+      toast.success("Reply added!");
+    } catch (err) {
+      console.error("Failed to add reply:", err);
+      toast.error("Failed to add reply. Please try again.");
     }
   };
 
@@ -257,6 +278,11 @@ export default function BizHubPostDetail() {
   const memoizedComments = useMemo(() => {
     return post?.comments || [];
   }, [post?.comments]);
+
+  // Group comments into top-level and replies
+  const groupedComments = useMemo(() => {
+    return groupComments(memoizedComments);
+  }, [memoizedComments]);
 
   if (isLoading) {
     return (
@@ -539,8 +565,8 @@ export default function BizHubPostDetail() {
           </div>
 
           <div className="space-y-4">
-            {memoizedComments.length > 0 ? (
-              memoizedComments.map((comment: any) => {
+            {groupedComments.topLevel.length > 0 ? (
+              groupedComments.topLevel.map((comment: any) => {
                 const commentAuthorName =
                   comment.userId?.fname && comment.userId?.lname
                     ? `${comment.userId.fname} ${comment.userId.lname}`
@@ -555,110 +581,298 @@ export default function BizHubPostDetail() {
                   ? "/feeds/myprofile"
                   : `/feeds/connections/${commentAuthorId}?from=connect-members`;
 
+                const replies = groupedComments.repliesByParentId[comment._id] || [];
+
                 return (
-                  <div key={comment._id} className="flex gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Link href={commentProfileUrl}>
-                      <Avatar
-                        src={commentAuthorAvatar}
-                        alt={commentAuthorName}
-                        size="sm"
-                        fallbackText={commentAuthorName}
-                        showMembershipBorder={false}
-                        className="cursor-pointer"
-                      />
-                    </Link>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Link
-                            href={commentProfileUrl}
-                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
-                          >
-                            {commentAuthorName}
-                          </Link>
-                          <div className="text-[11px] text-gray-400">
-                            {new Date(comment.createdAt).toLocaleDateString()}
+                  <div key={comment._id} className="space-y-3">
+                    {/* Top-level comment */}
+                    <div className="flex gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <Link href={commentProfileUrl}>
+                        <Avatar
+                          src={commentAuthorAvatar}
+                          alt={commentAuthorName}
+                          size="sm"
+                          fallbackText={commentAuthorName}
+                          showMembershipBorder={false}
+                          className="cursor-pointer"
+                        />
+                      </Link>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Link
+                              href={commentProfileUrl}
+                              className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                            >
+                              {commentAuthorName}
+                            </Link>
+                            <div className="text-[11px] text-gray-400">
+                              {new Date(comment.createdAt).toLocaleDateString()}
+                            </div>
                           </div>
+                          {isCommentOwner && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingCommentId(comment._id);
+                                  setEditingCommentText(comment.content);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 p-1"
+                                title="Edit comment"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteComment(comment._id)}
+                                className="text-red-600 hover:text-red-700 p-1"
+                                title="Delete comment"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        {isCommentOwner && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingCommentId(comment._id);
-                                setEditingCommentText(comment.content);
-                              }}
-                              className="text-blue-600 hover:text-blue-700 p-1"
-                              title="Edit comment"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteComment(comment._id)}
-                              className="text-red-600 hover:text-red-700 p-1"
-                              title="Delete comment"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+
+                        {editingCommentId === comment._id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editingCommentText}
+                              onChange={(e) => setEditingCommentText(e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEditComment(comment._id)}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingCommentId(null);
+                                  setEditingCommentText("");
+                                }}
+                                className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-700">{comment.content}</p>
+                            <div className="flex items-center gap-4">
+                              <button
+                                onClick={() => handleLikeComment(comment._id)}
+                                className={`flex items-center gap-1 text-sm ${isCommentLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
+                                  }`}
+                              >
+                                <svg className="w-4 h-4" fill={isCommentLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                </svg>
+                                {comment.likes?.length || 0}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setReplyingToCommentId(comment._id);
+                                  setReplyText("");
+                                }}
+                                className="text-gray-500 hover:text-blue-600 text-sm"
+                              >
+                                Reply
+                              </button>
+                              {!isCommentOwner && (
+                                <button
+                                  onClick={() => handleOpenReportModal(comment._id)}
+                                  className="text-gray-500 hover:text-red-600 text-sm"
+                                >
+                                  Report
+                                </button>
+                              )}
+                            </div>
+                          </>
                         )}
                       </div>
+                    </div>
 
-                      {editingCommentId === comment._id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={editingCommentText}
-                            onChange={(e) => setEditingCommentText(e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    {/* Inline reply input */}
+                    {replyingToCommentId === comment._id && (
+                      <div className="ml-12 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex gap-2 items-start">
+                          <Avatar
+                            src={getAvatarUrl(currentUser?.avatar)}
+                            alt={currentUser?.fname || "User"}
+                            size="xs"
+                            fallbackText={currentUser?.fname || "U"}
+                            showMembershipBorder={false}
                           />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditComment(comment._id)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingCommentId(null);
-                                setEditingCommentText("");
-                              }}
-                              className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
-                            >
-                              Cancel
-                            </button>
+                          <div className="flex-1 space-y-2">
+                            <textarea
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder={`Reply to ${commentAuthorName}...`}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleReply(comment._id)}
+                                disabled={!replyText.trim()}
+                                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                                  !replyText.trim()
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    : "bg-blue-600 text-white hover:bg-blue-700"
+                                }`}
+                              >
+                                Reply
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setReplyingToCommentId(null);
+                                  setReplyText("");
+                                }}
+                                className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-700">{comment.content}</p>
-                          <div className="flex items-center gap-4">
-                            <button
-                              onClick={() => handleLikeComment(comment._id)}
-                              className={`flex items-center gap-1 text-sm ${isCommentLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
-                                }`}
-                            >
-                              <svg className="w-4 h-4" fill={isCommentLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                              </svg>
-                              {comment.likes?.length || 0}
-                            </button>
-                            {!isCommentOwner && (
-                              <button
-                                onClick={() => handleOpenReportModal(comment._id)}
-                                className="text-gray-500 hover:text-red-600 text-sm"
-                              >
-                                Report
-                              </button>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
+                      </div>
+                    )}
+
+                    {/* Replies (indented) */}
+                    {replies.length > 0 && (
+                      <div className="ml-12 space-y-3">
+                        {replies.map((reply: any) => {
+                          const replyAuthorName =
+                            reply.userId?.fname && reply.userId?.lname
+                              ? `${reply.userId.fname} ${reply.userId.lname}`
+                              : reply.user?.name || "Unknown";
+
+                          const replyAuthorId = reply.userId?._id || reply.user?._id;
+                          const replyAuthorAvatar = reply.userId?.avatar || reply.user?.avatar;
+                          const isReplyOwner = replyAuthorId === userId;
+                          const isReplyLiked = reply.likes?.some((like: any) => like.userId === userId);
+
+                          const replyProfileUrl = isReplyOwner
+                            ? "/feeds/myprofile"
+                            : `/feeds/connections/${replyAuthorId}?from=connect-members`;
+
+                          return (
+                            <div key={reply._id} className="flex gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
+                              <Link href={replyProfileUrl}>
+                                <Avatar
+                                  src={replyAuthorAvatar}
+                                  alt={replyAuthorName}
+                                  size="xs"
+                                  fallbackText={replyAuthorName}
+                                  showMembershipBorder={false}
+                                  className="cursor-pointer"
+                                />
+                              </Link>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <Link
+                                      href={replyProfileUrl}
+                                      className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                                    >
+                                      {replyAuthorName}
+                                    </Link>
+                                    <div className="text-[11px] text-gray-400">
+                                      {new Date(reply.createdAt).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                  {isReplyOwner && (
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => {
+                                          setEditingCommentId(reply._id);
+                                          setEditingCommentText(reply.content);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-700 p-1"
+                                        title="Edit reply"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteComment(reply._id)}
+                                        className="text-red-600 hover:text-red-700 p-1"
+                                        title="Delete reply"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {editingCommentId === reply._id ? (
+                                  <div className="space-y-2">
+                                    <textarea
+                                      value={editingCommentText}
+                                      onChange={(e) => setEditingCommentText(e.target.value)}
+                                      rows={2}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                    />
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleEditComment(reply._id)}
+                                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setEditingCommentId(null);
+                                          setEditingCommentText("");
+                                        }}
+                                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="text-sm text-gray-700">{reply.content}</p>
+                                    <div className="flex items-center gap-4">
+                                      <button
+                                        onClick={() => handleLikeComment(reply._id)}
+                                        className={`flex items-center gap-1 text-sm ${isReplyLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
+                                          }`}
+                                      >
+                                        <svg className="w-4 h-4" fill={isReplyLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                        </svg>
+                                        {reply.likes?.length || 0}
+                                      </button>
+                                      {!isReplyOwner && (
+                                        <button
+                                          onClick={() => handleOpenReportModal(reply._id)}
+                                          className="text-gray-500 hover:text-red-600 text-sm"
+                                        >
+                                          Report
+                                        </button>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })

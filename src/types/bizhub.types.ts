@@ -48,3 +48,10 @@ export interface BizHubPost {
     timeAgo: string;
     createdAt: string;
 }
+
+/**
+ * Comment Node for recursive tree rendering (unlimited nesting)
+ */
+export interface BizHubCommentNode extends BizHubComment {
+    children: BizHubCommentNode[];
+}

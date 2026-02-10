@@ -369,3 +369,10 @@ export interface BizPulseMockPost {
   // Source type to differentiate between BizHub and BizPulse posts
   sourceType?: "bizhub" | "bizpulse";
 }
+
+/**
+ * Comment Node for recursive tree rendering (unlimited nesting)
+ */
+export interface BizPulseCommentNode extends BizPulseComment {
+  children: BizPulseCommentNode[];
+}

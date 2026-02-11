@@ -5,6 +5,11 @@
  * @returns Formatted relative time string or actual date
  */
 export function getTimeAgo(date: string | Date | number): string {
+  // Handle undefined/null
+  if (!date) {
+    return "Just now";
+  }
+
   const now = new Date();
   const past = new Date(date);
 

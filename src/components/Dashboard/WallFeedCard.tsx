@@ -6,6 +6,7 @@ import { ThumbsUp, MessageSquare, Calendar, ExternalLink } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Image from "next/image";
 import { WallFeedPost } from "@/types/bizpulse.types";
+import { useTimeAgo } from "@/utils/timeAgo";
 
 interface WallFeedCardProps {
   post: WallFeedPost;
@@ -14,6 +15,9 @@ interface WallFeedCardProps {
 
 export default function WallFeedCard({ post, onLike }: WallFeedCardProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
+
+  // Dynamic time ago
+  const dynamicTimeAgo = useTimeAgo(post.createdAt);
 
   const getAuthorName = () => {
     if (post.userId?.fname)
@@ -177,7 +181,7 @@ export default function WallFeedCard({ post, onLike }: WallFeedCardProps) {
         )}
 
         {/* Conditional Sections */}
-        {post.type === "article" && post.article && (
+        {post.type === "spotlight-stories" && post.article && (
           <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
             <p className="text-xs text-yellow-800 font-medium flex items-center gap-1">
               <ExternalLink className="w-3 h-3" />
@@ -237,7 +241,7 @@ export default function WallFeedCard({ post, onLike }: WallFeedCardProps) {
           <div className="flex items-center space-x-1 text-xs text-gray-500">
             <Calendar className="w-3 h-3" />
             <span>
-              {post.timeAgo || new Date(post.createdAt).toLocaleDateString()}
+              {dynamicTimeAgo}
             </span>
           </div>
         </div>

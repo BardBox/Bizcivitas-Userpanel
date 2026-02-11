@@ -7,6 +7,7 @@ import { getAvatarUrl } from "@/utils/Feeds/connections/userHelpers";
 import toast from "react-hot-toast";
 import { parseMentions } from "@/utils/parseMentions";
 import { useUserSearch } from "@/hooks/useUserSearch";
+import { useTimeAgo } from "@/utils/timeAgo";
 
 interface CommentItemProps {
   comment: any;
@@ -52,6 +53,9 @@ export default function CommentItem({
   const authorId = author._id || author.id;
   const authorName = author.name || `${author.fname || ""} ${author.lname || ""}`.trim();
   const authorAvatar = author.avatar;
+
+  // Dynamic time ago
+  const dynamicTimeAgo = useTimeAgo(comment.createdAt || comment.timestamp);
 
   const isCurrentUser = authorId === currentUserId;
   const isAdmin = ["admin", "master-franchise", "area-franchise", "dcp", "cgc"].includes(
@@ -223,7 +227,7 @@ export default function CommentItem({
                 {authorName}
               </Link>
               <span className={`text-gray-400 ${isReply ? "text-[10px]" : "text-xs"}`}>
-                {comment.timeAgo || "Just now"}
+                {dynamicTimeAgo}
               </span>
               {isReply && parentAuthorName && (
                 <span className="text-[10px] text-gray-400">

@@ -16,6 +16,10 @@ interface TransformedComment {
   };
   timeAgo: string;
   likes: number;
+  likeCount: number;
+  isLiked: boolean;
+  parentCommentId?: string | null;
+  replyCount?: number;
 }
 
 /**
@@ -46,30 +50,60 @@ function calculateTimeAgo(dateString: string): string {
  */
 const transformCommentToMock = (
   comment: any,
-  baseUrl: string
-): TransformedComment => ({
-  id: comment._id || "",
-  content: comment.content || "",
-  author: {
-    id: comment.userId?._id || "",
-    name: comment.userId
-      ? `${comment.userId.fname || ""} ${comment.userId.lname || ""}`.trim() ||
-      "Unknown User"
-      : "Unknown User",
-    avatar: comment.userId?.avatar
-      ? `${baseUrl}/image/${comment.userId.avatar}?width=32&height=32&format=webp`
-      : null,
-  },
-  timeAgo: comment.createdAt ? calculateTimeAgo(comment.createdAt) : "Recently",
-  likes: 0, // Removing like functionality
-});
+  baseUrl: string,
+  currentUserId?: string
+): TransformedComment => {
+  // Debug logging for user data
+  if (!comment.userId || !comment.userId.fname) {
+    console.warn('[Comment Transform] Missing user data:', {
+      commentId: comment._id,
+      userId: comment.userId,
+      hasUserId: !!comment.userId,
+      hasFname: !!comment.userId?.fname
+    });
+  }
+
+  // Calculate likes
+  const commentLikes = Array.isArray(comment.likes) ? comment.likes : [];
+  const likeCount = commentLikes.length;
+  const isLiked = currentUserId
+    ? commentLikes.some((like: any) => {
+        const likeUserId = typeof like.userId === 'object'
+          ? like.userId?._id?.toString()
+          : like.userId?.toString();
+        return likeUserId === currentUserId;
+      })
+    : false;
+
+  return {
+    id: comment._id || "",
+    content: comment.content || "",
+    author: {
+      id: comment.userId?._id || "",
+      name: comment.userId
+        ? `${comment.userId.fname || ""} ${comment.userId.lname || ""}`.trim() ||
+        "Unknown User"
+        : "Unknown User",
+      avatar: comment.userId?.avatar
+        ? `${baseUrl}/image/${comment.userId.avatar}?width=32&height=32&format=webp`
+        : null,
+    },
+    timeAgo: comment.createdAt ? calculateTimeAgo(comment.createdAt) : "Recently",
+    likes: likeCount, // For backward compatibility
+    likeCount: likeCount,
+    isLiked: isLiked,
+    parentCommentId: comment.parentCommentId || null,
+    replyCount: comment.replyCount || 0,
+  };
+};
 
 /**
  * Transform backend BizPulsePost to frontend BizPulseMockPost format
  * This allows existing components to work with API data
  */
 export function transformBizPulsePostToMock(
-  post: WallFeedPost | BizPulsePost
+  post: WallFeedPost | BizPulsePost,
+  currentUserId?: string
 ): BizPulseMockPost {
   // Debug: log the incoming post structure
 
@@ -143,12 +177,16 @@ export function transformBizPulsePostToMock(
     // Ensure path doesn't start with a slash
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
 
-    // For now, don't encode the path - let the browser handle it naturally
-    // or let Next.js Image component handle encoding if needed
-    // Backend should handle the raw path with spaces
-    const finalUrl = `${IMAGE_BASE_URL}/image/${cleanPath}?${sizes[type]}&format=webp`;
+    // Encode the path properly - encode each segment separately to preserve path structure
+    // This handles filenames with spaces like "IMG_32651 (1) (1).png"
+    const encodedPath = cleanPath
+      .split('/')
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+
+    const finalUrl = `${IMAGE_BASE_URL}/image/${encodedPath}?${sizes[type]}&format=webp`;
     console.log('[BizPulse Image Debug] Raw path:', path);
-    console.log('[BizPulse Image Debug] Using IMAGE_BASE_URL:', IMAGE_BASE_URL);
+    console.log('[BizPulse Image Debug] Encoded path:', encodedPath);
     console.log('[BizPulse Image Debug] Final constructed URL:', finalUrl);
     return finalUrl;
   };
@@ -255,7 +293,7 @@ export function transformBizPulsePostToMock(
       });
 
       transformedPost.comments = sortedComments.map((comment) =>
-        transformCommentToMock(comment, IMAGE_BASE_URL)
+        transformCommentToMock(comment, IMAGE_BASE_URL, currentUserId)
       );
     }
 
@@ -302,7 +340,7 @@ export function transformBizPulsePostToMock(
       });
 
       transformedPost.comments = sortedComments.map((comment) =>
-        transformCommentToMock(comment, IMAGE_BASE_URL)
+        transformCommentToMock(comment, IMAGE_BASE_URL, currentUserId)
       );
     }
 

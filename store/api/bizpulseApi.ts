@@ -142,11 +142,11 @@ export const bizpulseApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { id }) => [{ type: "Post", id }],
         }),
-        addComment: builder.mutation<WallFeedPost, { postId: string; content: string }>({
-            query: ({ postId, content }) => ({
+        addComment: builder.mutation<WallFeedPost, { postId: string; content: string; parentCommentId?: string }>({
+            query: ({ postId, content, parentCommentId }) => ({
                 url: `/wallfeed/comment/${postId}`,
                 method: "POST",
-                body: { content },
+                body: { content, ...(parentCommentId ? { parentCommentId } : {}) },
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }],
         }),
@@ -162,6 +162,13 @@ export const bizpulseApi = baseApi.injectEndpoints({
                 url: `/wallfeed/comment/${postId}/${commentId}/edit`,
                 method: "PUT",
                 body: { content },
+            }),
+            invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }],
+        }),
+        likeComment: builder.mutation<WallFeedPost, { postId: string; commentId: string }>({
+            query: ({ postId, commentId }) => ({
+                url: `/wallfeed/${postId}/comments/${commentId}/like`,
+                method: "POST",
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }],
         }),
@@ -194,11 +201,11 @@ export const bizpulseApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }, { type: "Post", id: "BIZHUB_LIST" }],
         }),
-        addBizHubComment: builder.mutation<any, { postId: string; content: string }>({
-            query: ({ postId, content }) => ({
+        addBizHubComment: builder.mutation<any, { postId: string; content: string; parentCommentId?: string }>({
+            query: ({ postId, content, parentCommentId }) => ({
                 url: `/post/${postId}/comment`,
                 method: "POST",
-                body: { content },
+                body: { content, ...(parentCommentId ? { parentCommentId } : {}) },
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }],
         }),
@@ -238,6 +245,7 @@ export const {
     useAddCommentMutation,
     useDeleteCommentMutation,
     useEditCommentMutation,
+    useLikeCommentMutation,
     useGetBizHubPostByIdQuery,
     useCreateBizHubPostMutation,
     useDeleteBizHubPostMutation,

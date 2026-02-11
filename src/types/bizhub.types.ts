@@ -15,6 +15,21 @@ export interface UserInfo {
     classification: string;
 }
 
+export interface BizHubComment {
+    _id: string;
+    userId: UserInfo;
+    content: string;
+    mediaUrl?: string;
+    likes: { userId: string }[];
+    likeCount: number;
+    isLiked: boolean;
+    createdAt: string;
+    edited?: boolean;
+    editedAt?: string;
+    parentCommentId?: string | null;
+    replyCount?: number;
+}
+
 export interface BizHubPost {
     _id: string;
     userId?: UserInfo;
@@ -25,11 +40,18 @@ export interface BizHubPost {
     mediaUrls: string[];
     badge: string;
     visibility: string;
-    comments: any[];
+    comments: BizHubComment[];
     likes: { userId: string }[];
     likeCount: number;
     commentCount: number;
     isLiked: boolean;
     timeAgo: string;
     createdAt: string;
+}
+
+/**
+ * Comment Node for recursive tree rendering (unlimited nesting)
+ */
+export interface BizHubCommentNode extends BizHubComment {
+    children: BizHubCommentNode[];
 }

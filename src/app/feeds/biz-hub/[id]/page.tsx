@@ -24,6 +24,10 @@ import HtmlContent from "@/components/HtmlContent";
 import ImageCarousel from "@/components/ImageCarousel";
 import Avatar from "@/components/ui/Avatar";
 import PostNotAvailable from "@/components/ui/PostNotAvailable";
+import { buildCommentTree } from "@/utils/buildCommentTree";
+import CommentItem from "@/components/CommentItem";
+import { useUserSearch } from "@/hooks/useUserSearch";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
 
 // Utility functions
 const getInitials = (name: string): string => {
@@ -69,7 +73,31 @@ export default function BizHubPostDetail() {
   const [commentText, setCommentText] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+
+  // Mention autocomplete state
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionStartIndex, setMentionStartIndex] = useState(0);
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionedUsers, setMentionedUsers] = useState<Array<{id: string, username: string}>>([]);
+  const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
+
+  // Use the user search hook
+  const { users: mentionUsers, loading: mentionLoading } = useUserSearch(mentionQuery);
+
+  // Debug: Log when dropdown state changes
+  useEffect(() => {
+    console.log("🎯 Mention State:", {
+      showMentionDropdown,
+      mentionQuery,
+      mentionUsers: mentionUsers.length,
+      mentionLoading,
+      textareaRef: !!textareaRef,
+    });
+  }, [showMentionDropdown, mentionQuery, mentionUsers, mentionLoading, textareaRef]);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportType, setReportType] = useState<"comment" | "post">("comment");
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
@@ -128,6 +156,86 @@ export default function BizHubPostDetail() {
     }
   }, [post]);
 
+  // Handle mention detection in textarea
+  const handleCommentTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    console.log("⚡ handleCommentTextChange CALLED! Value:", e.target.value);
+    const text = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setCommentText(text);
+
+    // Find "@" before cursor
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    console.log("🔍 Mention Detection:", {
+      text,
+      cursorPos,
+      lastAtIndex,
+      textBeforeCursor,
+    });
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      console.log("📝 Text after @:", textAfterAt, "length:", textAfterAt.length);
+
+      // Check if there's no space after @ (still typing the mention)
+      if (!textAfterAt.includes(" ") && textAfterAt.length >= 0) {
+        console.log("✅ Showing mention dropdown, query:", textAfterAt);
+        setMentionQuery(textAfterAt);
+        setMentionStartIndex(lastAtIndex);
+        setShowMentionDropdown(true);
+        setSelectedMentionIndex(0);
+        return;
+      }
+    }
+
+    // Hide dropdown if no @ or conditions not met
+    console.log("❌ Hiding mention dropdown");
+    setShowMentionDropdown(false);
+  };
+
+  // Handle mention selection
+  const handleMentionSelect = (user: any) => {
+    if (!textareaRef) return;
+
+    // Use full name (FirstName LastName) instead of username
+    const displayName = `${user.fname} ${user.lname}`.trim() || user.username || user.name || 'User';
+    const beforeMention = commentText.substring(0, mentionStartIndex);
+    const afterMention = commentText.substring(textareaRef.selectionStart);
+    const newText = `${beforeMention}@${displayName} ${afterMention}`;
+
+    setCommentText(newText);
+    setShowMentionDropdown(false);
+    setMentionedUsers([...mentionedUsers, { id: user.id, username: displayName }]);
+
+    // Focus textarea and move cursor after mention
+    setTimeout(() => {
+      if (textareaRef) {
+        const newCursorPos = beforeMention.length + displayName.length + 2; // +2 for @ and space
+        textareaRef.focus();
+        textareaRef.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  // Handle keyboard navigation in mention dropdown
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!showMentionDropdown) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => Math.min(prev + 1, mentionUsers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" && mentionUsers.length > 0) {
+      e.preventDefault();
+      handleMentionSelect(mentionUsers[selectedMentionIndex]);
+    } else if (e.key === "Escape") {
+      setShowMentionDropdown(false);
+    }
+  };
+
   const handleLike = async () => {
     if (postId) {
       try {
@@ -142,8 +250,19 @@ export default function BizHubPostDetail() {
     if (!commentText.trim() || !postId) return;
 
     try {
-      await addBizHubComment({ postId, content: commentText.trim() }).unwrap();
+      const mentions = mentionedUsers.map(u => u.id);
+      console.log("💬 Posting comment with mentions:", {
+        content: commentText.trim(),
+        mentionedUsers,
+        mentionIds: mentions,
+      });
+      await addBizHubComment({
+        postId,
+        content: commentText.trim(),
+        ...(mentions.length > 0 && { mentions })
+      }).unwrap();
       setCommentText("");
+      setMentionedUsers([]);
       toast.success("Comment added!");
     } catch (err) {
       console.error("Failed to add comment:", err);
@@ -151,21 +270,37 @@ export default function BizHubPostDetail() {
     }
   };
 
-  const handleEditComment = async (commentId: string) => {
-    if (!editingCommentText.trim() || !postId) return;
+  const handleReply = async (parentCommentId: string, content: string) => {
+    if (!content.trim() || !postId) return;
+
+    try {
+      await addBizHubComment({
+        postId,
+        content: content.trim(),
+        parentCommentId
+      }).unwrap();
+      toast.success("Reply added!");
+    } catch (err) {
+      console.error("Failed to add reply:", err);
+      toast.error("Failed to add reply. Please try again.");
+      throw err;
+    }
+  };
+
+  const handleEditComment = async (commentId: string, content: string) => {
+    if (!content.trim() || !postId) return;
 
     try {
       await editBizHubComment({
         postId,
         commentId,
-        content: editingCommentText.trim(),
+        content: content.trim(),
       }).unwrap();
-      setEditingCommentId(null);
-      setEditingCommentText("");
       toast.success("Comment updated!");
     } catch (err) {
       console.error("Failed to edit comment:", err);
       toast.error("Failed to update comment.");
+      throw err;
     }
   };
 
@@ -257,6 +392,11 @@ export default function BizHubPostDetail() {
   const memoizedComments = useMemo(() => {
     return post?.comments || [];
   }, [post?.comments]);
+
+  // Group comments into top-level and replies
+  const commentTree = useMemo(() => {
+    return buildCommentTree(memoizedComments);
+  }, [memoizedComments]);
 
   if (isLoading) {
     return (
@@ -513,16 +653,50 @@ export default function BizHubPostDetail() {
               fallbackText={currentUser ? `${currentUser.fname} ${currentUser.lname}` : "You"}
               showMembershipBorder={false}
             />
-            <div className="flex-1 space-y-3">
+            <div className="flex-1 space-y-3 relative">
               <textarea
+                ref={(ref) => setTextareaRef(ref)}
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Share your thoughts..."
+                onChange={handleCommentTextChange}
+                onKeyDown={handleCommentKeyDown}
+                onClick={() => console.log("🖱️ TEXTAREA CLICKED!")}
+                onFocus={() => console.log("🎯 TEXTAREA FOCUSED!")}
+                onInput={(e) => console.log("⌨️ ONINPUT FIRED:", (e.target as HTMLTextAreaElement).value)}
+                placeholder="Share your thoughts... (type @ to mention someone)"
                 rows={3}
                 disabled={submittingComment}
                 className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${submittingComment ? "bg-gray-50" : "border-gray-300"
                   }`}
               />
+
+              {/* Mention Autocomplete Dropdown */}
+              {(() => {
+                console.log("🔧 Checking render condition:", {
+                  showMentionDropdown,
+                  hasTextareaRef: !!textareaRef,
+                  mentionUsersLength: mentionUsers.length,
+                  shouldRender: showMentionDropdown && textareaRef,
+                });
+
+                if (showMentionDropdown && textareaRef) {
+                  console.log("✅ Rendering MentionAutocomplete component!");
+                  return (
+                    <MentionAutocomplete
+                      users={mentionUsers}
+                      loading={mentionLoading}
+                      onSelect={handleMentionSelect}
+                      selectedIndex={selectedMentionIndex}
+                      onClose={() => setShowMentionDropdown(false)}
+                      position={{
+                        top: textareaRef.offsetHeight + 8,
+                        left: 0,
+                      }}
+                    />
+                  );
+                }
+                console.log("❌ NOT rendering MentionAutocomplete");
+                return null;
+              })()}
               <div className="flex justify-end">
                 <button
                   onClick={handleAddComment}
@@ -539,129 +713,20 @@ export default function BizHubPostDetail() {
           </div>
 
           <div className="space-y-4">
-            {memoizedComments.length > 0 ? (
-              memoizedComments.map((comment: any) => {
-                const commentAuthorName =
-                  comment.userId?.fname && comment.userId?.lname
-                    ? `${comment.userId.fname} ${comment.userId.lname}`
-                    : comment.user?.name || "Unknown";
-
-                const commentAuthorId = comment.userId?._id || comment.user?._id;
-                const commentAuthorAvatar = comment.userId?.avatar || comment.user?.avatar;
-                const isCommentOwner = commentAuthorId === userId;
-                const isCommentLiked = comment.likes?.some((like: any) => like.userId === userId);
-
-                const commentProfileUrl = isCommentOwner
-                  ? "/feeds/myprofile"
-                  : `/feeds/connections/${commentAuthorId}?from=connect-members`;
-
-                return (
-                  <div key={comment._id} className="flex gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Link href={commentProfileUrl}>
-                      <Avatar
-                        src={commentAuthorAvatar}
-                        alt={commentAuthorName}
-                        size="sm"
-                        fallbackText={commentAuthorName}
-                        showMembershipBorder={false}
-                        className="cursor-pointer"
-                      />
-                    </Link>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Link
-                            href={commentProfileUrl}
-                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
-                          >
-                            {commentAuthorName}
-                          </Link>
-                          <div className="text-[11px] text-gray-400">
-                            {new Date(comment.createdAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                        {isCommentOwner && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingCommentId(comment._id);
-                                setEditingCommentText(comment.content);
-                              }}
-                              className="text-blue-600 hover:text-blue-700 p-1"
-                              title="Edit comment"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteComment(comment._id)}
-                              className="text-red-600 hover:text-red-700 p-1"
-                              title="Delete comment"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {editingCommentId === comment._id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={editingCommentText}
-                            onChange={(e) => setEditingCommentText(e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditComment(comment._id)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingCommentId(null);
-                                setEditingCommentText("");
-                              }}
-                              className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-700">{comment.content}</p>
-                          <div className="flex items-center gap-4">
-                            <button
-                              onClick={() => handleLikeComment(comment._id)}
-                              className={`flex items-center gap-1 text-sm ${isCommentLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
-                                }`}
-                            >
-                              <svg className="w-4 h-4" fill={isCommentLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                              </svg>
-                              {comment.likes?.length || 0}
-                            </button>
-                            {!isCommentOwner && (
-                              <button
-                                onClick={() => handleOpenReportModal(comment._id)}
-                                className="text-gray-500 hover:text-red-600 text-sm"
-                              >
-                                Report
-                              </button>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+            {commentTree.length > 0 ? (
+              commentTree.map((comment: any) => (
+                <CommentItem
+                  key={comment._id}
+                  comment={comment}
+                  depth={0}
+                  currentUserId={currentUser?._id}
+                  currentUserRole={currentUser?.role}
+                  onReply={handleReply}
+                  onEdit={handleEditComment}
+                  onDelete={handleDeleteComment}
+                  onLike={handleLikeComment}
+                />
+              ))
             ) : (
               <div className="text-center py-8 text-gray-500">No comments yet.</div>
             )}

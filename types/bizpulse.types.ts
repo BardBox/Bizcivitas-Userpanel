@@ -109,6 +109,8 @@ export interface BizPulseComment {
   hiddenForUsers?: string[];
   edited?: boolean;
   editedAt?: string;
+  parentCommentId?: string | null;
+  replyCount?: number;
 }
 
 /**
@@ -340,6 +342,8 @@ export interface BizPulseMockPost {
     };
     timeAgo: string;
     likes?: number;
+    parentCommentId?: string | null;
+    replyCount?: number;
   }>;
   // Poll data (for pulse-polls type)
   poll?: {
@@ -364,4 +368,11 @@ export interface BizPulseMockPost {
   currentUserId?: string;
   // Source type to differentiate between BizHub and BizPulse posts
   sourceType?: "bizhub" | "bizpulse";
+}
+
+/**
+ * Comment Node for recursive tree rendering (unlimited nesting)
+ */
+export interface BizPulseCommentNode extends BizPulseComment {
+  children: BizPulseCommentNode[];
 }

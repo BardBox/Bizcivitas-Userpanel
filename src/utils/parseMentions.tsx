@@ -32,35 +32,50 @@ export function parseMentions(
 
       console.log("👤 Processing mention:", { mention, username, name });
 
-      if (username) {
-        mentionMap.set(`@${username}`, mention._id);
+      const mentionId = mention._id || (mention as any).id;
+      if (username && mentionId) {
+        mentionMap.set(`@${username}`, mentionId);
       }
-      if (name) {
-        mentionMap.set(`@${name}`, mention._id);
+      if (name && mentionId) {
+        mentionMap.set(`@${name}`, mentionId);
       }
     });
     console.log("🗺️ Mention map:", Array.from(mentionMap.entries()));
   }
 
-  // Regex to find @mentions in text - matches @FirstName LastName or @username
-  // Matches: @Deven Oza, @deven, @John Doe Smith (multiple words)
-  const mentionRegex = /@([A-Za-z]+(?:\s+[A-Za-z]+)*)/g;
+  // Build list of known mention strings (sorted longest first for greedy matching)
+  const knownMentions = Array.from(mentionMap.keys()).sort((a, b) => b.length - a.length);
+
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
 
+  // Regex matches @ followed by 1-2 words (FirstName or FirstName LastName)
+  const mentionRegex = /@([A-Za-z]+(?:\s+[A-Za-z]+)?)/g;
+
   let match;
   while ((match = mentionRegex.exec(text)) !== null) {
-    const mentionText = match[0]; // Full match like "@Deven Oza"
-    const username = match[1]; // Captured name without @ (e.g., "Deven Oza")
-    const userId = mentionMap.get(mentionText);
+    let mentionText = match[0];
+    let username = match[1];
+    let userId: string | undefined;
+
+    // Check if a known mention starts at this position (prefer exact known names)
+    const textFromAt = text.substring(match.index);
+    const knownMatch = knownMentions.find((k) => textFromAt.startsWith(k));
+    if (knownMatch) {
+      mentionText = knownMatch;
+      username = knownMatch.substring(1); // remove @
+      userId = mentionMap.get(knownMatch);
+      // Advance regex past the full known mention
+      mentionRegex.lastIndex = match.index + mentionText.length;
+    } else {
+      userId = mentionMap.get(mentionText);
+    }
 
     // Add text before the mention
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
     }
 
-    // Always make @mentions clickable using smart MentionLink component
-    console.log(`🔗 Creating mention link for ${mentionText}`, { userId, username });
     parts.push(
       <MentionLink
         key={`mention-${match.index}`}

@@ -142,11 +142,11 @@ export const bizpulseApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { id }) => [{ type: "Post", id }],
         }),
-        addComment: builder.mutation<WallFeedPost, { postId: string; content: string; parentCommentId?: string }>({
-            query: ({ postId, content, parentCommentId }) => ({
+        addComment: builder.mutation<WallFeedPost, { postId: string; content: string; parentCommentId?: string; mentions?: string[] }>({
+            query: ({ postId, content, parentCommentId, mentions }) => ({
                 url: `/wallfeed/comment/${postId}`,
                 method: "POST",
-                body: { content, ...(parentCommentId ? { parentCommentId } : {}) },
+                body: { content, ...(parentCommentId ? { parentCommentId } : {}), ...(mentions?.length ? { mentions } : {}) },
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }],
         }),
@@ -201,11 +201,11 @@ export const bizpulseApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }, { type: "Post", id: "BIZHUB_LIST" }],
         }),
-        addBizHubComment: builder.mutation<any, { postId: string; content: string; parentCommentId?: string }>({
-            query: ({ postId, content, parentCommentId }) => ({
+        addBizHubComment: builder.mutation<any, { postId: string; content: string; parentCommentId?: string; mentions?: string[] }>({
+            query: ({ postId, content, parentCommentId, mentions }) => ({
                 url: `/post/${postId}/comment`,
                 method: "POST",
-                body: { content, ...(parentCommentId ? { parentCommentId } : {}) },
+                body: { content, ...(parentCommentId ? { parentCommentId } : {}), ...(mentions?.length ? { mentions } : {}) },
             }),
             invalidatesTags: (result, error, { postId }) => [{ type: "Post", id: postId }],
         }),

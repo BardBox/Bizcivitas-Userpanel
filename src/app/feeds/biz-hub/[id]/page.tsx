@@ -270,14 +270,15 @@ export default function BizHubPostDetail() {
     }
   };
 
-  const handleReply = async (parentCommentId: string, content: string) => {
+  const handleReply = async (parentCommentId: string, content: string, mentions?: string[]) => {
     if (!content.trim() || !postId) return;
 
     try {
       await addBizHubComment({
         postId,
         content: content.trim(),
-        parentCommentId
+        parentCommentId,
+        mentions
       }).unwrap();
       toast.success("Reply added!");
     } catch (err) {

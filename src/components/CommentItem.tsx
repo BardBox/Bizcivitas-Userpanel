@@ -1,24 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import Avatar from "@/components/ui/Avatar";
 import { getAvatarUrl } from "@/utils/Feeds/connections/userHelpers";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { parseMentions } from "@/utils/parseMentions";
-
-interface CommentAuthor {
-  id: string;
-  name: string;
-  avatar: string | null;
-}
+import { useUserSearch } from "@/hooks/useUserSearch";
 
 interface CommentItemProps {
-  comment: any; // Will accept both BizPulseCommentNode and BizHubCommentNode
+  comment: any;
   depth: number;
   currentUserId?: string;
   currentUserRole?: string;
-  onReply: (commentId: string, content: string) => Promise<void>;
+  onReply: (commentId: string, content: string, mentions?: string[]) => Promise<void>;
   onEdit: (commentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
   onLike: (commentId: string) => Promise<void>;
@@ -42,7 +37,17 @@ export default function CommentItem({
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get author data (handle both BizPulse and BizHub formats)
+  // Mention autocomplete state for reply
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionStartIndex, setMentionStartIndex] = useState(0);
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionedUsers, setMentionedUsers] = useState<{ id: string; username: string }[]>([]);
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const { users: mentionUsers } = useUserSearch(showMentionDropdown ? mentionQuery : "");
+
+  // Get author data
   const author = comment.userId || comment.author;
   const authorId = author._id || author.id;
   const authorName = author.name || `${author.fname || ""} ${author.lname || ""}`.trim();
@@ -54,11 +59,6 @@ export default function CommentItem({
   );
   const canEdit = isCurrentUser;
   const canDelete = isCurrentUser || isAdmin;
-
-  // Calculate indentation (cap at 5 levels = 60px)
-  const maxDepth = 5;
-  const cappedDepth = Math.min(depth, maxDepth);
-  const marginLeft = cappedDepth * 12; // 12px per level
 
   const profileUrl = isCurrentUser
     ? "/feeds/myprofile"
@@ -91,10 +91,11 @@ export default function CommentItem({
 
     setIsSubmitting(true);
     try {
-      await onReply(comment._id || comment.id, replyText);
+      const mentions = mentionedUsers.map((u) => u.id);
+      await onReply(comment._id || comment.id, replyText, mentions.length > 0 ? mentions : undefined);
       setReplyText("");
       setIsReplying(false);
-      toast.success("Reply added");
+      setMentionedUsers([]);
     } catch (error) {
       console.error("Failed to add reply:", error);
       toast.error("Failed to add reply");
@@ -108,10 +109,8 @@ export default function CommentItem({
 
     try {
       await onDelete(comment._id || comment.id);
-      toast.success("Comment deleted");
     } catch (error) {
       console.error("Failed to delete comment:", error);
-      toast.error("Failed to delete comment");
     }
   };
 
@@ -124,14 +123,87 @@ export default function CommentItem({
     }
   };
 
+  // Mention detection in reply textarea
+  const handleReplyTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setReplyText(text);
+
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      if (!textAfterAt.includes(" ") && textAfterAt.length >= 0) {
+        setMentionQuery(textAfterAt);
+        setMentionStartIndex(lastAtIndex);
+        setShowMentionDropdown(true);
+        setSelectedMentionIndex(0);
+        return;
+      }
+    }
+
+    setShowMentionDropdown(false);
+  };
+
+  // Handle mention selection
+  const handleMentionSelect = (user: any) => {
+    const textarea = replyTextareaRef.current;
+    if (!textarea) return;
+
+    const displayName = `${user.fname} ${user.lname}`.trim() || user.username || "User";
+    const beforeMention = replyText.substring(0, mentionStartIndex);
+    const afterMention = replyText.substring(textarea.selectionStart);
+    const newText = `${beforeMention}@${displayName} ${afterMention}`;
+
+    setReplyText(newText);
+    setShowMentionDropdown(false);
+    setMentionedUsers([...mentionedUsers, { id: user.id, username: displayName }]);
+
+    setTimeout(() => {
+      if (textarea) {
+        const newCursorPos = beforeMention.length + displayName.length + 2;
+        textarea.focus();
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  // Keyboard navigation for mention dropdown
+  const handleReplyKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!showMentionDropdown) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => Math.min(prev + 1, mentionUsers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" && mentionUsers.length > 0) {
+      e.preventDefault();
+      handleMentionSelect(mentionUsers[selectedMentionIndex]);
+    } else if (e.key === "Escape") {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const isReply = depth > 0;
+  const parentAuthorName = comment.parentAuthorName || null;
+
   return (
-    <div style={{ marginLeft: `${marginLeft}px` }} className="mb-3">
-      <div className="flex space-x-3 p-3 bg-white rounded-lg border border-gray-200">
-        <Link href={profileUrl}>
+    <div className={`${isReply ? "mt-1" : "mb-3"}`}>
+      <div
+        className={`flex space-x-3 ${
+          isReply
+            ? "ml-10 pl-3 py-2.5 border-l-2 border-blue-200 bg-gray-50/60 rounded-r-lg"
+            : "p-3 bg-white rounded-lg border border-gray-200"
+        }`}
+      >
+        <Link href={profileUrl} className="flex-shrink-0">
           <Avatar
             src={getAvatarUrl(authorAvatar)}
             alt={authorName}
-            size={depth === 0 ? "sm" : "xs"}
+            size={isReply ? "xs" : "sm"}
             fallbackText={authorName}
             showMembershipBorder={false}
             className="cursor-pointer"
@@ -140,36 +212,43 @@ export default function CommentItem({
 
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-start justify-between mb-1">
-            <div className="flex flex-col">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href={profileUrl}
-                className="font-semibold text-sm text-gray-900 hover:text-blue-600 transition-colors"
+                className={`font-semibold hover:text-blue-600 transition-colors ${
+                  isReply ? "text-xs text-gray-800" : "text-sm text-gray-900"
+                }`}
               >
                 {authorName}
               </Link>
-              <span className="text-xs text-gray-500">{comment.timeAgo || "Just now"}</span>
+              <span className={`text-gray-400 ${isReply ? "text-[10px]" : "text-xs"}`}>
+                {comment.timeAgo || "Just now"}
+              </span>
+              {isReply && parentAuthorName && (
+                <span className="text-[10px] text-gray-400">
+                  <svg className="w-3 h-3 inline -mt-0.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 015 5v6M3 10l6 6M3 10l6-6" />
+                  </svg>
+                  {parentAuthorName}
+                </span>
+              )}
             </div>
 
             {/* Edit/Delete Buttons */}
             {(canEdit || canDelete) && !isEditing && (
-              <div className="flex gap-2">
+              <div className="flex gap-1 ml-2">
                 {canEdit && (
                   <button
                     onClick={() => {
                       setIsEditing(true);
                       setEditContent(comment.content || "");
                     }}
-                    className="text-blue-600 hover:text-blue-700 p-1"
+                    className="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
                     title="Edit comment"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
                 )}
@@ -177,16 +256,11 @@ export default function CommentItem({
                   <button
                     onClick={handleDeleteClick}
                     disabled={isDeleting}
-                    className="text-red-600 hover:text-red-700 p-1 disabled:opacity-50"
+                    className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50"
                     title="Delete comment"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 )}
@@ -200,7 +274,7 @@ export default function CommentItem({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                rows={3}
+                rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
               />
               <div className="flex gap-2">
@@ -229,15 +303,8 @@ export default function CommentItem({
             </div>
           ) : (
             <>
-              <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap break-words">
-                {(() => {
-                  console.log("🔍 Comment mentions debug:", {
-                    content: comment.content,
-                    mentions: comment.mentions,
-                    mentionsLength: comment.mentions?.length || 0,
-                  });
-                  return parseMentions(comment.content, comment.mentions);
-                })()}
+              <p className={`text-gray-700 mt-0.5 whitespace-pre-wrap break-words ${isReply ? "text-xs" : "text-sm"}`}>
+                {parseMentions(comment.content, comment.mentions)}
               </p>
 
               {/* Image */}
@@ -246,19 +313,19 @@ export default function CommentItem({
                   src={comment.mediaUrl}
                   alt="Comment attachment"
                   className="mt-2 rounded-lg max-w-full h-auto"
-                  style={{ maxHeight: "300px" }}
+                  style={{ maxHeight: "200px" }}
                 />
               )}
 
               {/* Actions (Like, Reply) */}
-              <div className="flex items-center gap-4 mt-2 text-xs text-gray-600">
+              <div className={`flex items-center gap-3 mt-1.5 text-gray-500 ${isReply ? "text-[11px]" : "text-xs"}`}>
                 <button
                   onClick={handleLikeClick}
                   className={`flex items-center gap-1 hover:text-blue-600 transition-colors ${
                     comment.isLiked ? "text-blue-600 font-semibold" : ""
                   }`}
                 >
-                  <svg className="w-4 h-4" fill={comment.isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill={comment.isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                   </svg>
                   <span>{comment.likeCount || 0}</span>
@@ -266,7 +333,7 @@ export default function CommentItem({
 
                 <button
                   onClick={() => setIsReplying(!isReplying)}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 transition-colors font-medium"
                 >
                   Reply
                 </button>
@@ -274,32 +341,66 @@ export default function CommentItem({
             </>
           )}
 
-          {/* Reply Form */}
+          {/* Reply Form with Mention Autocomplete */}
           {isReplying && (
-            <div className="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <div className="mt-2 p-2.5 bg-white rounded-lg border border-gray-200">
               <div className="flex space-x-2">
                 <Avatar
-                  src={getAvatarUrl(null)}
+                  src={getAvatarUrl(undefined)}
                   alt="You"
                   size="xs"
                   fallbackText="You"
                   showMembershipBorder={false}
                 />
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-2 relative">
                   <textarea
+                    ref={replyTextareaRef}
                     value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder={`Reply to ${authorName}...`}
+                    onChange={handleReplyTextChange}
+                    onKeyDown={handleReplyKeyDown}
+                    placeholder={`Reply to ${authorName}... (type @ to mention)`}
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-xs bg-gray-50"
                   />
+
+                  {/* Mention Dropdown */}
+                  {showMentionDropdown && mentionUsers.length > 0 && (
+                    <div className="absolute bottom-full left-0 mb-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
+                      {mentionUsers.map((user: any, index: number) => (
+                        <button
+                          key={user.id}
+                          onClick={() => handleMentionSelect(user)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-blue-50 transition-colors ${
+                            index === selectedMentionIndex ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <Avatar
+                            src={getAvatarUrl(user.avatar)}
+                            alt={`${user.fname} ${user.lname}`}
+                            size="xs"
+                            fallbackText={`${user.fname} ${user.lname}`}
+                            showMembershipBorder={false}
+                          />
+                          <div>
+                            <span className="font-medium text-gray-900">
+                              {user.fname} {user.lname}
+                            </span>
+                            {user.username && (
+                              <span className="text-gray-400 ml-1">@{user.username}</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <button
                       onClick={handleReplySubmit}
                       disabled={isSubmitting || !replyText.trim()}
-                      className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                         isSubmitting || !replyText.trim()
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                           : "bg-blue-600 text-white hover:bg-blue-700"
                       }`}
                     >
@@ -309,9 +410,11 @@ export default function CommentItem({
                       onClick={() => {
                         setIsReplying(false);
                         setReplyText("");
+                        setMentionedUsers([]);
+                        setShowMentionDropdown(false);
                       }}
                       disabled={isSubmitting}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 disabled:opacity-50"
+                      className="px-3 py-1 text-gray-500 rounded-full text-xs hover:bg-gray-100 disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -325,11 +428,11 @@ export default function CommentItem({
 
       {/* Recursively render children */}
       {comment.children && comment.children.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-0.5">
           {comment.children.map((child: any) => (
             <CommentItem
               key={child._id || child.id}
-              comment={child}
+              comment={{ ...child, parentAuthorName: authorName }}
               depth={depth + 1}
               currentUserId={currentUserId}
               currentUserRole={currentUserRole}

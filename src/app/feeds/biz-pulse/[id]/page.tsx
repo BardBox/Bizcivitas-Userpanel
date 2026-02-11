@@ -209,14 +209,15 @@ export default function BizPulseDetailPage() {
   }, [newComment, isSubmitting, postId, addComment, mentionedUsers]);
 
   // Handle reply submit
-  const handleReply = useCallback(async (parentCommentId: string, content: string) => {
+  const handleReply = useCallback(async (parentCommentId: string, content: string, mentions?: string[]) => {
     if (!content.trim()) return;
 
     try {
       await addComment({
         postId,
         content: content.trim(),
-        parentCommentId
+        parentCommentId,
+        mentions
       }).unwrap();
       toast.success("Reply posted!");
     } catch (error) {

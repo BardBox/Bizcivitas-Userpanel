@@ -21,11 +21,27 @@ export default function MentionLink({ username, userId, children }: MentionLinkP
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
 
-    console.log("🖱️ MentionLink clicked!", { username, userId });
+    // Check if this mention is the logged-in user (by ID or name)
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const me = JSON.parse(storedUser);
+        const myId = (me._id || me.id || "").toString();
+        const myName = `${me.fname || ""} ${me.lname || ""}`.trim().toLowerCase();
+
+        const isMe =
+          (userId && myId && userId.toString() === myId) ||
+          (myName && username.toLowerCase() === myName);
+
+        if (isMe) {
+          router.push("/feeds/myprofile");
+          return;
+        }
+      }
+    } catch {}
 
     // If we already have the user ID, navigate directly
     if (userId) {
-      console.log(`✅ Has userId, navigating to profile: ${userId}`);
       router.push(`/feeds/connections/${userId}?from=mention`);
       return;
     }
@@ -55,7 +71,7 @@ export default function MentionLink({ username, userId, children }: MentionLinkP
       });
 
       console.log("📦 API Response:", response.data);
-      const users = response.data?.data || [];
+      const users = (response.data as any)?.data || [];
       console.log(`👥 Found ${users.length} users:`, users.map((u: any) => ({ username: u.username, fname: u.fname, lname: u.lname })));
 
       if (users.length === 0) {
@@ -116,12 +132,10 @@ export default function MentionLink({ username, userId, children }: MentionLinkP
 
       console.log(`🎯 Final selected user:`, user);
 
-      // Backend API returns 'id' field, not '_id'
-      const userId = user?._id || user?.id;
+      const resolvedId = user?._id || user?.id;
 
-      if (user && userId) {
-        console.log(`✅ Found user: ${user.fname} ${user.lname} (${user.username}), ID: ${userId}`);
-        router.push(`/feeds/connections/${userId}?from=member-directory`);
+      if (user && resolvedId) {
+        router.push(`/feeds/connections/${resolvedId}?from=mention`);
       } else {
         console.error(`❌ Could not resolve user`, user);
         alert(`Could not find user @${username}`);

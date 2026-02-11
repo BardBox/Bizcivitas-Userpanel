@@ -16,8 +16,8 @@ interface WallFeedCardProps {
 export default function WallFeedCard({ post, onLike }: WallFeedCardProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
 
-  // Dynamic time ago
-  const dynamicTimeAgo = useTimeAgo(post.createdAt);
+  // Dynamic time ago - use createdAt or updatedAt
+  const dynamicTimeAgo = useTimeAgo(post.createdAt || post.updatedAt);
 
   const getAuthorName = () => {
     if (post.userId?.fname)

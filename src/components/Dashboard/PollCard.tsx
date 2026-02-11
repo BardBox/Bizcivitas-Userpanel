@@ -6,7 +6,6 @@ import { WallFeedPost, PollOption } from "@/types/bizpulse.types";
 import { bizpulseApi } from "@/services/bizpulseApi";
 import { Calendar, ThumbsUp, X, Activity } from "lucide-react";
 import Image from "next/image";
-import { useTimeAgo } from "@/utils/timeAgo";
 
 interface PollCardProps {
   post: WallFeedPost;
@@ -29,9 +28,6 @@ export default function PollCard({
   const [localVotedOptionIndex, setLocalVotedOptionIndex] = useState<
     number | null
   >(null);
-
-  // Dynamic time ago
-  const dynamicTimeAgo = useTimeAgo(post.createdAt);
 
   const poll = post.poll;
   if (!poll) return null;
@@ -173,9 +169,6 @@ export default function PollCard({
               </span>
             </div>
           </Link>
-          <span className="text-xs text-gray-500">
-            {dynamicTimeAgo}
-          </span>
         </div>
       </div>
 

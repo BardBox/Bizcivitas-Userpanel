@@ -58,8 +58,16 @@ const transformCommentToMock = (
     console.warn('[Comment Transform] Missing user data:', {
       commentId: comment._id,
       userId: comment.userId,
+      userIdType: typeof comment.userId,
       hasUserId: !!comment.userId,
-      hasFname: !!comment.userId?.fname
+      hasFname: !!comment.userId?.fname,
+      userIdKeys: comment.userId ? Object.keys(comment.userId) : 'null',
+      fullComment: comment
+    });
+  } else {
+    console.log('[Comment Transform] Found user data:', {
+      commentId: comment._id,
+      userName: `${comment.userId.fname} ${comment.userId.lname}`.trim()
     });
   }
 
@@ -76,7 +84,8 @@ const transformCommentToMock = (
     : false;
 
   return {
-    id: comment._id || "",
+    _id: comment._id || "", // Keep _id for compatibility with buildCommentTree
+    id: comment._id || "", // Also provide id for backward compatibility
     content: comment.content || "",
     author: {
       id: comment.userId?._id || "",
@@ -94,6 +103,7 @@ const transformCommentToMock = (
     isLiked: isLiked,
     parentCommentId: comment.parentCommentId || null,
     replyCount: comment.replyCount || 0,
+    createdAt: comment.createdAt, // Keep createdAt for sorting
   };
 };
 

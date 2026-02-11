@@ -11,7 +11,7 @@ export interface CommentNode<T = any> {
   [key: string]: any;
 }
 
-export function buildCommentTree<T extends { _id?: string; parentCommentId?: string | null }>(
+export function buildCommentTree<T extends { _id?: string; id?: string; parentCommentId?: string | null }>(
   comments: T[]
 ): (T & { children: (T & { children: any[] })[] })[] {
   // Handle empty or invalid input
@@ -25,16 +25,20 @@ export function buildCommentTree<T extends { _id?: string; parentCommentId?: str
 
   // First pass: Initialize all comments with empty children array
   comments.forEach((comment) => {
-    if (comment._id) {
-      commentMap.set(comment._id, { ...comment, children: [] });
+    // Support both _id (from backend) and id (from transformed data)
+    const commentId = comment._id || comment.id;
+    if (commentId) {
+      commentMap.set(commentId, { ...comment, children: [] });
     }
   });
 
   // Second pass: Build the tree structure
   comments.forEach((comment) => {
-    if (!comment._id) return;
+    // Support both _id (from backend) and id (from transformed data)
+    const commentId = comment._id || comment.id;
+    if (!commentId) return;
 
-    const commentWithChildren = commentMap.get(comment._id)!;
+    const commentWithChildren = commentMap.get(commentId)!;
 
     // If no parent or parent doesn't exist, it's a root comment
     if (!comment.parentCommentId || !commentMap.has(comment.parentCommentId)) {

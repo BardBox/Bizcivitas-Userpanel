@@ -76,15 +76,14 @@ export default function BizPulseDetailPage() {
   // Transform the raw post data
   const post = useMemo(() => {
     if (!rawPost) return null;
-    // The API might return the post wrapped in 'wallFeed' or directly
-    const postData = (rawPost as any).wallFeed || rawPost;
+    // The API now extracts wallFeed directly in transformResponse
     const userId = currentUser?._id || currentUser?.id;
-    return transformBizPulsePostToMock(postData, userId);
+    return transformBizPulsePostToMock(rawPost, userId);
   }, [rawPost, currentUser]);
 
   // Get likes array from raw post for display
   const likesArray = useMemo(() => {
-    return ((rawPost as any)?.wallFeed?.likes || (rawPost as any)?.likes) || [];
+    return (rawPost as any)?.likes || [];
   }, [rawPost]);
 
   // Build comment tree for recursive rendering

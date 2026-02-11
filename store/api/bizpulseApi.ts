@@ -68,7 +68,10 @@ export const bizpulseApi = baseApi.injectEndpoints({
         }),
         getPostById: builder.query<WallFeedPost, string>({
             query: (id) => `/wallfeed/${id}`,
-            transformResponse: (response: { data: WallFeedPost }) => response.data,
+            transformResponse: (response: { data: { wallFeed: WallFeedPost } }) => {
+                // Backend wraps the post in wallFeed object
+                return response.data.wallFeed || response.data;
+            },
             providesTags: (result, error, id) => [{ type: "Post", id }],
         }),
         likePost: builder.mutation<WallFeedPost, string>({

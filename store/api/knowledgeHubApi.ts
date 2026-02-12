@@ -37,6 +37,35 @@ export interface MediaItem {
   updatedAt?: string;
 }
 
+export interface CollectionComment {
+  _id: string;
+  userId: {
+    _id: string;
+    fname?: string;
+    lname?: string;
+    avatar?: string;
+    username?: string;
+    role?: string;
+  };
+  parentCommentId?: string | null;
+  content: string;
+  mediaUrl?: string;
+  mentions?: Array<{
+    _id: string;
+    fname?: string;
+    lname?: string;
+    avatar?: string;
+    username?: string;
+    role?: string;
+  }>;
+  likes: Array<{ userId: string }>;
+  likeCount?: number;
+  isLiked?: boolean;
+  createdAt: string;
+  replyCount?: number;
+  children?: CollectionComment[];
+}
+
 export interface Collection {
   _id: string;
   type: "expert" | "knowledge" | "membership" | "resource";
@@ -57,6 +86,7 @@ export interface Collection {
     userId: string;
     savedAt: string;
   }>;
+  comments?: CollectionComment[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -195,6 +225,64 @@ export const knowledgeHubApi = baseApi.injectEndpoints({
         { type: 'Collection' as const, id: 'SAVED' },
       ],
     }),
+
+    // Add comment to collection
+    addCollectionComment: builder.mutation<
+      { message: string; data: Collection },
+      { collectionId: string; content: string; parentCommentId?: string; mentions?: string[] }
+    >({
+      query: ({ collectionId, content, parentCommentId, mentions }) => ({
+        url: `/collections/${collectionId}/comment`,
+        method: "POST",
+        body: { content, ...(parentCommentId ? { parentCommentId } : {}), ...(mentions?.length ? { mentions } : {}) },
+      }),
+      invalidatesTags: (result, error, { collectionId }) => [
+        { type: 'Collection' as const, id: collectionId },
+      ],
+    }),
+
+    // Edit comment on collection
+    editCollectionComment: builder.mutation<
+      { message: string; data: Collection },
+      { collectionId: string; commentId: string; content: string }
+    >({
+      query: ({ collectionId, commentId, content }) => ({
+        url: `/collections/${collectionId}/comments/${commentId}/edit`,
+        method: "PUT",
+        body: { content },
+      }),
+      invalidatesTags: (result, error, { collectionId }) => [
+        { type: 'Collection' as const, id: collectionId },
+      ],
+    }),
+
+    // Delete comment from collection
+    deleteCollectionComment: builder.mutation<
+      { message: string; data: Collection },
+      { collectionId: string; commentId: string }
+    >({
+      query: ({ collectionId, commentId }) => ({
+        url: `/collections/${collectionId}/comments/${commentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, { collectionId }) => [
+        { type: 'Collection' as const, id: collectionId },
+      ],
+    }),
+
+    // Like/unlike comment on collection
+    likeCollectionComment: builder.mutation<
+      { message: string; data: Collection },
+      { collectionId: string; commentId: string }
+    >({
+      query: ({ collectionId, commentId }) => ({
+        url: `/collections/${collectionId}/comments/${commentId}/like`,
+        method: "POST",
+      }),
+      invalidatesTags: (result, error, { collectionId }) => [
+        { type: 'Collection' as const, id: collectionId },
+      ],
+    }),
   }),
 });
 
@@ -210,4 +298,8 @@ export const {
   useGetSavedMediaQuery,
   useSaveMediaMutation,
   useSaveCollectionMutation,
+  useAddCollectionCommentMutation,
+  useEditCollectionCommentMutation,
+  useDeleteCollectionCommentMutation,
+  useLikeCollectionCommentMutation,
 } = knowledgeHubApi;

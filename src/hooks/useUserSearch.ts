@@ -54,7 +54,8 @@ export function useUserSearch(query: string): UseUserSearchReturn {
 
         const response = await axios.get(url, {
           params: {
-            keyword: query, // Only send keyword - it searches across ALL fields
+            keyword: query,
+            searchFields: "fname,lname,username", // Limit search to name and username only
           },
           headers: {
             Authorization: `Bearer ${token}`,

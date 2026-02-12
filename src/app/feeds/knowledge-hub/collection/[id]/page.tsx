@@ -1,13 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Play, Video, CheckCircle, FileText, Home } from "lucide-react";
+import { Play, Video, CheckCircle, FileText, Home, MessageSquare } from "lucide-react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../../../../store/store";
 import {
   useGetCollectionByIdQuery,
-  type Collection,
+  useAddCollectionCommentMutation,
+  useEditCollectionCommentMutation,
+  useDeleteCollectionCommentMutation,
+  useLikeCollectionCommentMutation,
   type MediaItem,
 } from "../../../../../../store/api/knowledgeHubApi";
+import { buildCommentTree } from "@/utils/buildCommentTree";
+import CommentItem from "@/components/CommentItem";
+import { useUserSearch } from "@/hooks/useUserSearch";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
+import Avatar from "@/components/ui/Avatar";
+
+const getAvatarUrl = (avatarPath?: string | null) => {
+  if (!avatarPath) return "/favicon.ico";
+  if (avatarPath.startsWith("http")) return avatarPath;
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  return `${baseUrl}/image/${avatarPath}`;
+};
 
 export default function CollectionDetailPage() {
   const params = useParams();
@@ -15,55 +33,208 @@ export default function CollectionDetailPage() {
   const searchParams = useSearchParams();
   const collectionId = params.id as string;
 
-  // Get return context from URL parameters
   const returnTab = searchParams.get("returnTab");
-  const source = searchParams.get("source"); // 'saved' or undefined (knowledge-hub)
+  const source = searchParams.get("source");
 
-  const [activeTab, setActiveTab] = useState<"contents" | "description">(
-    "contents"
-  );
+  const [activeTab, setActiveTab] = useState<"contents" | "description" | "comments">("contents");
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
 
-  // Fetch collection with all items (videos or documents)
-  const { data: collection, isLoading } =
-    useGetCollectionByIdQuery(collectionId);
+  // Auth
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+
+  // Fetch collection
+  const { data: collection, isLoading } = useGetCollectionByIdQuery(collectionId);
+
+  // Comment mutations
+  const [addCollectionComment, { isLoading: submittingComment }] = useAddCollectionCommentMutation();
+  const [editCollectionComment] = useEditCollectionCommentMutation();
+  const [deleteCollectionComment] = useDeleteCollectionCommentMutation();
+  const [likeCollectionComment] = useLikeCollectionCommentMutation();
+
+  // Comment state
+  const [commentText, setCommentText] = useState("");
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionStartIndex, setMentionStartIndex] = useState(0);
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionedUsers, setMentionedUsers] = useState<Array<{ id: string; username: string }>>([]);
+  const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
+
+  const { users: mentionUsers, loading: mentionLoading } = useUserSearch(mentionQuery);
 
   const items = collection?.subItems || [];
   const currentItem = items[currentItemIndex];
 
-  // Check if collection contains documents or videos
   const isDocumentCollection = collection?.type === "resource";
   const isVideoCollection =
     collection?.type === "expert" ||
     collection?.type === "knowledge" ||
     collection?.type === "membership";
 
-  // Determine colors based on collection type
   const isExpert = collection?.type === "expert";
-  const gradientClass = isExpert
-    ? "from-purple-500 to-indigo-600"
-    : "from-green-500 to-emerald-600";
+  const gradientClass = isExpert ? "from-purple-500 to-indigo-600" : "from-green-500 to-emerald-600";
   const textColorClass = isExpert ? "text-purple-600" : "text-green-600";
   const bgColorClass = isExpert ? "bg-purple-50" : "bg-green-50";
   const borderColorClass = isExpert ? "border-purple-500" : "border-green-500";
 
+  // Build comment tree
+  const memoizedComments = useMemo(() => {
+    return collection?.comments || [];
+  }, [collection?.comments]);
+
+  const commentTree = useMemo(() => {
+    return buildCommentTree(memoizedComments);
+  }, [memoizedComments]);
+
   const handleItemSelect = (index: number) => {
     setCurrentItemIndex(index);
-    // Scroll to top to show content viewer
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle back navigation with proper context
   const handleBack = () => {
     if (source === "saved") {
-      // Return to saved resources page
       router.push(`/feeds/saved-resources`);
     } else if (returnTab) {
-      // Return to knowledge hub with the tab context
       router.push(`/feeds/knowledge-hub?tab=${returnTab}`);
     } else {
-      // Fallback to browser back
       router.back();
+    }
+  };
+
+  // ==========================================
+  // Comment Handlers
+  // ==========================================
+  const handleCommentTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setCommentText(text);
+
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      if (!textAfterAt.includes(" ") && textAfterAt.length >= 0) {
+        setMentionQuery(textAfterAt);
+        setMentionStartIndex(lastAtIndex);
+        setShowMentionDropdown(true);
+        setSelectedMentionIndex(0);
+        return;
+      }
+    }
+    setShowMentionDropdown(false);
+  };
+
+  const handleMentionSelect = (user: any) => {
+    if (!textareaRef) return;
+    const displayName = `${user.fname} ${user.lname}`.trim() || user.username || user.name || "User";
+    const beforeMention = commentText.substring(0, mentionStartIndex);
+    const afterMention = commentText.substring(textareaRef.selectionStart);
+    const newText = `${beforeMention}@${displayName} ${afterMention}`;
+
+    setCommentText(newText);
+    setShowMentionDropdown(false);
+    setMentionedUsers([...mentionedUsers, { id: user.id, username: displayName }]);
+
+    setTimeout(() => {
+      if (textareaRef) {
+        const newCursorPos = beforeMention.length + displayName.length + 2;
+        textareaRef.focus();
+        textareaRef.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!showMentionDropdown) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => Math.min(prev + 1, mentionUsers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" && mentionUsers.length > 0) {
+      e.preventDefault();
+      handleMentionSelect(mentionUsers[selectedMentionIndex]);
+    } else if (e.key === "Escape") {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentText.trim() || !collectionId) return;
+
+    try {
+      const mentions = mentionedUsers.map((u) => u.id);
+      await addCollectionComment({
+        collectionId,
+        content: commentText.trim(),
+        ...(mentions.length > 0 && { mentions }),
+      }).unwrap();
+      setCommentText("");
+      setMentionedUsers([]);
+      toast.success("Comment added!");
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+      toast.error("Failed to add comment. Please try again.");
+    }
+  };
+
+  const handleReply = async (parentCommentId: string, content: string, mentions?: string[]) => {
+    if (!content.trim() || !collectionId) return;
+
+    try {
+      await addCollectionComment({
+        collectionId,
+        content: content.trim(),
+        parentCommentId,
+        mentions,
+      }).unwrap();
+      toast.success("Reply added!");
+    } catch (err) {
+      console.error("Failed to add reply:", err);
+      toast.error("Failed to add reply. Please try again.");
+      throw err;
+    }
+  };
+
+  const handleEditComment = async (commentId: string, content: string) => {
+    if (!content.trim() || !collectionId) return;
+
+    try {
+      await editCollectionComment({
+        collectionId,
+        commentId,
+        content: content.trim(),
+      }).unwrap();
+      toast.success("Comment updated!");
+    } catch (err) {
+      console.error("Failed to edit comment:", err);
+      toast.error("Failed to update comment.");
+      throw err;
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!collectionId || !confirm("Are you sure you want to delete this comment?")) return;
+
+    try {
+      await deleteCollectionComment({ collectionId, commentId }).unwrap();
+      toast.success("Comment deleted!");
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+      toast.error("Failed to delete comment.");
+    }
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    if (!collectionId) return;
+
+    try {
+      await likeCollectionComment({ collectionId, commentId }).unwrap();
+    } catch (err) {
+      console.error("Failed to like comment:", err);
     }
   };
 
@@ -246,6 +417,22 @@ export default function CollectionDetailPage() {
                   >
                     Description
                   </button>
+                  <button
+                    onClick={() => setActiveTab("comments")}
+                    className={`flex-1 px-6 py-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                      activeTab === "comments"
+                        ? `${textColorClass} border-b-2 ${borderColorClass}`
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Comments
+                    {memoizedComments.length > 0 && (
+                      <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                        {memoizedComments.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -332,7 +519,7 @@ export default function CollectionDetailPage() {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : activeTab === "description" ? (
                   <div className="prose prose-sm max-w-none">
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">
                       About this Collection
@@ -349,6 +536,90 @@ export default function CollectionDetailPage() {
                         </p>
                       </div>
                     )}
+                  </div>
+                ) : (
+                  /* Comments Tab */
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Comments
+                    </h2>
+
+                    {/* Comment Input */}
+                    <div className="flex space-x-3">
+                      <Avatar
+                        src={getAvatarUrl(currentUser?.avatar)}
+                        alt={currentUser ? `${currentUser.fname} ${currentUser.lname}` : "User"}
+                        size="sm"
+                        fallbackText={currentUser ? `${currentUser.fname} ${currentUser.lname}` : "You"}
+                        showMembershipBorder={false}
+                      />
+                      <div className="flex-1 space-y-3 relative">
+                        <textarea
+                          ref={(ref) => setTextareaRef(ref)}
+                          value={commentText}
+                          onChange={handleCommentTextChange}
+                          onKeyDown={handleCommentKeyDown}
+                          placeholder="Share your thoughts... (type @ to mention someone)"
+                          rows={3}
+                          disabled={submittingComment}
+                          className={`w-full p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            submittingComment ? "bg-gray-50" : "border-gray-300"
+                          }`}
+                        />
+
+                        {/* Mention Autocomplete Dropdown */}
+                        {showMentionDropdown && textareaRef && (
+                          <MentionAutocomplete
+                            users={mentionUsers}
+                            loading={mentionLoading}
+                            onSelect={handleMentionSelect}
+                            selectedIndex={selectedMentionIndex}
+                            onClose={() => setShowMentionDropdown(false)}
+                            position={{
+                              top: textareaRef.offsetHeight + 8,
+                              left: 0,
+                            }}
+                          />
+                        )}
+
+                        <div className="flex justify-end">
+                          <button
+                            onClick={handleAddComment}
+                            disabled={!commentText.trim() || submittingComment}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                              submittingComment || !commentText.trim()
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
+                            }`}
+                          >
+                            {submittingComment ? "Posting..." : "Post Comment"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Comment Tree */}
+                    <div className="space-y-4">
+                      {commentTree.length > 0 ? (
+                        commentTree.map((comment: any) => (
+                          <CommentItem
+                            key={comment._id}
+                            comment={comment}
+                            depth={0}
+                            currentUserId={currentUser?._id}
+                            currentUserRole={currentUser?.role}
+                            onReply={handleReply}
+                            onEdit={handleEditComment}
+                            onDelete={handleDeleteComment}
+                            onLike={handleLikeComment}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          No comments yet. Be the first to share your thoughts!
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

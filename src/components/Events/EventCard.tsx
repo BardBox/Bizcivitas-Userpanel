@@ -86,7 +86,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden">
       {/* Event Image */}
-      <div className="relative w-full aspect-[16/9]">
+      <div className="relative w-full">
         <Image
           src={
             event.image
@@ -94,8 +94,10 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
               : "/images/default-event.jpg"
           }
           alt={event.title}
-          fill
-          className="object-cover"
+          width={0}
+          height={0}
+          sizes="100vw"
+          className="w-full h-auto"
         />
 
         {/* Status Badge */}

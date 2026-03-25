@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { ImagePlus, Loader2, Send } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { ImagePlus, Loader2, Send, Smile } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+import type { EmojiClickData } from "emoji-picker-react";
+
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface CommentInputProps {
   postId: string;
@@ -18,6 +22,8 @@ export default function CommentInput({
   const [content, setContent] = useState("");
   const [media, setMedia] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,19 +62,54 @@ export default function CommentInput({
     }
   };
 
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newText = content.substring(0, start) + emojiData.emoji + content.substring(end);
+      setContent(newText);
+      setShowEmojiPicker(false);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newPos = start + emojiData.emoji.length;
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(newPos, newPos);
+        }
+      }, 0);
+    } else {
+      setContent((prev) => prev + emojiData.emoji);
+      setShowEmojiPicker(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-4 relative">
         <div className="flex-1">
           <textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write a comment..."
             className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             rows={2}
           />
+          {showEmojiPicker && (
+            <div className="absolute z-50 bottom-full mb-2">
+              <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="text-gray-500 hover:text-yellow-500 transition-colors"
+            title="Add emoji"
+          >
+            <Smile className="w-6 h-6" />
+          </button>
           <label className="cursor-pointer">
             <input
               type="file"

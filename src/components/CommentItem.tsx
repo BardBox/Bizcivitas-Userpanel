@@ -8,6 +8,11 @@ import toast from "react-hot-toast";
 import { parseMentions } from "@/utils/parseMentions";
 import { useUserSearch } from "@/hooks/useUserSearch";
 import { useTimeAgo } from "@/utils/timeAgo";
+import { Smile } from "lucide-react";
+import dynamic from "next/dynamic";
+import type { EmojiClickData } from "emoji-picker-react";
+
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface CommentItemProps {
   comment: any;
@@ -45,6 +50,9 @@ export default function CommentItem({
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionedUsers, setMentionedUsers] = useState<{ id: string; username: string }[]>([]);
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showReplyEmojiPicker, setShowReplyEmojiPicker] = useState(false);
+  const [showEditEmojiPicker, setShowEditEmojiPicker] = useState(false);
 
   const { users: mentionUsers } = useUserSearch(showMentionDropdown ? mentionQuery : "");
 
@@ -191,6 +199,48 @@ export default function CommentItem({
     }
   };
 
+  const handleReplyEmojiClick = (emojiData: EmojiClickData) => {
+    const textarea = replyTextareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newText = replyText.substring(0, start) + emojiData.emoji + replyText.substring(end);
+      setReplyText(newText);
+      setShowReplyEmojiPicker(false);
+      setTimeout(() => {
+        if (replyTextareaRef.current) {
+          const newPos = start + emojiData.emoji.length;
+          replyTextareaRef.current.focus();
+          replyTextareaRef.current.setSelectionRange(newPos, newPos);
+        }
+      }, 0);
+    } else {
+      setReplyText((prev) => prev + emojiData.emoji);
+      setShowReplyEmojiPicker(false);
+    }
+  };
+
+  const handleEditEmojiClick = (emojiData: EmojiClickData) => {
+    const textarea = editTextareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newText = editContent.substring(0, start) + emojiData.emoji + editContent.substring(end);
+      setEditContent(newText);
+      setShowEditEmojiPicker(false);
+      setTimeout(() => {
+        if (editTextareaRef.current) {
+          const newPos = start + emojiData.emoji.length;
+          editTextareaRef.current.focus();
+          editTextareaRef.current.setSelectionRange(newPos, newPos);
+        }
+      }, 0);
+    } else {
+      setEditContent((prev) => prev + emojiData.emoji);
+      setShowEditEmojiPicker(false);
+    }
+  };
+
   const isReply = depth > 0;
   const parentAuthorName = comment.parentAuthorName || null;
 
@@ -274,14 +324,28 @@ export default function CommentItem({
 
           {/* Content or Edit Form */}
           {isEditing ? (
-            <div className="space-y-2 mt-2">
+            <div className="space-y-2 mt-2 relative">
               <textarea
+                ref={editTextareaRef}
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
               />
-              <div className="flex gap-2">
+              {showEditEmojiPicker && (
+                <div className="absolute z-50 bottom-full mb-2">
+                  <EmojiPicker onEmojiClick={handleEditEmojiClick} width={280} height={320} />
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditEmojiPicker(!showEditEmojiPicker)}
+                  className="p-1 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+                  title="Add emoji"
+                >
+                  <Smile className="w-4 h-4" />
+                </button>
                 <button
                   onClick={handleEditSubmit}
                   disabled={isSubmitting || !editContent.trim()}
@@ -297,6 +361,7 @@ export default function CommentItem({
                   onClick={() => {
                     setIsEditing(false);
                     setEditContent(comment.content || "");
+                    setShowEditEmojiPicker(false);
                   }}
                   disabled={isSubmitting}
                   className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 disabled:opacity-50"
@@ -367,6 +432,13 @@ export default function CommentItem({
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-xs bg-gray-50"
                   />
 
+                  {/* Emoji Picker for Reply */}
+                  {showReplyEmojiPicker && (
+                    <div className="absolute z-50 bottom-full mb-2">
+                      <EmojiPicker onEmojiClick={handleReplyEmojiClick} width={280} height={320} />
+                    </div>
+                  )}
+
                   {/* Mention Dropdown */}
                   {showMentionDropdown && mentionUsers.length > 0 && (
                     <div className="absolute bottom-full left-0 mb-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
@@ -398,7 +470,15 @@ export default function CommentItem({
                     </div>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowReplyEmojiPicker(!showReplyEmojiPicker)}
+                      className="p-1 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+                      title="Add emoji"
+                    >
+                      <Smile className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       onClick={handleReplySubmit}
                       disabled={isSubmitting || !replyText.trim()}
@@ -416,6 +496,7 @@ export default function CommentItem({
                         setReplyText("");
                         setMentionedUsers([]);
                         setShowMentionDropdown(false);
+                        setShowReplyEmojiPicker(false);
                       }}
                       disabled={isSubmitting}
                       className="px-3 py-1 text-gray-500 rounded-full text-xs hover:bg-gray-100 disabled:opacity-50"

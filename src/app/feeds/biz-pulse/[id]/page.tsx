@@ -9,7 +9,12 @@ import {
   ArrowLeft,
   Home,
   ChevronRight,
+  Smile,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+import type { EmojiClickData } from "emoji-picker-react";
+
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 import Link from "next/link";
 import type { RootState } from "../../../../../store/store";
 import {
@@ -66,6 +71,7 @@ export default function BizPulseDetailPage() {
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionedUsers, setMentionedUsers] = useState<Array<{id: string, username: string}>>([]);
   const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Use the user search hook
   const { users: mentionUsers, loading: mentionLoading } = useUserSearch(mentionQuery);
@@ -184,6 +190,27 @@ export default function BizPulseDetailPage() {
       handleMentionSelect(mentionUsers[selectedMentionIndex]);
     } else if (e.key === "Escape") {
       setShowMentionDropdown(false);
+    }
+  };
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    if (textareaRef) {
+      const start = textareaRef.selectionStart;
+      const end = textareaRef.selectionEnd;
+      const text = newComment;
+      const newText = text.substring(0, start) + emojiData.emoji + text.substring(end);
+      setNewComment(newText);
+      setShowEmojiPicker(false);
+      setTimeout(() => {
+        if (textareaRef) {
+          const newPos = start + emojiData.emoji.length;
+          textareaRef.focus();
+          textareaRef.setSelectionRange(newPos, newPos);
+        }
+      }, 0);
+    } else {
+      setNewComment((prev) => prev + emojiData.emoji);
+      setShowEmojiPicker(false);
     }
   };
 
@@ -557,7 +584,23 @@ export default function BizPulseDetailPage() {
                       }}
                     />
                   )}
-                  <div className="flex justify-end">
+
+                  {/* Emoji Picker */}
+                  {showEmojiPicker && (
+                    <div className="absolute z-50 bottom-full mb-2">
+                      <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="p-1.5 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+                      title="Add emoji"
+                    >
+                      <Smile className="w-5 h-5" />
+                    </button>
                     <button
                       onClick={handleCommentSubmit}
                       disabled={!newComment.trim() || isSubmitting}

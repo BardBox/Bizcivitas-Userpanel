@@ -559,16 +559,31 @@ export default function BizPulseDetailPage() {
                   showMembershipBorder={false}
                 />
                 <div className="flex-1 space-y-3 relative">
-                  <textarea
-                    ref={(ref) => setTextareaRef(ref)}
-                    value={newComment}
-                    onChange={handleCommentTextChange}
-                    onKeyDown={handleCommentKeyDown}
-                    placeholder="Share your thoughts... (type @ to mention someone)"
-                    disabled={isSubmitting}
-                    className="w-full p-4 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                  />
+                  <div className="relative">
+                    <textarea
+                      ref={(ref) => setTextareaRef(ref)}
+                      value={newComment}
+                      onChange={handleCommentTextChange}
+                      onKeyDown={handleCommentKeyDown}
+                      placeholder="Share your thoughts... (type @ to mention someone)"
+                      disabled={isSubmitting}
+                      className="w-full p-4 pb-10 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={3}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="absolute bottom-2 right-3 p-1 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+                      title="Add emoji"
+                    >
+                      <Smile className="w-5 h-5" />
+                    </button>
+                    {showEmojiPicker && (
+                      <div className="absolute z-50 bottom-12 right-0">
+                        <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Mention Autocomplete Dropdown */}
                   {showMentionDropdown && textareaRef && (
@@ -585,22 +600,7 @@ export default function BizPulseDetailPage() {
                     />
                   )}
 
-                  {/* Emoji Picker */}
-                  {showEmojiPicker && (
-                    <div className="absolute z-50 bottom-full mb-2">
-                      <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="p-1.5 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
-                      title="Add emoji"
-                    >
-                      <Smile className="w-5 h-5" />
-                    </button>
+                  <div className="flex justify-end">
                     <button
                       onClick={handleCommentSubmit}
                       disabled={!newComment.trim() || isSubmitting}

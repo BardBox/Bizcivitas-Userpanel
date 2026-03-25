@@ -85,31 +85,31 @@ export default function CommentInput({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-start gap-4 relative">
-        <div className="flex-1">
+      <div className="flex items-start gap-4">
+        <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write a comment..."
-            className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full p-3 pb-9 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             rows={2}
           />
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="absolute bottom-2 right-3 p-0.5 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+            title="Add emoji"
+          >
+            <Smile className="w-5 h-5" />
+          </button>
           {showEmojiPicker && (
-            <div className="absolute z-50 bottom-full mb-2">
+            <div className="absolute z-50 bottom-11 right-0">
               <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
             </div>
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="text-gray-500 hover:text-yellow-500 transition-colors"
-            title="Add emoji"
-          >
-            <Smile className="w-6 h-6" />
-          </button>
           <label className="cursor-pointer">
             <input
               type="file"

@@ -324,28 +324,30 @@ export default function CommentItem({
 
           {/* Content or Edit Form */}
           {isEditing ? (
-            <div className="space-y-2 mt-2 relative">
-              <textarea
-                ref={editTextareaRef}
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
-              />
-              {showEditEmojiPicker && (
-                <div className="absolute z-50 bottom-full mb-2">
-                  <EmojiPicker onEmojiClick={handleEditEmojiClick} width={280} height={320} />
-                </div>
-              )}
-              <div className="flex items-center gap-2">
+            <div className="space-y-2 mt-2">
+              <div className="relative">
+                <textarea
+                  ref={editTextareaRef}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 pb-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                />
                 <button
                   type="button"
                   onClick={() => setShowEditEmojiPicker(!showEditEmojiPicker)}
-                  className="p-1 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+                  className="absolute bottom-1.5 right-2 p-0.5 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
                   title="Add emoji"
                 >
                   <Smile className="w-4 h-4" />
                 </button>
+                {showEditEmojiPicker && (
+                  <div className="absolute z-50 bottom-10 right-0">
+                    <EmojiPicker onEmojiClick={handleEditEmojiClick} width={280} height={320} />
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleEditSubmit}
                   disabled={isSubmitting || !editContent.trim()}
@@ -422,22 +424,30 @@ export default function CommentItem({
                   showMembershipBorder={false}
                 />
                 <div className="flex-1 space-y-2 relative">
-                  <textarea
-                    ref={replyTextareaRef}
-                    value={replyText}
-                    onChange={handleReplyTextChange}
-                    onKeyDown={handleReplyKeyDown}
-                    placeholder={`Reply to ${authorName}... (type @ to mention)`}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-xs bg-gray-50"
-                  />
-
-                  {/* Emoji Picker for Reply */}
-                  {showReplyEmojiPicker && (
-                    <div className="absolute z-50 bottom-full mb-2">
-                      <EmojiPicker onEmojiClick={handleReplyEmojiClick} width={280} height={320} />
-                    </div>
-                  )}
+                  <div className="relative">
+                    <textarea
+                      ref={replyTextareaRef}
+                      value={replyText}
+                      onChange={handleReplyTextChange}
+                      onKeyDown={handleReplyKeyDown}
+                      placeholder={`Reply to ${authorName}... (type @ to mention)`}
+                      rows={2}
+                      className="w-full px-3 py-2 pb-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-xs bg-gray-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowReplyEmojiPicker(!showReplyEmojiPicker)}
+                      className="absolute bottom-1.5 right-2 p-0.5 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
+                      title="Add emoji"
+                    >
+                      <Smile className="w-3.5 h-3.5" />
+                    </button>
+                    {showReplyEmojiPicker && (
+                      <div className="absolute z-50 bottom-10 right-0">
+                        <EmojiPicker onEmojiClick={handleReplyEmojiClick} width={280} height={320} />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Mention Dropdown */}
                   {showMentionDropdown && mentionUsers.length > 0 && (
@@ -471,14 +481,6 @@ export default function CommentItem({
                   )}
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowReplyEmojiPicker(!showReplyEmojiPicker)}
-                      className="p-1 text-gray-400 hover:text-yellow-500 transition-colors rounded-full hover:bg-gray-100"
-                      title="Add emoji"
-                    >
-                      <Smile className="w-3.5 h-3.5" />
-                    </button>
                     <button
                       onClick={handleReplySubmit}
                       disabled={isSubmitting || !replyText.trim()}
